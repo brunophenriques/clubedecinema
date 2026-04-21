@@ -7,3 +7,4 @@ alembic
 requests
 sentence-transformers
 rapidfuzz
+psycopg[binary]
