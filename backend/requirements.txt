@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+python-dotenv
+alembic
+requests
+sentence-transformers
+rapidfuzz

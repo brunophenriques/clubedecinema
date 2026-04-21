@@ -1,0 +1,1225 @@
+:root{
+  --bg: #F6F4F8;
+  --card: #FFFFFF;
+  --card2:#FBFAFD;
+  --border:#E9E5EE;
+
+  --text:#12131A;
+  --muted:#6B6874;
+
+  --accent:#F08BB8;     /* rosa pastel */
+  --accent2:#FFB6D2;    /* hover */
+  --radius: 18px;
+
+  --shadow: 0 8px 24px rgba(20, 10, 25, .06);
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.wrap{ max-width: 960px; margin: 0 auto; padding: 18px; }
+
+/* =========================
+   TOP NAV
+   ========================= */
+.top{
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(246,244,248,.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.top-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 16px;
+}
+
+.brand{ display:flex; align-items:center; gap:12px; min-width: 220px; }
+.logo{
+  width:42px; height:42px;
+  display:grid; place-items:center;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 14px;
+  font-size: 18px;
+}
+.brand-title{ font-weight: 900; letter-spacing: .2px; }
+.brand-sub{ color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+.nav{ display:flex; gap:8px; align-items:center; }
+.nav-link{
+  text-decoration:none;
+  color: var(--muted);
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 650;
+}
+.nav-link:hover{
+  background: rgba(240,139,184,.10);
+  border-color: rgba(240,139,184,.25);
+  color: #1a1420;
+}
+.nav-link.active{
+  background: rgba(240,139,184,.16);
+  border-color: rgba(240,139,184,.30);
+  color: #1a1420;
+}
+
+/* =========================
+   TYPO / UTILS
+   ========================= */
+h1{ margin:0; font-size: 40px; line-height: 1.05; }
+h2{ margin:0; font-size: 18px; }
+.muted{ color: var(--muted); }
+.small{ font-size: 12px; }
+code{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+/* =========================
+   BUTTONS / INPUTS
+   ========================= */
+.btn{
+  appearance:none;
+  border: 1px solid rgba(30, 20, 40, .12);
+  background: #fff;
+  color: rgba(20, 15, 30, .92);
+  padding: 10px 14px;
+  border-radius: 999px;
+  cursor:pointer;
+  font-weight: 750;
+  transition: transform .08s ease, background .12s ease;
+}
+.btn:hover{ background: rgba(240, 139, 184, .08); }
+.btn:active{ transform: translateY(1px); }
+.btn:disabled{ opacity:.55; cursor:not-allowed; transform: none; }
+
+.btn.primary{
+  border-color: transparent;
+  background: var(--accent);
+  color: #2a0f1a;
+}
+.btn.primary:hover{ background: var(--accent2); }
+
+.btn.ghost{ background: transparent; }
+
+.input{
+  width:100%;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 20, 40, .12);
+  background: #fff;
+  padding: 10px 12px;
+  outline: none;
+}
+.input:focus{
+  border-color: rgba(240,139,184,.45);
+  box-shadow: 0 0 0 4px rgba(240,139,184,.10);
+}
+
+/* =========================
+   CARDS / SECTIONS
+   ========================= */
+.section{
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid rgba(30, 20, 40, .08);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.section-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.hero-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* =========================
+   WEEK (index)
+   ========================= */
+.kicker{
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.week-status{
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  font-size: 13px;
+}
+.week-status strong{ font-weight: 900; }
+
+/* =========================
+   FILMS GRID (index)
+   ========================= */
+/* FILM GRID — no horizontal scroll */
+.film-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* tablet */
+@media (max-width: 980px){
+  .film-grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* mobile */
+@media (max-width: 620px){
+  .film-grid{
+    grid-template-columns: 1fr;
+  }
+}
+.film-card{
+  display:flex;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  border-radius: 16px;
+}
+
+.poster{
+  width: 84px;
+  height: 120px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow:hidden;
+  flex: 0 0 auto;
+  background: #fff;
+  display:grid;
+  place-items:center;
+}
+.poster img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  display:block;
+}
+
+.film-body{
+  flex: 1;
+  min-width: 0;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+.film-title{
+  margin:0;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 900;
+}
+.film-meta{
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.film-actions{
+  margin-top: 12px;
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+/* details */
+.details{
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+.details summary{ cursor:pointer; font-weight: 900; }
+.details ul{ margin: 10px 0 0; }
+
+.footer{ padding: 18px 0 28px; }
+
+/* =========================
+   ADMIN (clean + readable)
+   ========================= */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 860px){
+  .grid{ grid-template-columns: 1fr; }
+}
+
+.admin-films{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.admin-film{
+  border: 1px solid rgba(30, 20, 40, .10);
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px;
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  align-items:flex-start;
+}
+
+.admin-title{
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.admin-meta{
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.admin-right{
+  display:flex;
+  gap: 8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+/* =========================
+   BADGES (chips)
+   ========================= */
+.badges{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-top: 10px;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(30,20,40,.10);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 750;
+  color: rgba(20,15,30,.72);
+  line-height: 1;
+}
+
+/* semantic colors */
+.badge--open{
+  background: rgba(240,139,184,.12);
+  border-color: rgba(240,139,184,.30);
+  color: #7a2f4d;
+}
+
+.badge--closed{
+  background: rgba(20,15,30,.04);
+  border-color: rgba(20,15,30,.10);
+  color: rgba(20,15,30,.72);
+}
+
+.badge--on{
+  background: rgba(180, 140, 255, .12);
+  border-color: rgba(180, 140, 255, .28);
+  color: #4a2f7a;
+}
+
+.badge--off{
+  background: rgba(20,15,30,.04);
+  border-color: rgba(20,15,30,.10);
+  color: rgba(20,15,30,.72);
+}
+
+.badge--warn{
+  background: rgba(240,139,184,.14);
+  border-color: rgba(240,139,184,.40);
+  color: #7a2f4d;
+}
+
+/* ====== Index polish extras ====== */
+
+/* badge states (usa data-state no #badge) */
+#badge[data-state="pending"]{
+  border-color: rgba(20,15,30,.18);
+  color: rgba(20,15,30,.65);
+  background: rgba(255,255,255,.55);
+}
+#badge[data-state="open"]{
+  border-color: rgba(240,139,184,.45);
+  color: rgba(122,47,77,.9);
+  background: rgba(240,139,184,.10);
+}
+#badge[data-state="closed"]{
+  border-color: rgba(20,15,30,.14);
+  color: rgba(20,15,30,.70);
+  background: rgba(255,255,255,.45);
+}
+
+/* voted box uses week-status */
+.week-status{
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  font-size: 13px;
+}
+.week-status strong{ font-weight: 850; }
+.week-status[data-state="voted"]{
+  border-color: rgba(240,139,184,.35);
+  background: rgba(240,139,184,.08);
+}
+
+/* poster placeholder nicer */
+.poster.placeholder{
+  background: linear-gradient(180deg, rgba(240,139,184,.14), rgba(255,255,255,.65));
+  border-color: rgba(240,139,184,.20);
+}
+.poster.placeholder span{
+  font-weight: 950;
+  letter-spacing: .08em;
+  color: rgba(20,15,30,.45);
+}
+
+/* align button size inside film cards */
+.film-actions .btn{
+  padding: 9px 12px;
+  font-size: 13px;
+}
+.small-muted{ font-size: 12px; }
+
+/* ====== HOME: Filmes numa linha (scroll horizontal) ====== */
+.film-grid{
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 6px 2px 10px;
+  scroll-snap-type: x mandatory;
+}
+.film-grid::-webkit-scrollbar{ height: 10px; }
+.film-grid::-webkit-scrollbar-thumb{
+  background: rgba(240,139,184,.25);
+  border-radius: 999px;
+}
+.film-card{
+  min-width: 420px;
+  max-width: 420px;
+  scroll-snap-align: start;
+  border-radius: 18px;
+  padding: 14px;
+}
+.poster{
+  width: 96px;
+  height: 138px;
+}
+
+/* deixa o texto mais “grande”/respirável */
+.film-title{ font-size: 18px; }
+.film-meta{ font-size: 14px; }
+.btn{ padding: 11px 14px; }
+
+/* mobile: stack normal */
+@media (max-width: 720px){
+  .film-grid{
+    display: grid;
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+  .film-card{
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+/* =========================
+   TOASTS
+   ========================= */
+#toastRoot{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: grid;
+  gap: 10px;
+  z-index: 9999;
+}
+
+.toast{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  min-width: 280px;
+  max-width: 360px;
+  padding: 12px 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(30,20,40,.12);
+  box-shadow: 0 14px 35px rgba(20,10,25,.12);
+  backdrop-filter: blur(10px);
+  animation: toastIn .18s ease;
+}
+
+.toast__dot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  margin-top: 5px;
+  background: rgba(20,15,30,.35);
+  flex: 0 0 auto;
+}
+
+.toast__msg{
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(20,15,30,.86);
+  font-weight: 650;
+}
+
+.toast__x{
+  margin-left:auto;
+  border: 0;
+  background: transparent;
+  cursor:pointer;
+  color: rgba(20,15,30,.45);
+  font-weight: 900;
+  padding: 0 4px;
+}
+
+.toast--success .toast__dot{
+  background: rgba(240,139,184,.95);
+}
+.toast--error .toast__dot{
+  background: rgba(255, 92, 124, .92);
+}
+.toast--info .toast__dot{
+  background: rgba(180, 140, 255, .92);
+}
+
+.toast--out{
+  animation: toastOut .2s ease forwards;
+}
+
+@keyframes toastIn{
+  from{ transform: translateY(6px); opacity: 0; }
+  to{ transform: translateY(0); opacity: 1; }
+}
+@keyframes toastOut{
+  from{ transform: translateY(0); opacity: 1; }
+  to{ transform: translateY(6px); opacity: 0; }
+}
+
+/* =========================
+   HOME FILMS: mais “big”
+   ========================= */
+
+/* cards maiores no desktop */
+.film-card{
+  min-width: 460px;
+  max-width: 460px;
+  padding: 16px;
+  border-radius: 18px;
+}
+
+.poster{
+  width: 110px;
+  height: 158px;
+  border-radius: 14px;
+}
+
+.film-title{
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+.film-meta{
+  font-size: 14px;
+}
+
+/* botão votar mais clean */
+.film-actions .btn{
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+/* mobile: volta a grid */
+@media (max-width: 720px){
+  #toastRoot{ left: 12px; right: 12px; bottom: 12px; }
+  .toast{ max-width: none; min-width: 0; }
+  .poster{ width: 94px; height: 134px; }
+  .film-title{ font-size: 18px; }
+}
+
+/* =========================
+   ARCHIVE
+   ========================= */
+.archive-grid{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.archive-week{
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+.archive-week-head{
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  align-items:flex-start;
+}
+
+.archive-week-title{
+  font-weight: 950;
+  letter-spacing: -0.01em;
+}
+
+.archive-winner{
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(240,139,184,.25);
+  background: rgba(240,139,184,.06);
+}
+
+.archive-films{
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.archive-film{
+  display:flex;
+  gap: 12px;
+  align-items:center;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(30,20,40,.08);
+  background: var(--card2);
+}
+
+.archive-film-body{
+  flex: 1;
+  min-width: 0;
+}
+
+.archive-film-title{
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.archive-film-votes{
+  width: 44px;
+  height: 32px;
+  display:grid;
+  place-items:center;
+  border-radius: 999px;
+  border: 1px solid rgba(30,20,40,.10);
+  background: #fff;
+  font-weight: 950;
+  color: rgba(20,15,30,.70);
+}
+
+/* ===== Archive: menos bold / mais “editorial” ===== */
+.archive-week-title{ font-weight: 750; font-size: 18px; }
+.archive-film-title{ font-weight: 600; }
+.badge{ font-weight: 700; }
+
+.hero h1{ font-weight: 650; }            /* em vez de parecer “poster” */
+.section-head h2{ font-weight: 800; }
+
+.archive-film-votes{
+  font-weight: 800;
+  color: rgba(20,15,30,.62);
+}
+
+/* detalhes (summary) menos agressivo */
+.details summary{ font-weight: 500; }
+
+/* suavizar o “Semanas” e contagem */
+#count{ font-weight: 550; }
+
+/* =========================
+   HALL OF FAME (ARCHIVE)
+   ========================= */
+.hof-grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 12px;
+}
+@media (max-width: 980px){ .hof-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 640px){ .hof-grid{ grid-template-columns: 1fr; } }
+
+.hof-card{
+  text-align:left;
+  width:100%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  cursor:pointer;
+  transition: transform .08s ease, background .12s ease;
+}
+.hof-card:hover{ background: rgba(240, 139, 184, .05); }
+.hof-card:active{ transform: translateY(1px); }
+
+.hof-card__top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.hof-card__week{
+  font-weight: 850;
+  line-height: 1.15;
+}
+
+.hof-poster{
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 16px;
+  overflow:hidden;
+  border: 1px solid var(--border);
+  background: #fff;
+  display:grid;
+  place-items:center;
+}
+.hof-poster img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  display:block;
+}
+.hof-poster--ph{
+  background: linear-gradient(180deg, rgba(240,139,184,.14), rgba(255,255,255,.65));
+  border-color: rgba(240,139,184,.20);
+}
+.hof-poster--ph span{
+  font-weight: 950;
+  letter-spacing: .08em;
+  color: rgba(20,15,30,.45);
+}
+
+.hof-card__win{ margin-top: 10px; }
+.hof-card__winTitle{ font-weight: 900; font-size: 15px; }
+
+.hof-modal{
+  position: fixed;
+  inset: 0;
+  display:none;
+  z-index: 9999;
+}
+.hof-modal.is-open{ display:block; }
+
+.hof-modal__backdrop{
+  position:absolute; inset:0;
+  background: rgba(10, 8, 14, .35);
+  backdrop-filter: blur(6px);
+}
+
+.hof-modal__panel{
+  position:relative;
+  margin: 18px auto;
+  max-width: 860px;
+  width: calc(100% - 28px);
+  background: var(--card);
+  border: 1px solid rgba(30,20,40,.10);
+  border-radius: 18px;
+  box-shadow: 0 22px 60px rgba(10,8,14,.22);
+  overflow:hidden;
+}
+
+.hof-modal__head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap: 10px;
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,.8);
+}
+.hof-modal__title{
+  font-weight: 950;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.hof-modal__body{ padding: 14px; }
+
+.hof-winnerBox{
+  border: 1px solid rgba(240,139,184,.25);
+  background: rgba(240,139,184,.06);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.hof-list{
+  display:grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.hof-row{
+  display:flex;
+  gap: 12px;
+  align-items:center;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(30,20,40,.08);
+  background: var(--card2);
+}
+.hof-row--win{
+  border-color: rgba(240,139,184,.28);
+  background: rgba(240,139,184,.07);
+}
+
+.hof-row .hof-poster{
+  width: 64px;
+  aspect-ratio: 2/3;
+  border-radius: 12px;
+}
+
+.hof-row__body{ flex:1; min-width:0; }
+.hof-row__title{ font-weight: 900; line-height: 1.15; }
+
+.hof-row__votes{
+  width: 44px;
+  height: 32px;
+  display:grid;
+  place-items:center;
+  border-radius: 999px;
+  border: 1px solid rgba(30,20,40,.10);
+  background: #fff;
+  font-weight: 900;
+  color: rgba(20,15,30,.70);
+}
+
+.hof-crown{ margin-left: 6px; }
+
+/* =========================
+   SEGMENTED TOGGLE (Arquivo / HOF)
+   ========================= */
+.seg{
+  display:inline-flex;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(30, 20, 40, .12);
+  background: rgba(255,255,255,.7);
+}
+.seg-btn{
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 9px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  color: rgba(20,15,30,.65);
+}
+.seg-btn.is-active{
+  background: rgba(240,139,184,.18);
+  color: #1a1420;
+  border: 1px solid rgba(240,139,184,.28);
+}
+
+/* =========================
+   HALL OF FAME GRID
+   ========================= */
+.hof-grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 12px;
+}
+@media (max-width: 980px){ .hof-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 640px){ .hof-grid{ grid-template-columns: 1fr; } }
+
+.hof-card{
+  text-align:left;
+  width:100%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  cursor:pointer;
+  transition: transform .08s ease, background .12s ease;
+}
+.hof-card:hover{ background: rgba(240, 139, 184, .05); }
+.hof-card:active{ transform: translateY(1px); }
+
+.hof-card__top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.hof-card__week{
+  font-weight: 850;
+  line-height: 1.15;
+}
+
+.hof-poster{
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 16px;
+  overflow:hidden;
+  border: 1px solid var(--border);
+  background: #fff;
+  display:grid;
+  place-items:center;
+}
+.hof-poster img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  display:block;
+}
+.hof-poster--ph{
+  background: linear-gradient(180deg, rgba(240,139,184,.14), rgba(255,255,255,.65));
+  border-color: rgba(240,139,184,.20);
+}
+.hof-poster--ph span{
+  font-weight: 950;
+  letter-spacing: .08em;
+  color: rgba(20,15,30,.45);
+}
+
+.hof-card__win{ margin-top: 10px; }
+.hof-card__winTitle{ font-weight: 900; font-size: 15px; }
+
+/* =========================
+   MODAL (HOF)
+   ========================= */
+.hof-modal{
+  position: fixed;
+  inset: 0;
+  display:none;
+  z-index: 9999;
+}
+.hof-modal.is-open{ display:block; }
+
+.hof-modal__backdrop{
+  position:absolute; inset:0;
+  background: rgba(10, 8, 14, .35);
+  backdrop-filter: blur(6px);
+}
+
+.hof-modal__panel{
+  position:relative;
+  margin: 18px auto;
+  max-width: 860px;
+  width: calc(100% - 28px);
+  background: var(--card);
+  border: 1px solid rgba(30,20,40,.10);
+  border-radius: 18px;
+  box-shadow: 0 22px 60px rgba(10,8,14,.22);
+  overflow:hidden;
+}
+
+.hof-modal__head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap: 10px;
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,.8);
+}
+.hof-modal__title{
+  font-weight: 950;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.hof-modal__body{ padding: 14px; }
+
+.hof-list{
+  display:grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.hof-row{
+  display:flex;
+  gap: 12px;
+  align-items:center;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(30,20,40,.08);
+  background: var(--card2);
+}
+.hof-row--win{
+  border-color: rgba(240,139,184,.28);
+  background: rgba(240,139,184,.07);
+}
+
+.hof-row .hof-poster{
+  width: 64px;
+  aspect-ratio: 2/3;
+  border-radius: 12px;
+}
+
+.hof-row__body{ flex:1; min-width:0; }
+.hof-row__title{ font-weight: 900; line-height: 1.15; }
+
+.hof-row__votes{
+  width: 44px;
+  height: 32px;
+  display:grid;
+  place-items:center;
+  border-radius: 999px;
+  border: 1px solid rgba(30,20,40,.10);
+  background: #fff;
+  font-weight: 900;
+  color: rgba(20,15,30,.70);
+}
+
+.hof-crown{ margin-left: 6px; }
+
+/* ===== Header auth area ===== */
+.top-right{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+}
+
+.auth-pill{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.60);
+  border-radius: 999px;
+}
+
+.auth-pill__user{
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+/* ===== Submit section layout ===== */
+.submit-form{ display:grid; gap: 10px; }
+.submit-row{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.submit-row .input:nth-child(1){ max-width: 180px; }
+.submit-row .input:nth-child(2){ flex: 1; min-width: 220px; }
+
+.submit-actions{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 820px){
+  .top-right{ flex-wrap: wrap; justify-content:flex-end; }
+  .auth-pill__user{ max-width: 140px; }
+}
+
+/* =========================
+   FILMES — GRID (sem scroll)
+========================= */
+
+.film-grid{
+  /* mata qualquer carrossel antigo */
+  display: grid !important;
+  grid-auto-flow: initial !important;
+  overflow-x: visible !important;
+  overflow: visible !important;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding-bottom: 0;
+}
+
+/* tablet */
+@media (max-width: 980px){
+  .film-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* mobile */
+@media (max-width: 620px){
+  .film-grid{ grid-template-columns: 1fr; }
+}
+
+/* =========================
+   FILM CARD — tile vertical
+========================= */
+
+.film-card{
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px;
+}
+
+.poster{
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 2 / 3;     /* poster “normal” */
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.poster img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.poster.placeholder{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.film-body{
+  display:flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.film-top{
+  display:flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.film-title{
+  margin: 0;
+  line-height: 1.15;
+  font-size: 16px; /* menos "bold/giant" */
+}
+
+.film-meta{
+  font-size: 13px;
+}
+
+.film-actions{
+  margin-top: auto;         /* empurra botão para baixo */
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* botão “Ver mais” a ficar com vibe de action */
+#filmsMore{
+  width: 100%;
+  justify-content: center;
+  margin-top: 14px !important;
+}
+
+/* =========================
+   FIX HOME FILMS (desktop only)
+   mantém vibe anterior mas remove scroll
+========================= */
+
+/* Mata o carrossel antigo */
+.film-grid{
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  overflow-x: visible !important;
+  gap: 14px !important;
+}
+
+/* Remove largura forçada */
+.film-card{
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* Volta poster ao tamanho original compacto */
+.poster{
+  width: 86px !important;
+  height: 124px !important;
+}
+
+/* Remove títulos gigantes */
+.film-title{
+  font-size: 16px !important;
+}
+
+/* Remove botão oversized */
+.film-actions .btn{
+  padding: 9px 12px !important;
+  font-size: 13px !important;
+}
+
+/* =========================
+   HOME FILM CARD — layout horizontal elegante
+========================= */
+
+.film-card{
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 16px !important;
+}
+
+.poster{
+  width: 96px !important;
+  height: 140px !important;
+  flex-shrink: 0 !important;
+  border-radius: 14px !important;
+}
+
+.film-body{
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  flex: 1 !important;
+}
+
+.film-actions{
+  margin-top: 10px !important;
+  justify-content: flex-start !important;
+}

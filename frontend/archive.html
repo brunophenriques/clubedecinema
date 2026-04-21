@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Arquivo — Clube de Cinema</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/archive.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <div class="brand">
+        <div class="logo">🎬</div>
+        <div>
+          <div class="brand-title">Clube de Cinema</div>
+          <div class="brand-sub">Arquivo</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav-link" href="/">Semana</a>
+        <a class="nav-link active" href="/archive">Arquivo</a>
+        <!-- escondido por default; aparece só se for admin -->
+        <a class="nav-link" id="navAdmin" href="/admin" style="display:none">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="kicker">Histórico</div>
+      <h1>Arquivo</h1>
+      <p class="muted">Vê semanas anteriores ou muda para Hall of Fame (vencedores).</p>
+
+      <div class="hero-actions">
+        <button id="refresh" class="btn primary" type="button">Atualizar</button>
+
+        <!-- VIEW TOGGLE -->
+        <div class="seg">
+          <button id="viewArchive" class="seg-btn is-active" type="button">Arquivo</button>
+          <button id="viewHof" class="seg-btn" type="button">Hall of Fame</button>
+        </div>
+
+        <input id="q" class="input" placeholder="Pesquisar…" style="max-width: 420px;" />
+
+        <select id="sort" class="input" style="max-width: 260px;">
+          <option value="smart" selected>Smart</option>
+          <option value="new">Mais recentes</option>
+          <option value="old">Mais antigas</option>
+          <option value="votes">Mais votos (total)</option>
+          <option value="winnerVotes">Mais votos no vencedor</option>
+          <option value="az">Título A → Z</option>
+        </select>
+
+        <label class="btn" style="display:flex; gap:10px; align-items:center;">
+          <input id="onlyClosed" type="checkbox" checked />
+          <span>Mostrar só fechadas</span>
+        </label>
+      </div>
+
+      <div class="muted small" style="margin-top:10px">
+        API: <code id="apiLabel"></code>
+        <span style="margin-left:10px">•</span>
+        <span id="count" style="margin-left:10px">—</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <p id="status" class="muted">A carregar…</p>
+
+      <!-- NORMAL ARCHIVE -->
+      <div id="weeks" class="archive-grid"></div>
+
+      <!-- HALL OF FAME -->
+      <div id="hof" class="hof-grid" style="display:none"></div>
+    </section>
+
+    <!-- Modal (só usado no Hall of Fame para ver detalhes) -->
+    <div id="modal" class="hof-modal" aria-hidden="true">
+      <div class="hof-modal__backdrop" id="modalBackdrop"></div>
+      <div class="hof-modal__panel" role="dialog" aria-modal="true">
+        <div class="hof-modal__head">
+          <div>
+            <div id="modalTitle" class="hof-modal__title">—</div>
+            <div id="modalSub" class="muted small">—</div>
+          </div>
+          <button id="modalClose" class="btn" type="button">Fechar</button>
+        </div>
+        <div id="modalBody" class="hof-modal__body"></div>
+      </div>
+    </div>
+
+    <footer class="footer"></footer>
+  </main>
+
+  <script src="archive.js"></script>
+
+ 

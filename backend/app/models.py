@@ -1,0 +1,125 @@
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    ForeignKey,
+    UniqueConstraint,
+    Float,
+)
+from sqlalchemy.orm import relationship
+from .db import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    username = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+
+    # Admin flag
+    is_admin = Column(Boolean, default=False, nullable=False)
+
+    # sessions (login tokens)
+    sessions = relationship(
+        "Session",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+
+class Session(Base):
+    __tablename__ = "sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    token = Column(String, unique=True, index=True, nullable=False)
+
+    created_at = Column(Integer, nullable=False)   # unix seconds
+    expires_at = Column(Integer, nullable=False)   # unix seconds
+
+    user = relationship("User", back_populates="sessions")
+
+
+class Week(Base):
+    __tablename__ = "weeks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+
+    is_open = Column(Boolean, default=True, nullable=False)
+    is_ready = Column(Boolean, default=False, nullable=False)
+
+    # winner points to a film in films table (creates FK cycle with Film.week_id)
+    winner_film_id = Column(Integer, ForeignKey("films.id"), nullable=True)
+
+    films = relationship(
+        "Film",
+        back_populates="week",
+        cascade="all, delete-orphan",
+        foreign_keys="Film.week_id",
+        passive_deletes=True,
+    )
+
+    # resolve cycle updates (SQLAlchemy will do extra UPDATE)
+    winner = relationship(
+        "Film",
+        foreign_keys=[winner_film_id],
+        post_update=True,
+    )
+
+
+class Film(Base):
+    __tablename__ = "films"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    week_id = Column(Integer, ForeignKey("weeks.id", ondelete="CASCADE"), nullable=False)
+
+    # Canonical fields (what the public sees)
+    title = Column(String, nullable=False)
+    year = Column(Integer, nullable=True)
+    director = Column(String, nullable=True)
+    poster_url = Column(String, nullable=True)
+
+    # Who submitted it (used for voting rules)
+    submitter_key = Column(String, nullable=False)
+
+    # Raw submission (what user typed)
+    submitted_title = Column(String, nullable=True)
+    submitted_year = Column(Integer, nullable=True)
+
+    # Matching metadata (TMDB / scoring)
+    tmdb_id = Column(Integer, nullable=True)
+    match_score = Column(Float, nullable=True)
+    needs_review = Column(Boolean, default=False, nullable=False)
+
+    week = relationship("Week", back_populates="films", foreign_keys=[week_id])
+
+    votes = relationship(
+        "Vote",
+        back_populates="film",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+
+class Vote(Base):
+    __tablename__ = "votes"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    week_id = Column(Integer, ForeignKey("weeks.id", ondelete="CASCADE"), nullable=False)
+    film_id = Column(Integer, ForeignKey("films.id", ondelete="CASCADE"), nullable=False)
+
+    voter_key = Column(String, nullable=False)
+
+    film = relationship("Film", back_populates="votes")
+
+    __table_args__ = (
+        UniqueConstraint("week_id", "voter_key", name="unique_vote_per_week_per_voter"),
+    )

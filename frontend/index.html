@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clube de Cinema</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <div class="brand">
+        <div class="logo">🎬</div>
+        <div>
+          <div class="brand-title">Clube de Cinema</div>
+          <div class="brand-sub" id="weekTitle">—</div>
+        </div>
+      </div>
+
+      <div class="top-right">
+        <nav class="nav">
+          <a class="nav-link active" href="/index">Semana</a>
+          <a class="nav-link" href="/archive">Arquivo</a>
+          <!-- escondido por default; aparece só se for admin -->
+          <a class="nav-link" id="navAdmin" href="/admin" style="display:none">Admin</a>
+        </nav>
+
+        <div class="auth-pill">
+          <span class="auth-pill__user" id="authStatusLine">Não autenticado.</span>
+          <button class="btn" id="btnLogin" type="button">Login</button>
+          <button class="btn" id="btnLogout" type="button" style="display:none">Logout</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="kicker">Esta semana</div>
+      <h1 id="heroTitle">Clube de Cinema</h1>
+      <p id="heroSub" class="muted">Submete um filme e vota no favorito.</p>
+
+      <div class="hero-actions">
+        <button id="refresh" class="btn primary" type="button">Atualizar</button>
+        <a class="btn" href="archive.html">Ver arquivo</a>
+      </div>
+
+      <div class="week-status" id="weekStatus">—</div>
+    </section>
+
+    <!-- SUBMIT -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Submeter filme</h2>
+        <div class="muted" id="submitHint">—</div>
+      </div>
+
+      <form id="submitForm" class="submit-form">
+        <input id="subTitle" class="input" placeholder="Título" autocomplete="off" />
+
+        <div class="submit-row">
+          <input id="subYear" class="input" placeholder="Ano (opcional)" inputmode="numeric" />
+          <input id="subDirector" class="input" placeholder="Realizador (opcional)" autocomplete="off" />
+        </div>
+
+        <div class="submit-actions">
+          <button id="subBtn" class="btn primary" type="submit">Submeter</button>
+          <span class="muted small">O poster vem do TMDB automaticamente.</span>
+        </div>
+      </form>
+    </section>
+
+    <!-- FILMES -->
+    <section class="section">
+      <div class="section-head">
+        <h2>Filmes</h2>
+        <div class="muted" id="filmsHint">Escolhe um e vota.</div>
+      </div>
+
+      <div id="films" class="film-grid"></div>
+
+      <button id="filmsMore" class="btn" type="button" style="display:none; margin-top:12px;">
+        Ver mais
+      </button>
+    </section>
+
+    <!-- AUTH MODAL -->
+    <div id="authModal" style="display:none">
+      <div class="hof-modal is-open" style="display:block">
+        <div class="hof-modal__backdrop" id="authBackdrop"></div>
+        <div class="hof-modal__panel" role="dialog" aria-modal="true" style="max-width:520px">
+          <div class="hof-modal__head">
+            <div>
+              <div class="hof-modal__title">Entrar / Criar conta</div>
+              <div class="muted small">Sem email. Só username + password.</div>
+            </div>
+            <button class="btn" id="authClose" type="button">Fechar</button>
+          </div>
+          <div class="hof-modal__body">
+            <div class="seg" style="margin-bottom:12px;">
+              <button id="tabLogin" class="seg-btn is-active" type="button">Login</button>
+              <button id="tabRegister" class="seg-btn" type="button">Criar conta</button>
+            </div>
+
+            <form id="authForm" style="display:grid; gap:10px;">
+              <input id="authUser" class="input" placeholder="username (ex: rita)" autocomplete="username" />
+              <input id="authPass" class="input" placeholder="password" type="password" autocomplete="current-password" />
+              <button id="authSubmit" class="btn primary" type="submit">Entrar</button>
+              <div class="muted small" id="authMsg"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <span class="muted">API: <code id="apiLabel"></code></span>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+
+  
