@@ -507,11 +507,11 @@ def submit_film(
     db.refresh(week)
     return week_payload(db, week, include_submitter=False)
 
-from .db import DB_PATH  # no teu db.py existe DB_PATH
+
+from .db import DATABASE_URL
 
 @app.get("/debug/whoami")
 def debug_whoami(db: Session = Depends(get_db), authorization: str | None = Header(default=None)):
-    # devolve exatamente o que o backend está a ver
     token = None
     user = None
     is_admin = None
@@ -521,21 +521,20 @@ def debug_whoami(db: Session = Depends(get_db), authorization: str | None = Head
         is_admin = bool(getattr(user, "is_admin", False))
     except Exception as e:
         return {
-            "db_path": DB_PATH,
+            "database_url": DATABASE_URL,
             "authorization_present": bool(authorization),
             "token_prefix": (token[:8] if token else None),
             "error": str(e),
         }
 
     return {
-        "db_path": DB_PATH,
+        "database_url": DATABASE_URL,
         "authorization_present": bool(authorization),
         "token_prefix": (token[:8] if token else None),
         "user_id": user.id,
         "username": user.username,
         "is_admin": is_admin,
     }
-
 
 @app.post("/weeks/{week_id}/vote")
 def vote(
