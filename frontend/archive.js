@@ -1,5 +1,6 @@
 const API = "";
-document.getElementById("apiLabel").textContent = API;
+const apiLabel = document.getElementById("apiLabel");
+if (apiLabel) apiLabel.textContent = API;
 
 function el(id){ return document.getElementById(id); }
 
