@@ -16,14 +16,20 @@ function getToken() { return localStorage.getItem(TOKEN_KEY); }
 function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
 function clearToken() { localStorage.removeItem(TOKEN_KEY); }
 
+let currentWeekData = null;
+
+function authHeaders() {
+  const token = getToken();
+  return token ? { "Authorization": `Bearer ${token}` } : {};
+}
+
 /* -----------------------------
    HARD GUARD (redirect if not admin)
-   ✅ FIX: validate admin via /auth/me (does not depend on week existing)
 ------------------------------ */
 async function guardAdminOrRedirect() {
   const token = getToken();
   if (!token) {
-    window.location.replace("index.html");
+    window.location.replace("/");
     return false;
   }
 
@@ -34,24 +40,24 @@ async function guardAdminOrRedirect() {
 
     if (res.status === 401) {
       clearToken();
-      window.location.replace("index.html");
+      window.location.replace("/");
       return false;
     }
 
     if (!res.ok) {
-      window.location.replace("index.html");
+      window.location.replace("/");
       return false;
     }
 
     const me = await res.json();
     if (!me?.is_admin) {
-      window.location.replace("index.html");
+      window.location.replace("/");
       return false;
     }
 
     return true;
   } catch {
-    window.location.replace("index.html");
+    window.location.replace("/");
     return false;
   }
 }
@@ -67,6 +73,7 @@ function badge(text) {
     font-size:12px;color:#6B6874;
   ">${text}</span>`;
 }
+
 function badgeWarn(text) {
   return `<span style="
     display:inline-flex;align-items:center;gap:6px;
@@ -109,10 +116,8 @@ async function parseError(res) {
 
 async function apiGet(path, { auth = false } = {}) {
   const headers = {};
-  if (auth) {
-    const token = getToken();
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-  }
+  if (auth) Object.assign(headers, authHeaders());
+
   const res = await fetch(`${API}${path}`, { headers });
   if (!res.ok) {
     const err = await parseError(res);
@@ -123,15 +128,44 @@ async function apiGet(path, { auth = false } = {}) {
 
 async function apiPost(path, body, { auth = false } = {}) {
   const headers = { "Content-Type": "application/json" };
-  if (auth) {
-    const token = getToken();
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-  }
+  if (auth) Object.assign(headers, authHeaders());
+
   const res = await fetch(`${API}${path}`, {
     method: "POST",
     headers,
     body: JSON.stringify(body ?? {}),
   });
+
+  if (!res.ok) {
+    const err = await parseError(res);
+    throw new Error(`${err.status}|${err.detail}`);
+  }
+  return res.json();
+}
+
+async function apiDelete(path) {
+  const res = await fetch(`${API}${path}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+
+  if (!res.ok) {
+    const err = await parseError(res);
+    throw new Error(`${err.status}|${err.detail}`);
+  }
+  return res.json();
+}
+
+async function apiPatch(path, body) {
+  const res = await fetch(`${API}${path}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify(body || {}),
+  });
+
   if (!res.ok) {
     const err = await parseError(res);
     throw new Error(`${err.status}|${err.detail}`);
@@ -154,10 +188,12 @@ function openAuthModal(mode = "login") {
   $("authModal").style.display = "block";
   $("authUser")?.focus();
 }
+
 function closeAuthModal() {
   const m = $("authModal");
   if (m) m.style.display = "none";
 }
+
 function setAuthMode(mode) {
   $("tabLogin")?.classList.toggle("is-active", mode === "login");
   $("tabRegister")?.classList.toggle("is-active", mode === "register");
@@ -269,44 +305,171 @@ function connectFilmButtons(week) {
       }
     });
   });
+
+  box.querySelectorAll("[data-set-winner]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const filmId = Number(btn.getAttribute("data-set-winner"));
+      if (!filmId || !currentWeekData) return;
+
+      const old = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "A definir…";
+
+      try {
+        await apiPost(`/admin/weeks/${currentWeekData.id}/winner`, { film_id: filmId }, { auth: true });
+        await load();
+        alert("Vencedor definido.");
+      } catch (e) {
+        console.error(e);
+        const { status, detail } = splitErr(e);
+        alert(`Erro (${status ?? "?"}): ${detail}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = old;
+      }
+    });
+  });
+
+  box.querySelectorAll("[data-delete-film]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const filmId = Number(btn.getAttribute("data-delete-film"));
+      if (!filmId) return;
+
+      const ok = confirm("Apagar este filme?");
+      if (!ok) return;
+
+      const old = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "A apagar…";
+
+      try {
+        await apiDelete(`/admin/films/${filmId}`);
+        await load();
+        alert("Filme apagado.");
+      } catch (e) {
+        console.error(e);
+        const { status, detail } = splitErr(e);
+        alert(`Erro (${status ?? "?"}): ${detail}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = old;
+      }
+    });
+  });
+}
+
+/* -----------------------------
+   Needs review
+------------------------------ */
+async function loadNeedsReview() {
+  const box = $("needsReview");
+  if (!box) return;
+
+  try {
+    const films = await apiGet("/admin/films/needs-review", { auth: true });
+
+    if (!films.length) {
+      box.innerHTML = `<div class="muted">Nada para rever.</div>`;
+      return;
+    }
+
+    box.innerHTML = films.map((f) => `
+      <div class="admin-film">
+        <div class="admin-left">
+          <div class="admin-title">
+            ${escapeHtml(f.title)} ${f.year ? `(${f.year})` : ""} ${badgeWarn("REVER")}
+          </div>
+          <div class="admin-meta">
+            submitted: <strong>${escapeHtml(f.submitted_title || "—")}</strong> · ${f.submitted_year || "—"}
+          </div>
+          <div class="admin-meta">
+            tmdb_id: ${f.tmdb_id ?? "—"} · score: ${f.match_score ?? "—"} · week_id: ${f.week_id}
+          </div>
+        </div>
+        <div class="admin-right">
+          <button class="btn" data-needs-rematch="${f.id}">Fix match</button>
+        </div>
+      </div>
+    `).join("");
+
+    box.querySelectorAll("[data-needs-rematch]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const filmId = Number(btn.getAttribute("data-needs-rematch"));
+        if (!filmId) return;
+
+        const old = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "A corrigir…";
+
+        try {
+          await apiPost(`/admin/films/${filmId}/rematch`, {}, { auth: true });
+          await load();
+          alert("Rematch feito.");
+        } catch (e) {
+          console.error(e);
+          const { status, detail } = splitErr(e);
+          alert(`Erro (${status ?? "?"}): ${detail}`);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = old;
+        }
+      });
+    });
+  } catch (e) {
+    box.innerHTML = `<div class="muted">Erro ao carregar needs review.</div>`;
+    console.error(e);
+  }
 }
 
 /* -----------------------------
    Render
 ------------------------------ */
 function renderCurrent(week) {
+  currentWeekData = week;
+
   const status = $("currentStatus");
   const box = $("currentWeek");
+
+  const startBtn = $("startVoting");
+  const stopBtn = $("stopVoting");
+  const closeBtn = $("closeWeek");
+  const openBtn = $("openWeek");
+  const deleteBtn = $("deleteWeek");
 
   if (!week) {
     if (status) status.textContent = "Sem semana criada ainda.";
     if (box) box.innerHTML = "";
-    $("startVoting").disabled = true;
-    $("stopVoting").disabled = true;
-    $("closeWeek").disabled = true;
+    if (startBtn) startBtn.disabled = true;
+    if (stopBtn) stopBtn.disabled = true;
+    if (closeBtn) closeBtn.disabled = true;
+    if (openBtn) openBtn.disabled = true;
+    if (deleteBtn) deleteBtn.disabled = true;
     return;
   }
 
-  status.innerHTML = `
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px">
-      ${badge(`Week #${week.id}`)}
-      ${badge(week.is_open ? "Aberta" : "Fechada")}
-      ${badge(week.is_ready ? "Voting: ON" : "Voting: OFF")}
-      ${(week.films || []).some(f => f.needs_review) ? badgeWarn("Há filmes a rever") : ""}
-    </div>
-  `;
+  if (status) {
+    status.innerHTML = `
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px">
+        ${badge(`Week #${week.id}`)}
+        ${badge(week.is_open ? "Aberta" : "Fechada")}
+        ${badge(week.is_ready ? "Voting: ON" : "Voting: OFF")}
+        ${(week.films || []).some(f => f.needs_review) ? badgeWarn("Há filmes a rever") : ""}
+      </div>
+    `;
+  }
 
-  $("weekId").value = String(week.id);
+  if ($("weekId")) $("weekId").value = String(week.id);
 
   const filmsHtml = (week.films || []).map((f) => {
     const review = f.needs_review ? badgeWarn("REVER") : "";
+    const winner = Number(week.winner_film_id) === Number(f.id) ? badge("🏆 Winner") : "";
     const ms = (f.match_score === null || f.match_score === undefined) ? "—" : String(f.match_score);
 
     return `
       <div class="admin-film">
         <div class="admin-left">
           <div class="admin-title">
-            ${escapeHtml(f.title)} ${f.year ? `(${f.year})` : ""} ${review}
+            ${escapeHtml(f.title)} ${f.year ? `(${f.year})` : ""} ${review} ${winner}
           </div>
 
           <div class="admin-meta">
@@ -320,52 +483,59 @@ function renderCurrent(week) {
         </div>
 
         <div class="admin-right">
+          <button class="btn" data-set-winner="${f.id}">Set winner</button>
           ${f.needs_review ? `<button class="btn" data-rematch="${f.id}">Fix match</button>` : ""}
           <button class="btn" data-edit="${f.id}">Editar</button>
+          <button class="btn" data-delete-film="${f.id}">Apagar</button>
           ${f.poster_url ? `<a class="btn" target="_blank" href="${escapeHtml(f.poster_url)}">Poster</a>` : ""}
         </div>
       </div>
     `;
   }).join("");
 
-  box.innerHTML = `
-    <div style="margin-top:10px">
-      <div class="muted">Winner film id: <strong>${week.winner_film_id ?? "—"}</strong></div>
+  if (box) {
+    box.innerHTML = `
+      <div style="margin-top:10px">
+        <div class="muted">Winner film id: <strong>${week.winner_film_id ?? "—"}</strong></div>
 
-      <div style="margin-top:10px" class="muted"><strong>Filmes</strong></div>
+        <div style="margin-top:10px" class="muted"><strong>Filmes</strong></div>
 
-      <div class="admin-films">
-        ${filmsHtml || `<div class="muted" style="margin-top:8px">Ainda sem filmes.</div>`}
+        <div class="admin-films">
+          ${filmsHtml || `<div class="muted" style="margin-top:8px">Ainda sem filmes.</div>`}
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }
 
   connectFilmButtons(week);
 
-  $("startVoting").disabled = !!week.is_ready;
-  $("stopVoting").disabled = !week.is_ready;
-  $("closeWeek").disabled = !week.is_open;
+  if (startBtn) startBtn.disabled = !!week.is_ready;
+  if (stopBtn) stopBtn.disabled = !week.is_ready;
+  if (closeBtn) closeBtn.disabled = !week.is_open;
+  if (openBtn) openBtn.disabled = !!week.is_open;
+  if (deleteBtn) deleteBtn.disabled = false;
 }
 
 /* -----------------------------
-   Load (Admin endpoint)
-   ✅ FIX: 404 => "no week yet" (do NOT redirect)
+   Load
 ------------------------------ */
 async function load() {
   try {
     const week = await apiGet("/admin/weeks/current", { auth: true });
     renderCurrent(week);
+    await loadNeedsReview();
   } catch (e) {
     console.error(e);
     const { status } = splitErr(e);
 
     if (status === 404) {
       renderCurrent(null);
+      await loadNeedsReview();
       return;
     }
 
     if (status === 401) clearToken();
-    window.location.replace("index.html");
+    window.location.replace("/");
   }
 }
 
@@ -373,19 +543,18 @@ async function load() {
    Boot
 ------------------------------ */
 document.addEventListener("DOMContentLoaded", async () => {
-  // 🔒 bloqueia acesso direto
   const ok = await guardAdminOrRedirect();
   if (!ok) return;
 
-  $("apiLabel").textContent = API;
+  if ($("apiLabel")) $("apiLabel").textContent = API;
 
-  // auth buttons
   $("btnLogin")?.addEventListener("click", () => openAuthModal("login"));
+
   $("btnLogout")?.addEventListener("click", async () => {
     try { await apiPost("/auth/logout", {}, { auth: true }); } catch {}
     clearToken();
     await refreshAuthState();
-    window.location.replace("index.html");
+    window.location.replace("/");
   });
 
   $("authClose")?.addEventListener("click", closeAuthModal);
@@ -411,7 +580,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (out?.token) {
         setToken(out.token);
 
-        // valida admin imediatamente
         const ok2 = await guardAdminOrRedirect();
         if (!ok2) return;
 
@@ -432,10 +600,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // admin buttons
-  $("refresh").addEventListener("click", load);
+  $("refresh")?.addEventListener("click", load);
 
-  $("createWeek").addEventListener("click", async () => {
+  $("createWeek")?.addEventListener("click", async () => {
     const btn = $("createWeek");
     const title = $("newWeekTitle").value.trim();
     if (!title) return alert("Mete um título.");
@@ -455,7 +622,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  $("addFilm").addEventListener("click", async () => {
+  $("addFilm")?.addEventListener("click", async () => {
     const btn = $("addFilm");
 
     const weekId = Number($("weekId").value);
@@ -495,7 +662,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  $("startVoting").addEventListener("click", async () => {
+  $("startVoting")?.addEventListener("click", async () => {
     const btn = $("startVoting");
     const weekId = Number($("weekId").value);
     if (!weekId) return alert("Week ID inválido.");
@@ -514,7 +681,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  $("stopVoting").addEventListener("click", async () => {
+  $("stopVoting")?.addEventListener("click", async () => {
     const btn = $("stopVoting");
     const weekId = Number($("weekId").value);
     if (!weekId) return alert("Week ID inválido.");
@@ -533,7 +700,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  $("closeWeek").addEventListener("click", async () => {
+  $("closeWeek")?.addEventListener("click", async () => {
     const btn = $("closeWeek");
     const weekId = Number($("weekId").value);
     if (!weekId) return alert("Week ID inválido.");
@@ -552,7 +719,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // init
+  $("openWeek")?.addEventListener("click", async () => {
+    if (!currentWeekData) return;
+
+    try {
+      await apiPost(`/admin/weeks/${currentWeekData.id}/open`, {}, { auth: true });
+      await load();
+      alert("Semana reaberta.");
+    } catch (e) {
+      alert("Erro ao reabrir semana");
+      console.error(e);
+    }
+  });
+
+  $("deleteWeek")?.addEventListener("click", async () => {
+    if (!currentWeekData) return;
+
+    const ok = confirm(`Apagar semana '${currentWeekData.title}'?`);
+    if (!ok) return;
+
+    try {
+      await apiDelete(`/admin/weeks/${currentWeekData.id}`);
+      renderCurrent(null);
+      await load();
+      alert("Semana apagada.");
+    } catch (e) {
+      alert("Erro ao apagar semana");
+      console.error(e);
+    }
+  });
+
   await refreshAuthState();
   await load();
 });
