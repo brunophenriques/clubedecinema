@@ -11,9 +11,14 @@
   <header class="top">
     <div class="wrap top-inner">
       <div class="brand">
-        <div class="logo wordmark" aria-hidden="true"><span class="logo-main">CC</span><span class="logo-alt">67</span></div>
+        <div class="logo-badge" aria-hidden="true">
+          <span>67</span>
+        </div>
+
         <div class="brand-copy">
-          <div class="brand-title">Clube de Cinema 67</div>
+          <div class="brand-title">
+            <span>Clube de Cinema</span>
+          </div>
           <div class="brand-sub" id="weekTitle">—</div>
         </div>
       </div>
@@ -37,17 +42,18 @@
   <main class="wrap page-shell">
     <section class="hero hero--centered fade-in">
       <div class="hero-backdrop" aria-hidden="true"></div>
-      <div class="hero-inner">
-      <div class="kicker">Esta semana</div>
-      <h1 id="heroTitle">Clube de Cinema</h1>
-      <p id="heroSub" class="muted">Submete um filme e vota no favorito da semana.</p>
 
-      <div class="hero-actions hero-actions--centered">
-        <button id="refresh" class="btn primary" type="button">↻ Atualizar</button>
-        <a class="btn" href="/archive">Ver arquivo</a>
-        <div class="week-status" id="weekStatus" data-state="pending">A carregar…</div>
+      <div class="hero-inner">
+        <div class="kicker">Esta semana</div>
+        <h1 id="heroTitle">Clube de Cinema</h1>
+        <p id="heroSub" class="muted">Submete um filme e vota no favorito da semana.</p>
+
+        <div class="hero-actions hero-actions--centered">
+          <button id="refresh" class="btn primary" type="button">↻ Atualizar</button>
+          <a class="btn" href="/archive">Ver arquivo</a>
+          <div class="week-status" id="weekStatus" data-state="pending">A carregar…</div>
+        </div>
       </div>
-          </div>
     </section>
 
     <section class="section section--elevated fade-in">
@@ -55,16 +61,18 @@
         <div>
           <div class="kicker kicker--soft">Participação</div>
           <h2>Submeter filme</h2>
-        <div class="muted small" id="submitHint">Faz login para submeter.</div>
+          <div class="muted small" id="submitHint">Faz login para submeter.</div>
         </div>
       </div>
 
       <form id="submitForm" class="submit-form">
         <input id="subTitle" class="input" placeholder="Título do filme" autocomplete="off" />
+
         <div class="submit-row">
           <input id="subYear" class="input" placeholder="Ano" inputmode="numeric" />
           <input id="subDirector" class="input" placeholder="Realizador (opcional)" autocomplete="off" />
         </div>
+
         <div class="submit-actions">
           <button id="subBtn" class="btn primary" type="submit">Submeter</button>
           <span class="muted small">O poster é obtido do TMDB automaticamente.</span>
@@ -77,21 +85,26 @@
         <div>
           <div class="kicker kicker--soft">Seleção</div>
           <h2>Filmes</h2>
-        <div class="muted small" id="filmsHint">Escolhe e vota.</div>
+          <div class="muted small" id="filmsHint">Escolhe e vota.</div>
         </div>
       </div>
 
       <div id="films" class="film-grid"></div>
 
-      <button id="filmsMore" class="btn" type="button" style="display:none; margin-top:14px; width:100%; justify-content:center;">
+      <button
+        id="filmsMore"
+        class="btn"
+        type="button"
+        style="display:none; margin-top:14px; width:100%; justify-content:center;"
+      >
         Ver mais
       </button>
     </section>
 
-    <!-- AUTH MODAL -->
     <div id="authModal" style="display:none">
       <div class="hof-modal is-open" style="display:flex">
         <div class="hof-modal__backdrop" id="authBackdrop"></div>
+
         <div class="hof-modal__panel" role="dialog" aria-modal="true" style="max-width:440px">
           <div class="hof-modal__head">
             <div>
@@ -100,6 +113,7 @@
             </div>
             <button class="btn ghost" id="authClose" type="button">✕</button>
           </div>
+
           <div class="hof-modal__body">
             <div class="seg" style="margin-bottom:16px">
               <button id="tabLogin" class="seg-btn is-active" type="button">Login</button>
