@@ -146,7 +146,8 @@ function renderArchiveCard(w) {
   const win = winnerFilm(w);
   const badgeClass = w.is_open ? "badge--open" : "badge--closed";
   const stateText = w.is_open ? "Aberta" : "Fechada";
-  const meta = [`#${w.id}`, w.is_ready ? "voting ON" : "voting OFF", `${totalVotes(w)} voto(s)`].join(" · ");
+  const weekDisplayId = Math.max(1, Number(w.id) - 6);
+  const meta = [`#${weekDisplayId}`, w.is_ready ? "voting ON" : "voting OFF", `${totalVotes(w)} voto(s)`].join(" · ");
 
   const filmRows = films.map(f => `
     <div class="archive-film">
@@ -219,7 +220,8 @@ function renderHofCard(w) {
 /* ── Modal ── */
 function openModal(week) {
   el("modalTitle").textContent = week.title || `Semana #${week.id}`;
-  el("modalSub").textContent = `#${week.id} · ${week.is_open ? "aberta" : "fechada"}`;
+  const weekDisplayId = Math.max(1, Number(week.id) - 6);
+  el("modalSub").textContent = `#${weekDisplayId} · ${week.is_open ? "aberta" : "fechada"}`;
 
   const films = sortFilmsInWeek(week);
   const win = winnerFilm(week);
