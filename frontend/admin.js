@@ -460,13 +460,16 @@ function renderCurrent(week) {
 
   if ($("weekId")) $("weekId").value = String(week.id);
 
-  const filmsHtml = (week.films || []).map((f) => {
+  const films = [...(week.films || [])].sort((a, b) => (b.votes || 0) - (a.votes || 0));
+  const winnerObj = films.find((f) => Number(f.id) === Number(week.winner_film_id));
+
+  const filmsHtml = films.map((f) => {
     const review = f.needs_review ? badgeWarn("REVER") : "";
     const winner = Number(week.winner_film_id) === Number(f.id) ? badge("🏆 Winner") : "";
     const ms = (f.match_score === null || f.match_score === undefined) ? "—" : String(f.match_score);
 
     return `
-      <div class="admin-film">
+      <div class="admin-film" style="${Number(week.winner_film_id) === Number(f.id) ? "border:2px solid gold;background:#fff8dc;" : ""}">
         <div class="admin-left">
           <div class="admin-title">
             ${escapeHtml(f.title)} ${f.year ? `(${f.year})` : ""} ${review} ${winner}
@@ -496,12 +499,12 @@ function renderCurrent(week) {
   if (box) {
     box.innerHTML = `
       <div style="margin-top:10px">
-        <div class="muted">Winner film id: <strong>${week.winner_film_id ?? "—"}</strong></div>
+        <div class="muted">Winner: <strong>${winnerObj ? escapeHtml(winnerObj.title) : "—"}</strong></div>
 
         <div style="margin-top:10px" class="muted"><strong>Filmes</strong></div>
 
         <div class="admin-films">
-          ${filmsHtml || `<div class="muted" style="margin-top:8px">Ainda sem filmes.</div>`}
+          ${filmsHtml || `<div class="muted" style="margin-top:8px">🎬 Ainda sem filmes adicionados.</div>`}
         </div>
       </div>
     `;

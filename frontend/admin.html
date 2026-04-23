@@ -1,5 +1,4 @@
 <!doctype html>
-
 <html lang="pt">
 <head>
   <meta charset="utf-8" />
@@ -19,23 +18,20 @@
         </div>
       </div>
 
-```
-  <div class="top-right">
-    <nav class="nav">
-      <a class="nav-link" href="/">Semana</a>
-      <a class="nav-link" href="/archive">Arquivo</a>
-      <a class="nav-link active" href="/admin">Admin</a>
-    </nav>
+      <div class="top-right">
+        <nav class="nav">
+          <a class="nav-link" href="/">Semana</a>
+          <a class="nav-link" href="/archive">Arquivo</a>
+          <a class="nav-link active" href="/admin">Admin</a>
+        </nav>
 
-    <div class="auth-pill">
-      <span class="auth-pill__user" id="authStatusLine">Não autenticado.</span>
-      <button class="btn" id="btnLogin" type="button">Login</button>
-      <button class="btn" id="btnLogout" type="button" style="display:none">Logout</button>
+        <div class="auth-pill">
+          <span class="auth-pill__user" id="authStatusLine">Não autenticado.</span>
+          <button class="btn" id="btnLogin" type="button">Login</button>
+          <button class="btn" id="btnLogout" type="button" style="display:none">Logout</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-```
-
   </header>
 
   <main class="wrap">
@@ -45,118 +41,114 @@
         <button id="refresh" type="button" class="btn primary">Atualizar</button>
       </div>
 
-```
-  <div class="muted" id="currentStatus">A carregar…</div>
+      <div class="muted" id="currentStatus">A carregar…</div>
 
-  <div class="hero-actions" style="margin-top:12px">
-    <button id="startVoting" type="button" class="btn">Start voting</button>
-    <button id="stopVoting" type="button" class="btn">Stop voting</button>
-    <button id="closeWeek" type="button" class="btn">Fechar semana</button>
-    <button id="openWeek" type="button" class="btn">Reabrir semana</button>
-    <button id="deleteWeek" type="button" class="btn">Apagar semana</button>
+      <div class="hero-actions" style="margin-top:12px">
+        <button id="startVoting" type="button" class="btn">Start voting</button>
+        <button id="stopVoting" type="button" class="btn">Stop voting</button>
+        <button id="closeWeek" type="button" class="btn">Fechar semana</button>
+        <button id="openWeek" type="button" class="btn">Reabrir semana</button>
+        <button id="deleteWeek" type="button" class="btn">Apagar semana</button>
 
-    <select id="sort" class="input" style="max-width: 260px;">
-      <option value="new">Mais recentes</option>
-      <option value="old">Mais antigas</option>
-      <option value="votes">Mais votos (total)</option>
-      <option value="winnerVotes">Mais votos no vencedor</option>
-      <option value="az">Título A → Z</option>
-    </select>
-  </div>
+        <select id="sort" class="input" style="max-width: 260px;">
+          <option value="new">Mais recentes</option>
+          <option value="old">Mais antigas</option>
+          <option value="votes">Mais votos (total)</option>
+          <option value="winnerVotes">Mais votos no vencedor</option>
+          <option value="az">Título A → Z</option>
+        </select>
+      </div>
 
-  <div id="currentWeek" style="margin-top:12px"></div>
-</section>
+      <div id="currentWeek" style="margin-top:12px"></div>
+    </section>
 
-<section class="section">
-  <div class="section-head">
-    <h2>Criar semana</h2>
-    <div class="muted">Ex: “Week 2 — Noir”</div>
-  </div>
-  <div class="hero-actions">
-    <input id="newWeekTitle" class="input" placeholder="Título da semana" />
-    <button id="createWeek" type="button" class="btn primary">Criar</button>
-  </div>
-</section>
+    <section class="section">
+      <div class="section-head">
+        <h2>Criar semana</h2>
+        <div class="muted">Ex: “Week 2 — Noir”</div>
+      </div>
+      <div class="hero-actions">
+        <input id="newWeekTitle" class="input" placeholder="Título da semana" />
+        <button id="createWeek" type="button" class="btn primary">Criar</button>
+      </div>
+    </section>
 
-<section class="section">
-  <div class="section-head">
-    <h2>Adicionar filme</h2>
-    <div class="muted">O submitter manda-te o voter_key dele.</div>
-  </div>
+    <section class="section">
+      <div class="section-head">
+        <h2>Adicionar filme</h2>
+        <div class="muted">O submitter manda-te o voter_key dele.</div>
+      </div>
 
-  <div class="grid">
-    <div>
-      <label class="muted">Week ID</label>
-      <input id="weekId" class="input" placeholder="1" />
-    </div>
-    <div>
-      <label class="muted">Título</label>
-      <input id="filmTitle" class="input" placeholder="Strange Days" />
-    </div>
-    <div>
-      <label class="muted">Ano</label>
-      <input id="filmYear" class="input" placeholder="1995" />
-    </div>
-    <div>
-      <label class="muted">Realizador</label>
-      <input id="filmDirector" class="input" placeholder="Kathryn Bigelow" />
-    </div>
-  </div>
-
-  <div style="margin-top:12px">
-    <label class="muted">submitter_key</label>
-    <input id="submitterKey" class="input" placeholder="cola aqui o voter_key do submitter" />
-  </div>
-
-  <div class="hero-actions" style="margin-top:12px">
-    <button id="addFilm" type="button" class="btn primary">Adicionar filme</button>
-  </div>
-</section>
-
-<section class="section">
-  <div class="section-head">
-    <h2>Needs review</h2>
-    <div class="muted">Filmes que o TMDB não apanhou bem.</div>
-  </div>
-
-  <div id="needsReview"></div>
-</section>
-
-<!-- AUTH MODAL -->
-<div id="authModal" style="display:none">
-  <div class="hof-modal is-open" style="display:block">
-    <div class="hof-modal__backdrop" id="authBackdrop"></div>
-    <div class="hof-modal__panel" role="dialog" aria-modal="true" style="max-width:520px">
-      <div class="hof-modal__head">
+      <div class="grid">
         <div>
-          <div class="hof-modal__title">Entrar / Criar conta</div>
-          <div class="muted small">Sem email. Só username + password.</div>
+          <label class="muted">Week ID</label>
+          <input id="weekId" class="input" placeholder="1" />
         </div>
-        <button class="btn" id="authClose" type="button">Fechar</button>
+        <div>
+          <label class="muted">Título</label>
+          <input id="filmTitle" class="input" placeholder="Strange Days" />
+        </div>
+        <div>
+          <label class="muted">Ano</label>
+          <input id="filmYear" class="input" placeholder="1995" />
+        </div>
+        <div>
+          <label class="muted">Realizador</label>
+          <input id="filmDirector" class="input" placeholder="Kathryn Bigelow" />
+        </div>
       </div>
-      <div class="hof-modal__body">
-        <div class="seg" style="margin-bottom:12px;">
-          <button id="tabLogin" class="seg-btn is-active" type="button">Login</button>
-          <button id="tabRegister" class="seg-btn" type="button">Criar conta</button>
-        </div>
 
-        <form id="authForm" style="display:grid; gap:10px;">
-          <input id="authUser" class="input" placeholder="username (ex: rita)" autocomplete="username" />
-          <input id="authPass" class="input" placeholder="password" type="password" autocomplete="current-password" />
-          <button id="authSubmit" class="btn primary" type="submit" data-mode="login">Entrar</button>
-          <div class="muted small" id="authMsg"></div>
-        </form>
+      <div style="margin-top:12px">
+        <label class="muted">submitter_key</label>
+        <input id="submitterKey" class="input" placeholder="cola aqui o voter_key do submitter" />
+      </div>
+
+      <div class="hero-actions" style="margin-top:12px">
+        <button id="addFilm" type="button" class="btn primary">Adicionar filme</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Needs review</h2>
+        <div class="muted">Filmes que o TMDB não apanhou bem.</div>
+      </div>
+
+      <div id="needsReview"></div>
+    </section>
+
+    <!-- AUTH MODAL -->
+    <div id="authModal" style="display:none">
+      <div class="hof-modal is-open" style="display:block">
+        <div class="hof-modal__backdrop" id="authBackdrop"></div>
+        <div class="hof-modal__panel" role="dialog" aria-modal="true" style="max-width:520px">
+          <div class="hof-modal__head">
+            <div>
+              <div class="hof-modal__title">Entrar / Criar conta</div>
+              <div class="muted small">Sem email. Só username + password.</div>
+            </div>
+            <button class="btn" id="authClose" type="button">Fechar</button>
+          </div>
+          <div class="hof-modal__body">
+            <div class="seg" style="margin-bottom:12px;">
+              <button id="tabLogin" class="seg-btn is-active" type="button">Login</button>
+              <button id="tabRegister" class="seg-btn" type="button">Criar conta</button>
+            </div>
+
+            <form id="authForm" style="display:grid; gap:10px;">
+              <input id="authUser" class="input" placeholder="username (ex: rita)" autocomplete="username" />
+              <input id="authPass" class="input" placeholder="password" type="password" autocomplete="current-password" />
+              <button id="authSubmit" class="btn primary" type="submit" data-mode="login">Entrar</button>
+              <div class="muted small" id="authMsg"></div>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<footer class="footer">
-  <span class="muted">API: <code id="apiLabel"></code></span>
-</footer>
-```
-
+    <footer class="footer">
+      <span class="muted">feito pelo sigma zipzop <code id="apiLabel"></code></span>
+    </footer>
   </main>
-
 </body>
 </html>
