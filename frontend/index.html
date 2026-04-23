@@ -22,92 +22,85 @@
         <nav class="nav">
           <a class="nav-link active" href="/">Semana</a>
           <a class="nav-link" href="/archive">Arquivo</a>
-          <!-- escondido por default; aparece só se for admin -->
           <a class="nav-link" id="navAdmin" href="/admin" style="display:none">Admin</a>
         </nav>
 
         <div class="auth-pill">
           <span class="auth-pill__user" id="authStatusLine">Não autenticado.</span>
-          <button class="btn" id="btnLogin" type="button">Login</button>
-          <button class="btn" id="btnLogout" type="button" style="display:none">Logout</button>
+          <button class="btn" id="btnLogin" type="button">Entrar</button>
+          <button class="btn" id="btnLogout" type="button" style="display:none">Sair</button>
         </div>
       </div>
     </div>
   </header>
 
   <main class="wrap">
-    <!-- HERO -->
-    <section class="hero">
+    <section class="hero fade-in">
       <div class="kicker">Esta semana</div>
       <h1 id="heroTitle">Clube de Cinema</h1>
-      <p id="heroSub" class="muted">Submete um filme e vota no favorito.</p>
+      <p id="heroSub" class="muted">Submete um filme e vota no favorito da semana.</p>
 
       <div class="hero-actions">
-        <button id="refresh" class="btn primary" type="button">Atualizar</button>
+        <button id="refresh" class="btn primary" type="button">↻ Atualizar</button>
         <a class="btn" href="/archive">Ver arquivo</a>
+        <div class="week-status" id="weekStatus" data-state="pending">A carregar…</div>
       </div>
-
-      <div class="week-status" id="weekStatus">—</div>
     </section>
 
-    <!-- SUBMIT -->
-    <section class="section">
+    <section class="section fade-in">
       <div class="section-head">
         <h2>Submeter filme</h2>
-        <div class="muted" id="submitHint">—</div>
+        <div class="muted small" id="submitHint">Faz login para submeter.</div>
       </div>
 
       <form id="submitForm" class="submit-form">
-        <input id="subTitle" class="input" placeholder="Título" autocomplete="off" />
-
+        <input id="subTitle" class="input" placeholder="Título do filme" autocomplete="off" />
         <div class="submit-row">
-          <input id="subYear" class="input" placeholder="Ano (opcional)" inputmode="numeric" />
+          <input id="subYear" class="input" placeholder="Ano" inputmode="numeric" />
           <input id="subDirector" class="input" placeholder="Realizador (opcional)" autocomplete="off" />
         </div>
-
         <div class="submit-actions">
           <button id="subBtn" class="btn primary" type="submit">Submeter</button>
-          <span class="muted small">O poster vem do TMDB automaticamente.</span>
+          <span class="muted small">O poster é obtido do TMDB automaticamente.</span>
         </div>
       </form>
     </section>
 
-    <!-- FILMES -->
-    <section class="section">
+    <section class="section fade-in">
       <div class="section-head">
         <h2>Filmes</h2>
-        <div class="muted" id="filmsHint">Escolhe um e vota.</div>
+        <div class="muted small" id="filmsHint">Escolhe e vota.</div>
       </div>
 
       <div id="films" class="film-grid"></div>
 
-      <button id="filmsMore" class="btn" type="button" style="display:none; margin-top:12px;">
+      <button id="filmsMore" class="btn" type="button" style="display:none; margin-top:14px; width:100%; justify-content:center;">
         Ver mais
       </button>
     </section>
 
     <!-- AUTH MODAL -->
     <div id="authModal" style="display:none">
-      <div class="hof-modal is-open" style="display:block">
+      <div class="hof-modal is-open" style="display:flex">
         <div class="hof-modal__backdrop" id="authBackdrop"></div>
-        <div class="hof-modal__panel" role="dialog" aria-modal="true" style="max-width:520px">
+        <div class="hof-modal__panel" role="dialog" aria-modal="true" style="max-width:440px">
           <div class="hof-modal__head">
             <div>
-              <div class="hof-modal__title">Entrar / Criar conta</div>
-              <div class="muted small">Sem email. Só username + password.</div>
+              <div class="hof-modal__title">Entrar</div>
+              <div class="muted small">Sem email — só username e password.</div>
             </div>
-            <button class="btn" id="authClose" type="button">Fechar</button>
+            <button class="btn ghost" id="authClose" type="button">✕</button>
           </div>
           <div class="hof-modal__body">
-            <div class="seg" style="margin-bottom:12px;">
+            <div class="seg" style="margin-bottom:16px">
               <button id="tabLogin" class="seg-btn is-active" type="button">Login</button>
               <button id="tabRegister" class="seg-btn" type="button">Criar conta</button>
             </div>
 
             <form id="authForm" style="display:grid; gap:10px;">
-              <input id="authUser" class="input" placeholder="username (ex: rita)" autocomplete="username" />
-              <input id="authPass" class="input" placeholder="password" type="password" autocomplete="current-password" />
-              <button id="authSubmit" class="btn primary" type="submit">Entrar</button>
+              <input id="authUser" class="input" placeholder="Username" autocomplete="username" />
+              <input id="authPass" class="input" placeholder="Password" type="password" autocomplete="current-password" />
+              <button id="authSubmit" class="btn primary" type="submit" data-mode="login">Entrar</button>
               <div class="muted small" id="authMsg"></div>
             </form>
           </div>
@@ -116,9 +109,8 @@
     </div>
 
     <footer class="footer">
-      <span class="muted">API: <code id="apiLabel"></code></span>
+      <span>Clube de Cinema 67 feito pelo zipzop></code></span>
     </footer>
   </main>
-
-
-  
+</body>
+</html>
