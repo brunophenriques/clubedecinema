@@ -27,13 +27,15 @@
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="hero">
+  <main class="wrap page-shell">
+    <section class="hero hero--centered fade-in">
+      <div class="hero-backdrop" aria-hidden="true"></div>
+      <div class="hero-inner">
       <div class="kicker">Histórico</div>
       <h1>Arquivo</h1>
       <p class="muted">Vê semanas anteriores ou muda para Hall of Fame (vencedores).</p>
 
-      <div class="hero-actions">
+      <div class="hero-actions hero-actions--centered archive-toolbar">
         <button id="refresh" class="btn primary" type="button">Atualizar</button>
 
         <!-- VIEW TOGGLE -->
@@ -64,9 +66,10 @@
         <span style="margin-left:10px">•</span>
         <span id="count" style="margin-left:10px">—</span>
       </div>
+          </div>
     </section>
 
-    <section class="section">
+    <section class="section section--elevated fade-in">
       <p id="status" class="muted">A carregar…</p>
 
       <!-- NORMAL ARCHIVE -->
@@ -91,7 +94,7 @@
       </div>
     </div>
 
-    <footer class="footer"></footer>
+    <footer class="footer footer--centered"><span>Clube de Cinema</span><span class="footer-dot">•</span><span>Arquivo</span></footer>
   </main>
 
 

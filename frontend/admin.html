@@ -34,10 +34,14 @@
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="section">
-      <div class="section-head">
-        <h2>Semana atual</h2>
+  <main class="wrap page-shell">
+    <section class="section section--elevated fade-in">
+      <div class="section-head section-head--center">
+        <div>
+          <div class="kicker kicker--soft">Painel</div>
+          <h2>Semana atual</h2>
+          <div class="muted">Gerir estado da votação, filmes e semana ativa.</div>
+        </div>
         <button id="refresh" type="button" class="btn primary">Atualizar</button>
       </div>
 
@@ -62,7 +66,7 @@
       <div id="currentWeek" style="margin-top:12px"></div>
     </section>
 
-    <section class="section">
+    <section class="section section--elevated fade-in">
       <div class="section-head">
         <h2>Criar semana</h2>
         <div class="muted">Ex: “Week 2 — Noir”</div>
@@ -73,7 +77,7 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section section--elevated fade-in">
       <div class="section-head">
         <h2>Adicionar filme</h2>
         <div class="muted">O submitter manda-te o voter_key dele.</div>
@@ -146,9 +150,7 @@
       </div>
     </div>
 
-    <footer class="footer">
-      <span class="muted">feito pelo sigma zipzop <code id="apiLabel"></code></span>
-    </footer>
+    <footer class="footer footer--centered"><span>Clube de Cinema</span><span class="footer-dot">•</span><span>Admin</span><span class="footer-dot">•</span><code id="apiLabel"></code></footer>
   </main>
 </body>
 </html>
