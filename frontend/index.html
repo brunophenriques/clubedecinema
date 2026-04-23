@@ -11,8 +11,8 @@
   <header class="top">
     <div class="wrap top-inner">
       <div class="brand">
-        <div class="logo">🎬</div>
-        <div>
+        <div class="logo wordmark" aria-hidden="true"><span class="logo-main">CC</span><span class="logo-alt">67</span></div>
+        <div class="brand-copy">
           <div class="brand-title">Clube de Cinema</div>
           <div class="brand-sub" id="weekTitle">—</div>
         </div>
@@ -34,23 +34,29 @@
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="hero fade-in">
+  <main class="wrap page-shell">
+    <section class="hero hero--centered fade-in">
+      <div class="hero-backdrop" aria-hidden="true"></div>
+      <div class="hero-inner">
       <div class="kicker">Esta semana</div>
       <h1 id="heroTitle">Clube de Cinema</h1>
       <p id="heroSub" class="muted">Submete um filme e vota no favorito da semana.</p>
 
-      <div class="hero-actions">
+      <div class="hero-actions hero-actions--centered">
         <button id="refresh" class="btn primary" type="button">↻ Atualizar</button>
         <a class="btn" href="/archive">Ver arquivo</a>
         <div class="week-status" id="weekStatus" data-state="pending">A carregar…</div>
       </div>
+          </div>
     </section>
 
-    <section class="section fade-in">
-      <div class="section-head">
-        <h2>Submeter filme</h2>
+    <section class="section section--elevated fade-in">
+      <div class="section-head section-head--center">
+        <div>
+          <div class="kicker kicker--soft">Participação</div>
+          <h2>Submeter filme</h2>
         <div class="muted small" id="submitHint">Faz login para submeter.</div>
+        </div>
       </div>
 
       <form id="submitForm" class="submit-form">
@@ -66,10 +72,13 @@
       </form>
     </section>
 
-    <section class="section fade-in">
-      <div class="section-head">
-        <h2>Filmes</h2>
+    <section class="section section--elevated fade-in">
+      <div class="section-head section-head--center">
+        <div>
+          <div class="kicker kicker--soft">Seleção</div>
+          <h2>Filmes</h2>
         <div class="muted small" id="filmsHint">Escolhe e vota.</div>
+        </div>
       </div>
 
       <div id="films" class="film-grid"></div>
@@ -108,8 +117,10 @@
       </div>
     </div>
 
-    <footer class="footer">
-      <span>Clube de Cinema 67 feito pelo zipzop></code></span>
+    <footer class="footer footer--centered">
+      <span>Clube de Cinema</span>
+      <span class="footer-dot">•</span>
+      <span>Edição 67</span>
     </footer>
   </main>
 </body>
