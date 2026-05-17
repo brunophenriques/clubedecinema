@@ -240,7 +240,7 @@ function openPlayerModal(vidkingUrl, title) {
           <button class="btn ghost" id="playerClose" type="button">✕</button>
         </div>
         <div class="player-modal__body">
-          <iframe id="playerIframe" allowfullscreen allow="autoplay; fullscreen" frameborder="0"></iframe>
+          <iframe id="playerIframe" allowfullscreen allow="fullscreen; picture-in-picture" frameborder="0"></iframe>
         </div>
       </div>
     `;
@@ -347,20 +347,6 @@ function render(week) {
   const shown = (!expanded && all.length > LIMIT) ? all.slice(0, LIMIT) : all;
 
   shown.forEach(f => filmsEl.appendChild(filmCard(week, f, alreadyVoted)));
-
-  // Delegated handler for play buttons
-  filmsEl.addEventListener("click", (e) => {
-    const btn = e.target.closest(".poster-btn--play");
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const url = btn.dataset.vidking;
-    const title = btn.dataset.title;
-    const isEmbed = btn.dataset.embed === "1";
-    if (!url) return;
-    if (isEmbed) openPlayerModal(url, title);
-    else window.open(url, "_blank", "noopener,noreferrer");
-  }, { once: true });
 
   if (btnMore) {
     if (all.length <= LIMIT) {
@@ -500,4 +486,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await refreshAuthState();
   await load();
+
+  // Permanent delegated handler for play buttons — lives on the stable #films container
+  el("films")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".poster-btn--play");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const url = btn.dataset.vidking;
+    const title = btn.dataset.title;
+    const isEmbed = btn.dataset.embed === "1";
+    if (!url) return;
+    if (isEmbed) openPlayerModal(url, title);
+    else window.open(url, "_blank", "noopener,noreferrer");
+  });
 });
