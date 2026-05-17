@@ -198,10 +198,11 @@ function posterHTML(f) {
     : encodeURIComponent(`${f.title}${f.year ? ` ${f.year}` : ""}`);
   const letterboxdUrl = `https://letterboxd.com/search/${lbQuery}/`;
 
-  // VidKing embed URL — uses TMDB id if available, otherwise we open vidking search
+  // VidKing embed URL — uses TMDB id if available, otherwise falls back to title search
   const vidkingUrl = f.tmdb_id
     ? `https://www.vidking.net/embed/movie/${f.tmdb_id}`
-    : null;
+    : `https://www.vidking.net/search/${encodeURIComponent(f.title + (f.year ? ` ${f.year}` : ""))}`;
+  const vidkingIsEmbed = !!f.tmdb_id;
 
   const posterContent = f.poster_url
     ? `<img src="${escapeHtml(f.poster_url)}" alt="${escapeHtml(f.title)}" loading="lazy"/>`
@@ -217,10 +218,10 @@ function posterHTML(f) {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           Saber mais
         </a>
-        ${vidkingUrl ? `<button class="poster-btn poster-btn--play" data-vidking="${escapeHtml(vidkingUrl)}" data-title="${escapeHtml(f.title)}">
+        <button class="poster-btn poster-btn--play" data-vidking="${escapeHtml(vidkingUrl)}" data-embed="${vidkingIsEmbed ? '1' : '0'}" data-title="${escapeHtml(f.title)}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           Reproduzir
-        </button>` : ""}
+        </button>
       </div>
     </div>`;
 }
@@ -355,8 +356,10 @@ function render(week) {
     e.stopPropagation();
     const url = btn.dataset.vidking;
     const title = btn.dataset.title;
-    if (url) openPlayerModal(url, title);
-    else toast("Player nao disponivel para este filme (sem ID TMDB).", "info");
+    const isEmbed = btn.dataset.embed === "1";
+    if (!url) return;
+    if (isEmbed) openPlayerModal(url, title);
+    else window.open(url, "_blank", "noopener,noreferrer");
   }, { once: true });
 
   if (btnMore) {

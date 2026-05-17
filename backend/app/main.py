@@ -320,6 +320,7 @@ def week_payload(db: Session, week: models.Week, include_submitter: bool = False
             "director": f.director,
             "votes": int(counts.get(f.id, 0)),
             "poster_url": f.poster_url,
+            "tmdb_id": f.tmdb_id,
         }
 
         if include_submitter:
