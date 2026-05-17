@@ -192,11 +192,76 @@ function setWeekStatus(week, alreadyVoted) {
 
 /* ── Poster HTML ── */
 function posterHTML(f) {
-  if (f.poster_url) {
-    return `<div class="poster"><img src="${escapeHtml(f.poster_url)}" alt="${escapeHtml(f.title)}" loading="lazy"/></div>`;
+  // Build Letterboxd search URL using tmdb: search trigger if tmdb_id exists, otherwise title+year
+  const lbQuery = f.tmdb_id
+    ? `tmdb:${f.tmdb_id}`
+    : encodeURIComponent(`${f.title}${f.year ? ` ${f.year}` : ""}`);
+  const letterboxdUrl = `https://letterboxd.com/search/${lbQuery}/`;
+
+  // VidKing embed URL — uses TMDB id if available, otherwise we open vidking search
+  const vidkingUrl = f.tmdb_id
+    ? `https://www.vidking.net/embed/movie/${f.tmdb_id}`
+    : null;
+
+  const posterContent = f.poster_url
+    ? `<img src="${escapeHtml(f.poster_url)}" alt="${escapeHtml(f.title)}" loading="lazy"/>`
+    : `<span>${escapeHtml((f.title || "").split(" ").slice(0,2).map(s => s[0]?.toUpperCase()).join("") || "🎬")}</span>`;
+
+  const posterClass = f.poster_url ? "poster" : "poster placeholder";
+
+  return `
+    <div class="${posterClass}" data-letterboxd="${escapeHtml(letterboxdUrl)}" data-vidking="${vidkingUrl ? escapeHtml(vidkingUrl) : ""}" data-title="${escapeHtml(f.title)}">
+      ${posterContent}
+      <div class="poster-overlay">
+        <a class="poster-btn poster-btn--know" href="${escapeHtml(letterboxdUrl)}" target="_blank" rel="noopener noreferrer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          Saber mais
+        </a>
+        ${vidkingUrl ? `<button class="poster-btn poster-btn--play" data-vidking="${escapeHtml(vidkingUrl)}" data-title="${escapeHtml(f.title)}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Reproduzir
+        </button>` : ""}
+      </div>
+    </div>`;
+}
+
+/* ── Player Modal ── */
+function openPlayerModal(vidkingUrl, title) {
+  let modal = document.getElementById("playerModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "playerModal";
+    modal.innerHTML = `
+      <div class="player-modal__backdrop" id="playerBackdrop"></div>
+      <div class="player-modal__panel" role="dialog" aria-modal="true">
+        <div class="player-modal__head">
+          <div class="player-modal__title" id="playerTitle"></div>
+          <button class="btn ghost" id="playerClose" type="button">✕</button>
+        </div>
+        <div class="player-modal__body">
+          <iframe id="playerIframe" allowfullscreen allow="autoplay; fullscreen" frameborder="0"></iframe>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById("playerBackdrop").addEventListener("click", closePlayerModal);
+    document.getElementById("playerClose").addEventListener("click", closePlayerModal);
+    window.addEventListener("keydown", (e) => { if (e.key === "Escape") closePlayerModal(); });
   }
-  const initials = (f.title || "").split(" ").slice(0,2).map(s => s[0]?.toUpperCase()).join("") || "🎬";
-  return `<div class="poster placeholder"><span>${escapeHtml(initials)}</span></div>`;
+  document.getElementById("playerTitle").textContent = title;
+  document.getElementById("playerIframe").src = vidkingUrl;
+  modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
+}
+
+function closePlayerModal() {
+  const modal = document.getElementById("playerModal");
+  if (modal) {
+    modal.style.display = "none";
+    const iframe = document.getElementById("playerIframe");
+    if (iframe) iframe.src = "";
+    document.body.style.overflow = "";
+  }
 }
 
 /* ── Film card ── */
@@ -281,6 +346,18 @@ function render(week) {
   const shown = (!expanded && all.length > LIMIT) ? all.slice(0, LIMIT) : all;
 
   shown.forEach(f => filmsEl.appendChild(filmCard(week, f, alreadyVoted)));
+
+  // Delegated handler for play buttons
+  filmsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".poster-btn--play");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const url = btn.dataset.vidking;
+    const title = btn.dataset.title;
+    if (url) openPlayerModal(url, title);
+    else toast("Player nao disponivel para este filme (sem ID TMDB).", "info");
+  }, { once: true });
 
   if (btnMore) {
     if (all.length <= LIMIT) {
