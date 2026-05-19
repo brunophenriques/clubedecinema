@@ -163,3 +163,34 @@ class LetterboxdEntry(Base):
         # one entry per user per tmdb film (most recent watch wins on upsert)
         UniqueConstraint("user_id", "tmdb_id", name="uq_lb_entry_user_tmdb"),
     )
+
+
+class Reaction(Base):
+    """Emoji reaction from a user on a film."""
+    __tablename__ = "reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    film_id = Column(Integer, ForeignKey("films.id", ondelete="CASCADE"), nullable=False, index=True)
+    emoji = Column(String, nullable=False)  # one of the allowed emojis
+
+    user = relationship("User")
+    film = relationship("Film")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "film_id", name="uq_reaction_user_film"),
+    )
+
+
+class ChatMessage(Base):
+    """Chat message for a week's discussion."""
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    week_id = Column(Integer, ForeignKey("weeks.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    content = Column(String, nullable=False)
+    created_at = Column(Integer, nullable=False)  # unix timestamp
+
+    user = relationship("User")
+    week = relationship("Week")

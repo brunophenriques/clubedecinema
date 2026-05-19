@@ -38,10 +38,39 @@
           </button>
           <button class="btn" id="btnLogin" type="button">Entrar</button>
           <button class="btn" id="btnLogout" type="button" style="display:none">Sair</button>
+          <button class="btn chat-header-btn" id="btnChat" type="button" title="Chat da semana" style="display:none">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="chat-header-btn__badge" id="chatBadge" style="display:none"></span>
+          </button>
         </div>
       </div>
     </div>
   </header>
+
+  <!-- ── Chat panel ── -->
+  <div id="chatOverlay" class="chat-overlay"></div>
+  <aside id="chatPanel" class="chat-panel" aria-label="Chat da semana">
+    <div class="chat-panel__head">
+      <div class="chat-panel__title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+      </div>
+      <button class="btn ghost chat-panel__close" id="chatClose" type="button">✕</button>
+    </div>
+    <div class="chat-panel__week" id="chatWeekLabel"></div>
+    <div class="chat-panel__messages" id="chatMessages">
+      <div class="chat-empty" id="chatEmpty">Nenhuma mensagem ainda. Começa a discussão!</div>
+    </div>
+    <div class="chat-panel__input-wrap">
+      <div class="chat-panel__input-row">
+        <textarea id="chatInput" class="chat-input" placeholder="Escreve uma mensagem…" rows="1" maxlength="500"></textarea>
+        <button class="btn primary chat-send-btn" id="chatSend" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+        </button>
+      </div>
+      <div class="chat-panel__hint" id="chatHint"></div>
+    </div>
+  </aside>
 
   <main class="wrap page-shell">
     <section class="hero hero--centered fade-in">

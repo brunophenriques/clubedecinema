@@ -34,6 +34,36 @@ async function getLbMembers() {
 
 function invalidateLbCache() { _lbMembers = null; }
 
+/* ── Reactions ── */
+const REACTION_EMOJIS = ["👍", "😐", "67", "🇮🇱"];
+function encodeEmoji(e) { return encodeURIComponent(e).replace(/%/g, "_"); }
+
+async function loadReactions(filmId) {
+  try {
+    const [counts, mine] = await Promise.all([
+      apiGet(`/films/${filmId}/reactions`),
+      getToken() ? apiGet(`/films/${filmId}/reactions/me`, { auth: true }) : Promise.resolve({ emoji: null }),
+    ]);
+    REACTION_EMOJIS.forEach(emoji => {
+      const key = encodeEmoji(emoji);
+      const countEl = document.getElementById(`rcount-${filmId}-${key}`);
+      const btnEl = document.querySelector(`.reaction-btn[data-film="${filmId}"][data-emoji="${emoji}"]`);
+      if (countEl) countEl.textContent = counts.counts?.[emoji] || 0;
+      if (btnEl) btnEl.classList.toggle("reaction-btn--active", mine.emoji === emoji);
+    });
+  } catch {}
+}
+
+async function toggleReaction(filmId, emoji) {
+  if (!getToken()) { toast("Precisas de login para reagir.", "info"); openAuthModal("login"); return; }
+  try {
+    const res = await apiPost(`/films/${filmId}/reactions`, { emoji }, { auth: true });
+    await loadReactions(filmId);
+  } catch (e) {
+    toast(String(e?.message || "Erro."), "error");
+  }
+}
+
 /* ── Toast system ── */
 function ensureToastRoot() {
   let root = document.getElementById("toastRoot");
@@ -554,6 +584,13 @@ function filmCard(week, f, alreadyVoted) {
         </div>
         <div class="lb-strip-placeholder"></div>
       </div>
+      <div class="reaction-bar" id="reactions-${f.id}">
+        ${REACTION_EMOJIS.map(e => `
+          <button class="reaction-btn" data-film="${f.id}" data-emoji="${escapeHtml(e)}" title="${escapeHtml(e)}">
+            <span class="reaction-btn__emoji">${e}</span>
+            <span class="reaction-btn__count" id="rcount-${f.id}-${encodeEmoji(e)}">0</span>
+          </button>`).join("")}
+      </div>
       <div class="film-actions">
         <button class="btn${canVote ? " primary" : ""}" ${canVote ? "" : "disabled"}>
           ${btnLabel}
@@ -599,8 +636,13 @@ function filmCard(week, f, alreadyVoted) {
 
 /* ── Render week ── */
 function render(week) {
+  _chatWeekId = week.id;
   el("weekTitle").textContent = week.title;
   el("heroTitle").textContent = week.title;
+
+  // Show chat button
+  const btnChat = el("btnChat");
+  if (btnChat) btnChat.style.display = "";
 
   const hint = el("filmsHint");
   if (hint) hint.textContent = week.is_open ? "Escolhe e vota." : "Resultados finais.";
@@ -619,7 +661,10 @@ function render(week) {
   let expanded = localStorage.getItem(`cinema_club_films_expanded_${week.id}`) === "1";
   const shown = (!expanded && all.length > LIMIT) ? all.slice(0, LIMIT) : all;
 
-  shown.forEach(f => filmsEl.appendChild(filmCard(week, f, alreadyVoted)));
+  shown.forEach(f => {
+    filmsEl.appendChild(filmCard(week, f, alreadyVoted));
+    loadReactions(f.id);
+  });
 
   if (btnMore) {
     if (all.length <= LIMIT) {
@@ -827,6 +872,115 @@ async function submitFilmCurrentWeek() {
   }
 }
 
+/* ── Chat ── */
+let _chatWeekId = null;
+let _chatPollInterval = null;
+let _chatLastCount = 0;
+
+function openChat(weekId, weekTitle) {
+  _chatWeekId = weekId;
+  el("chatWeekLabel").textContent = weekTitle || `Semana #${weekId}`;
+  el("chatPanel").classList.add("chat-panel--open");
+  el("chatOverlay").classList.add("chat-overlay--visible");
+  document.body.style.overflow = "hidden";
+  el("chatBadge").style.display = "none";
+  _chatLastCount = 0;
+  fetchChat();
+  _chatPollInterval = setInterval(fetchChat, 6000);
+  setTimeout(() => el("chatInput")?.focus(), 300);
+}
+
+function closeChat() {
+  el("chatPanel").classList.remove("chat-panel--open");
+  el("chatOverlay").classList.remove("chat-overlay--visible");
+  document.body.style.overflow = "";
+  if (_chatPollInterval) { clearInterval(_chatPollInterval); _chatPollInterval = null; }
+}
+
+async function fetchChat() {
+  if (!_chatWeekId) return;
+  try {
+    const msgs = await apiGet(`/weeks/${_chatWeekId}/chat`);
+    renderChatMessages(msgs);
+    // Update badge if panel closed
+    if (!el("chatPanel").classList.contains("chat-panel--open") && msgs.length > _chatLastCount) {
+      el("chatBadge").style.display = "";
+      el("chatBadge").textContent = msgs.length - _chatLastCount;
+    }
+  } catch {}
+}
+
+function renderChatMessages(msgs) {
+  const container = el("chatMessages");
+  const empty = el("chatEmpty");
+  if (!msgs.length) { if (empty) empty.style.display = ""; return; }
+  if (empty) empty.style.display = "none";
+
+  const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+  const prevCount = container.querySelectorAll(".chat-msg").length;
+
+  // Only re-render if count changed
+  if (msgs.length === prevCount) return;
+
+  container.innerHTML = "";
+  const me = _currentUser;
+
+  msgs.forEach(msg => {
+    const isMe = me && msg.user.id === me.id;
+    const div = document.createElement("div");
+    div.className = `chat-msg ${isMe ? "chat-msg--me" : ""}`;
+    div.dataset.id = msg.id;
+
+    const avatar = msg.user.avatar_url
+      ? `<img class="lb-avatar chat-msg__avatar" src="${escapeHtml(msg.user.avatar_url)}" alt="${escapeHtml(msg.user.username)}" width="28" height="28"/>`
+      : `<div class="lb-avatar lb-avatar--initials chat-msg__avatar" style="width:28px;height:28px;font-size:10px">${escapeHtml(msg.user.username.slice(0,2).toUpperCase())}</div>`;
+
+    const time = new Date(msg.created_at * 1000).toLocaleTimeString("pt", { hour: "2-digit", minute: "2-digit" });
+
+    div.innerHTML = `
+      ${!isMe ? avatar : ""}
+      <div class="chat-msg__bubble">
+        ${!isMe ? `<div class="chat-msg__name">${escapeHtml(msg.user.username)}</div>` : ""}
+        <div class="chat-msg__text">${escapeHtml(msg.content)}</div>
+        <div class="chat-msg__time">${time}${isMe ? ` <button class="chat-msg__del" data-id="${msg.id}" title="Apagar">✕</button>` : ""}</div>
+      </div>
+      ${isMe ? avatar : ""}
+    `;
+    container.appendChild(div);
+  });
+
+  if (wasAtBottom || msgs.length !== prevCount) {
+    container.scrollTop = container.scrollHeight;
+  }
+
+  _chatLastCount = msgs.length;
+}
+
+async function sendChatMessage() {
+  if (!getToken()) { toast("Precisas de login para comentar.", "info"); openAuthModal("login"); return; }
+  if (!_chatWeekId) return;
+  const input = el("chatInput");
+  const content = (input.value || "").trim();
+  if (!content) return;
+
+  const btn = el("chatSend");
+  btn.disabled = true;
+  input.disabled = true;
+
+  try {
+    await apiPost(`/weeks/${_chatWeekId}/chat`, { content }, { auth: true });
+    input.value = "";
+    input.style.height = "auto";
+    await fetchChat();
+  } catch (e) {
+    toast(String(e?.message || "Erro ao enviar."), "error");
+  } finally {
+    btn.disabled = false;
+    input.disabled = false;
+    input.focus();
+  }
+}
+
 /* ── Boot ── */
 document.addEventListener("DOMContentLoaded", async () => {
   el("refresh")?.addEventListener("click", () => { toast("A atualizar…", "info", 1200); load(); });
@@ -899,7 +1053,42 @@ document.addEventListener("DOMContentLoaded", async () => {
     else window.open(url, "_blank", "noopener,noreferrer");
   });
 
-    // Letterboxd settings button + avatar both open popup
+  // Reaction button delegation
+  el("films")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".reaction-btn");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    toggleReaction(btn.dataset.film, btn.dataset.emoji);
+  });
+
+  // Chat delete delegation
+  el("chatMessages")?.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".chat-msg__del");
+    if (!btn) return;
+    const id = btn.dataset.id;
+    try {
+      await fetch(`${API}/chat/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` } });
+      await fetchChat();
+    } catch {}
+  });
+
+  // Chat panel
+  el("btnChat")?.addEventListener("click", () => {
+    if (_chatWeekId) openChat(_chatWeekId, el("weekTitle")?.textContent);
+  });
+  el("chatClose")?.addEventListener("click", closeChat);
+  el("chatOverlay")?.addEventListener("click", closeChat);
+  el("chatSend")?.addEventListener("click", sendChatMessage);
+  el("chatInput")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+  });
+  el("chatInput")?.addEventListener("input", (e) => {
+    e.target.style.height = "auto";
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+  });
+
+  // Letterboxd settings button + avatar both open popup
   el("btnLetterboxd")?.addEventListener("click", () => showLetterboxdPopup());
   el("authAvatarPill")?.addEventListener("click", () => { if (getToken()) showLetterboxdPopup(); });
 });

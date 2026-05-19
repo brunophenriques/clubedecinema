@@ -1362,3 +1362,198 @@ def get_all_members_letterboxd(
         }
         for u in users
     ]
+
+
+# ─────────────────────────────────────────────
+# Reactions
+# ─────────────────────────────────────────────
+
+ALLOWED_EMOJIS = {"👍", "😐", "67", "🇮🇱"}
+
+
+@app.get("/films/{film_id}/reactions")
+def get_reactions(film_id: int, db: Session = Depends(get_db)):
+    rows = (
+        db.query(models.Reaction, models.User)
+        .join(models.User, models.Reaction.user_id == models.User.id)
+        .filter(models.Reaction.film_id == film_id)
+        .all()
+    )
+    # group counts + who reacted with what
+    counts = {}
+    mine = None
+    for r, u in rows:
+        counts[r.emoji] = counts.get(r.emoji, 0) + 1
+
+    return {"counts": counts, "total": len(rows)}
+
+
+@app.get("/films/{film_id}/reactions/me")
+def get_my_reaction(
+    film_id: int,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    if not authorization:
+        return {"emoji": None}
+    try:
+        user = get_current_user(db, authorization)
+    except Exception:
+        return {"emoji": None}
+    r = db.query(models.Reaction).filter(
+        models.Reaction.film_id == film_id,
+        models.Reaction.user_id == user.id,
+    ).first()
+    return {"emoji": r.emoji if r else None}
+
+
+@app.post("/films/{film_id}/reactions")
+def set_reaction(
+    film_id: int,
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    user = get_current_user(db, authorization)
+    emoji = (body.get("emoji") or "").strip()
+
+    # Verify film exists
+    film = db.query(models.Film).filter(models.Film.id == film_id).first()
+    if not film:
+        raise HTTPException(404, "Film not found")
+
+    if emoji and emoji not in ALLOWED_EMOJIS:
+        raise HTTPException(400, f"Emoji not allowed. Use one of: {ALLOWED_EMOJIS}")
+
+    existing = db.query(models.Reaction).filter(
+        models.Reaction.film_id == film_id,
+        models.Reaction.user_id == user.id,
+    ).first()
+
+    if not emoji:
+        # Remove reaction
+        if existing:
+            db.delete(existing)
+            db.commit()
+        return {"ok": True, "emoji": None}
+
+    if existing:
+        if existing.emoji == emoji:
+            # Toggle off
+            db.delete(existing)
+            db.commit()
+            return {"ok": True, "emoji": None}
+        existing.emoji = emoji
+    else:
+        existing = models.Reaction(user_id=user.id, film_id=film_id, emoji=emoji)
+        db.add(existing)
+
+    db.commit()
+    return {"ok": True, "emoji": emoji}
+
+
+@app.get("/films/{film_id}/reactions/detail")
+def get_reactions_detail(film_id: int, db: Session = Depends(get_db)):
+    """Returns per-emoji lists of who reacted — for tooltip display."""
+    rows = (
+        db.query(models.Reaction, models.User)
+        .join(models.User, models.Reaction.user_id == models.User.id)
+        .filter(models.Reaction.film_id == film_id)
+        .all()
+    )
+    detail = {}
+    for r, u in rows:
+        if r.emoji not in detail:
+            detail[r.emoji] = []
+        detail[r.emoji].append({
+            "username": u.username,
+            "avatar_url": u.avatar_url or u.letterboxd_avatar_url,
+        })
+    return detail
+
+
+# ─────────────────────────────────────────────
+# Chat
+# ─────────────────────────────────────────────
+
+@app.get("/weeks/{week_id}/chat")
+def get_chat(week_id: int, db: Session = Depends(get_db)):
+    messages = (
+        db.query(models.ChatMessage, models.User)
+        .join(models.User, models.ChatMessage.user_id == models.User.id)
+        .filter(models.ChatMessage.week_id == week_id)
+        .order_by(models.ChatMessage.created_at.asc())
+        .all()
+    )
+    return [
+        {
+            "id": m.id,
+            "content": m.content,
+            "created_at": m.created_at,
+            "user": {
+                "id": u.id,
+                "username": u.username,
+                "avatar_url": u.avatar_url or u.letterboxd_avatar_url,
+            },
+        }
+        for m, u in messages
+    ]
+
+
+@app.post("/weeks/{week_id}/chat")
+def post_chat(
+    week_id: int,
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    user = get_current_user(db, authorization)
+
+    week = db.query(models.Week).filter(models.Week.id == week_id).first()
+    if not week:
+        raise HTTPException(404, "Week not found")
+
+    content = (body.get("content") or "").strip()
+    if not content:
+        raise HTTPException(400, "content required")
+    if len(content) > 500:
+        raise HTTPException(400, "Message too long (max 500 chars)")
+
+    msg = models.ChatMessage(
+        week_id=week_id,
+        user_id=user.id,
+        content=content,
+        created_at=int(time.time()),
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+
+    return {
+        "id": msg.id,
+        "content": msg.content,
+        "created_at": msg.created_at,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "avatar_url": user.avatar_url or user.letterboxd_avatar_url,
+        },
+    }
+
+
+@app.delete("/chat/{message_id}")
+def delete_chat_message(
+    message_id: int,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    user = get_current_user(db, authorization)
+    msg = db.query(models.ChatMessage).filter(models.ChatMessage.id == message_id).first()
+    if not msg:
+        raise HTTPException(404, "Message not found")
+    # Only author or admin can delete
+    if msg.user_id != user.id and not getattr(user, "is_admin", False):
+        raise HTTPException(403, "Not allowed")
+    db.delete(msg)
+    db.commit()
+    return {"ok": True}
