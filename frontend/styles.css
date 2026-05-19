@@ -2093,15 +2093,17 @@ code {
   padding: 8px 10px;
   box-shadow: var(--shadow-md);
   opacity: 0;
+  visibility: hidden;
   transform: translateY(6px) scale(.95);
   pointer-events: none;
-  transition: opacity .15s var(--ease-soft), transform .15s var(--ease-soft);
+  transition: opacity .15s var(--ease-soft), transform .15s var(--ease-soft), visibility .15s;
   z-index: 50;
   white-space: nowrap;
 }
 
 .reaction-picker--open {
   opacity: 1;
+  visibility: visible;
   transform: translateY(0) scale(1);
   pointer-events: all;
 }
