@@ -44,13 +44,26 @@ async function loadReactions(filmId) {
       apiGet(`/films/${filmId}/reactions`),
       getToken() ? apiGet(`/films/${filmId}/reactions/me`, { auth: true }) : Promise.resolve({ emoji: null }),
     ]);
-    REACTION_EMOJIS.forEach(emoji => {
-      const key = encodeEmoji(emoji);
-      const countEl = document.getElementById(`rcount-${filmId}-${key}`);
-      const btnEl = document.querySelector(`.reaction-btn[data-film="${filmId}"][data-emoji="${emoji}"]`);
-      if (countEl) countEl.textContent = counts.counts?.[emoji] || 0;
-      if (btnEl) btnEl.classList.toggle("reaction-btn--active", mine.emoji === emoji);
-    });
+
+    const chipsEl = document.getElementById(`chips-${filmId}`);
+    if (!chipsEl) return;
+
+    // Render only emojis that have at least 1 reaction
+    const html = REACTION_EMOJIS
+      .filter(e => (counts.counts?.[e] || 0) > 0)
+      .map(e => {
+        const count = counts.counts[e];
+        const isMe = mine.emoji === e;
+        return `<button class="reaction-chip${isMe ? " reaction-chip--mine" : ""}" data-film="${filmId}" data-emoji="${escapeHtml(e)}" title="${escapeHtml(e)}">
+          <span>${e}</span><span class="reaction-chip__count">${count}</span>
+        </button>`;
+      }).join("");
+
+    chipsEl.innerHTML = html;
+
+    // Mark picker button active if user has reacted
+    const addBtn = document.querySelector(`.reaction-add-btn[data-film="${filmId}"]`);
+    if (addBtn) addBtn.classList.toggle("reaction-add-btn--active", !!mine.emoji);
   } catch {}
 }
 
@@ -585,11 +598,15 @@ function filmCard(week, f, alreadyVoted) {
         <div class="lb-strip-placeholder"></div>
       </div>
       <div class="reaction-bar" id="reactions-${f.id}">
-        ${REACTION_EMOJIS.map(e => `
-          <button class="reaction-btn" data-film="${f.id}" data-emoji="${escapeHtml(e)}" title="${escapeHtml(e)}">
-            <span class="reaction-btn__emoji">${e}</span>
-            <span class="reaction-btn__count" id="rcount-${f.id}-${encodeEmoji(e)}">0</span>
-          </button>`).join("")}
+        <button class="reaction-add-btn" data-film="${f.id}" title="Reagir">
+          <span>😊</span>
+          <div class="reaction-picker" id="picker-${f.id}">
+            ${REACTION_EMOJIS.map(e => `
+              <button class="reaction-picker__btn" data-film="${f.id}" data-emoji="${escapeHtml(e)}">${e}</button>
+            `).join("")}
+          </div>
+        </button>
+        <div class="reaction-chips" id="chips-${f.id}"></div>
       </div>
       <div class="film-actions">
         <button class="btn${canVote ? " primary" : ""}" ${canVote ? "" : "disabled"}>
@@ -1053,13 +1070,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     else window.open(url, "_blank", "noopener,noreferrer");
   });
 
-  // Reaction button delegation
+  // Reaction picker toggle
   el("films")?.addEventListener("click", (e) => {
-    const btn = e.target.closest(".reaction-btn");
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    toggleReaction(btn.dataset.film, btn.dataset.emoji);
+    const addBtn = e.target.closest(".reaction-add-btn");
+    if (addBtn) {
+      e.preventDefault(); e.stopPropagation();
+      // Close all other pickers
+      document.querySelectorAll(".reaction-picker--open").forEach(p => {
+        if (p.closest(".reaction-add-btn") !== addBtn) p.classList.remove("reaction-picker--open");
+      });
+      addBtn.querySelector(".reaction-picker")?.classList.toggle("reaction-picker--open");
+      return;
+    }
+    // Picker emoji click
+    const pickerBtn = e.target.closest(".reaction-picker__btn");
+    if (pickerBtn) {
+      e.preventDefault(); e.stopPropagation();
+      pickerBtn.closest(".reaction-picker")?.classList.remove("reaction-picker--open");
+      toggleReaction(pickerBtn.dataset.film, pickerBtn.dataset.emoji);
+      return;
+    }
+    // Chip click (toggle off)
+    const chip = e.target.closest(".reaction-chip");
+    if (chip) {
+      e.preventDefault(); e.stopPropagation();
+      toggleReaction(chip.dataset.film, chip.dataset.emoji);
+      return;
+    }
+  });
+
+  // Close picker when clicking outside
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".reaction-picker--open").forEach(p => p.classList.remove("reaction-picker--open"));
   });
 
   // Chat delete delegation

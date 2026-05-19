@@ -2044,6 +2044,7 @@ code {
 
 .reaction-bar {
   display: flex;
+  align-items: center;
   gap: 6px;
   flex-wrap: wrap;
   margin-top: 10px;
@@ -2051,57 +2052,116 @@ code {
   border-top: 1px solid var(--ink-06);
 }
 
-.reaction-btn {
+/* ── Add button ── */
+.reaction-add-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-pill);
   border: 1.5px solid var(--ink-10);
   background: var(--cream);
   cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 13px;
-  transition: transform .12s var(--ease), border-color .12s, background .12s, box-shadow .12s;
-  user-select: none;
+  font-size: 16px;
+  transition: border-color .12s, background .12s, transform .12s var(--ease);
+  flex-shrink: 0;
 }
 
-.reaction-btn:hover {
+.reaction-add-btn:hover {
   border-color: var(--ink-30);
   background: var(--parchment);
-  transform: translateY(-2px) scale(1.06);
-  box-shadow: var(--shadow-sm);
+  transform: scale(1.1);
 }
 
-.reaction-btn:active {
-  transform: scale(.95);
-}
-
-.reaction-btn--active {
-  border-color: var(--rouge);
-  background: var(--rouge-dim);
-  box-shadow: 0 0 0 3px var(--rouge-dim);
-}
-
-.reaction-btn--active:hover {
+.reaction-add-btn--active {
   border-color: var(--rouge);
   background: var(--rouge-dim);
 }
 
-.reaction-btn__emoji {
-  font-size: 15px;
+/* ── Picker dropdown ── */
+.reaction-picker {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: flex;
+  gap: 4px;
+  background: var(--card);
+  border: 1px solid var(--ink-10);
+  border-radius: var(--radius-lg);
+  padding: 8px 10px;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transform: translateY(6px) scale(.95);
+  pointer-events: none;
+  transition: opacity .15s var(--ease-soft), transform .15s var(--ease-soft);
+  z-index: 50;
+  white-space: nowrap;
+}
+
+.reaction-picker--open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+.reaction-picker__btn {
+  font-size: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
+  transition: transform .1s var(--ease), background .1s;
   line-height: 1;
 }
 
-.reaction-btn__count {
+.reaction-picker__btn:hover {
+  transform: scale(1.3) translateY(-2px);
+  background: var(--parchment);
+}
+
+/* ── Chips (active reactions) ── */
+.reaction-chips {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--ink-10);
+  background: var(--cream);
+  cursor: pointer;
+  font-size: 13px;
+  transition: transform .12s var(--ease), border-color .12s, background .12s;
+  user-select: none;
+}
+
+.reaction-chip:hover {
+  border-color: var(--ink-30);
+  transform: translateY(-1px);
+}
+
+.reaction-chip--mine {
+  border-color: var(--rouge);
+  background: var(--rouge-dim);
+}
+
+.reaction-chip__count {
   font-size: 11px;
   font-weight: 700;
   color: var(--ink-60);
-  min-width: 8px;
   font-family: var(--font-mono);
 }
 
-.reaction-btn--active .reaction-btn__count {
+.reaction-chip--mine .reaction-chip__count {
   color: var(--rouge);
 }
 
