@@ -1201,8 +1201,22 @@ def set_letterboxd_username(
     db: Session = Depends(get_db),
     authorization: str | None = Header(None),
 ):
-    """Set or update the user's Letterboxd username, then trigger a sync."""
+    """Set or update the user's Letterboxd username and/or avatar URL, then trigger a sync."""
     user = get_current_user(db, authorization)
+
+    # Allow directly overriding avatar URL (e.g. user pastes a better image URL)
+    if "avatar_url" in body:
+        user.letterboxd_avatar_url = (body["avatar_url"] or "").strip() or None
+        db.commit()
+        db.refresh(user)
+        return {
+            "ok": True,
+            "letterboxd_username": user.letterboxd_username,
+            "letterboxd_avatar_url": user.letterboxd_avatar_url,
+            "synced": 0,
+            "error": None,
+        }
+
     lb_username = (body.get("letterboxd_username") or "").strip()
 
     if not lb_username:
@@ -1271,6 +1285,7 @@ def get_film_letterboxd_data(
         result.append({
             "user_id": user.id,
             "username": user.username,
+            "letterboxd_username": user.letterboxd_username,
             "avatar_url": user.letterboxd_avatar_url,
             "rating": entry.rating,
             "watched_date": entry.watched_date,

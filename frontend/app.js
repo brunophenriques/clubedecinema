@@ -417,12 +417,13 @@ async function buildWatcherStrip(tmdbId) {
       return "★".repeat(full) + (half ? "½" : "");
     };
 
-    const avatars = watchers.map(w =>
-      `<span class="lb-watcher" title="@${escapeHtml(w.username)}${w.rating != null ? ` · ${stars(w.rating)}` : ''}">
+    const avatars = watchers.map(w => {
+      const lbUser = w.letterboxd_username || w.username;
+      return `<span class="lb-watcher" title="@${escapeHtml(lbUser)}${w.rating != null ? ` · ${stars(w.rating)}` : ''}">
         ${avatarHTML(w, 24)}
         ${w.rating != null ? `<span class="lb-watcher__stars">${stars(w.rating)}</span>` : ""}
-      </span>`
-    ).join("");
+      </span>`;
+    }).join("");
 
     return `<div class="lb-strip"><span class="lb-strip__label">Visto por</span><div class="lb-strip__avatars">${avatars}</div></div>`;
   } catch {
@@ -674,15 +675,14 @@ function buildWatchedCard(week, film, watchers) {
 
   // Watcher avatars — each is a link to their Letterboxd profile
   const watcherAvatars = watchers.map(w => {
+    const lbUser = w.letterboxd_username || w.username;
     const stars = starsHTML(w.rating);
-    const tip = `@${w.username}${w.rating != null ? ` · ${stars}` : ""}`;
-    const href = w.letterboxd_url
-      ? `https://letterboxd.com/${escapeHtml(w.username || "")}/`
-      : `https://letterboxd.com/${escapeHtml(w.username || "")}/`;
+    const tip = `@${lbUser}${w.rating != null ? ` · ${stars}` : ""}`;
+    const href = `https://letterboxd.com/${encodeURIComponent(lbUser)}/`;
 
     const avatarEl = w.avatar_url
-      ? `<img class="wc-avatar" src="${escapeHtml(w.avatar_url)}" alt="@${escapeHtml(w.username)}" title="${escapeHtml(tip)}" width="36" height="36"/>`
-      : `<div class="wc-avatar wc-avatar--initials" title="${escapeHtml(tip)}">${escapeHtml((w.username||"?").slice(0,2).toUpperCase())}</div>`;
+      ? `<img class="wc-avatar" src="${escapeHtml(w.avatar_url)}" alt="@${escapeHtml(lbUser)}" title="${escapeHtml(tip)}" width="36" height="36"/>`
+      : `<div class="wc-avatar wc-avatar--initials" title="${escapeHtml(tip)}">${escapeHtml(lbUser.slice(0,2).toUpperCase())}</div>`;
 
     return `<a class="wc-watcher" href="${href}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(tip)}">
       ${avatarEl}
