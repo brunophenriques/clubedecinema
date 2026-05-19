@@ -5,6 +5,5 @@ pydantic
 python-dotenv
 alembic
 requests
-sentence-transformers
 rapidfuzz
 psycopg[binary]
