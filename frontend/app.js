@@ -523,6 +523,127 @@ async function load() {
     if (ws) { ws.dataset.state = "pending"; ws.textContent = "Sem semana criada."; }
     el("films").innerHTML = "";
   }
+
+  // Load "visto pelo clube" section independently
+  loadClubWatched();
+}
+
+/* ── "Visto pelo Clube" section ── */
+async function loadClubWatched() {
+  const section = el("clubWatchedSection");
+  if (!section) return;
+
+  try {
+    // Get last 5 closed weeks with winners
+    const weeks = await apiGet("/weeks");
+    const winners = weeks
+      .filter(w => !w.is_open && w.winner_film_id)
+      .slice(0, 5);
+
+    if (!winners.length) { section.style.display = "none"; return; }
+
+    // For each winner fetch letterboxd data
+    const cards = await Promise.all(winners.map(async (w) => {
+      const win = (w.films || []).find(f => Number(f.id) === Number(w.winner_film_id));
+      if (!win) return null;
+
+      let watchers = [];
+      if (win.tmdb_id) {
+        try { watchers = await apiGet(`/letterboxd/film/${win.tmdb_id}`); } catch {}
+      }
+      return { week: w, film: win, watchers };
+    }));
+
+    const valid = cards.filter(Boolean);
+    if (!valid.length) { section.style.display = "none"; return; }
+
+    // Only show section if at least one film has watchers
+    const hasAnyWatchers = valid.some(c => c.watchers.length > 0);
+
+    section.style.display = "";
+    const grid = el("clubWatchedGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+
+    valid.forEach(({ week: w, film, watchers }) => {
+      const card = buildWatchedCard(w, film, watchers);
+      grid.appendChild(card);
+    });
+
+    // Hide section header hint if no watchers at all
+    const hint = el("clubWatchedHint");
+    if (hint) hint.textContent = hasAnyWatchers
+      ? "O que o clube achou dos vencedores recentes."
+      : "Liga o teu Letterboxd para ver quem viu o quê.";
+
+  } catch (e) {
+    section.style.display = "none";
+  }
+}
+
+function starsHTML(rating) {
+  if (rating == null) return "";
+  const full = Math.floor(rating);
+  const half = (rating % 1) >= 0.5;
+  let s = "★".repeat(full);
+  if (half) s += "½";
+  return s;
+}
+
+function buildWatchedCard(week, film, watchers) {
+  const div = document.createElement("div");
+  div.className = "watched-card";
+
+  const avgRating = watchers.length
+    ? watchers.filter(w => w.rating != null).reduce((s, w, _, a) => s + w.rating / a.length, 0)
+    : null;
+
+  // Compute avg only from those who rated
+  const raters = watchers.filter(w => w.rating != null);
+  const avg = raters.length
+    ? (raters.reduce((s, w) => s + w.rating, 0) / raters.length).toFixed(1)
+    : null;
+
+  const watcherAvatars = watchers.map(w => {
+    const url = w.avatar_url;
+    const stars = starsHTML(w.rating);
+    const tip = `@${w.username}${w.rating != null ? ` · ${stars}` : ""}`;
+    if (url) {
+      return `<span class="wc-watcher" title="${escapeHtml(tip)}">
+        <img class="lb-avatar wc-avatar" src="${escapeHtml(url)}" alt="${escapeHtml(w.username)}" width="30" height="30"/>
+        ${stars ? `<span class="wc-stars">${escapeHtml(stars)}</span>` : ""}
+      </span>`;
+    }
+    return `<span class="wc-watcher" title="${escapeHtml(tip)}">
+      <span class="lb-avatar lb-avatar--initials wc-avatar" style="width:30px;height:30px;font-size:11px">${escapeHtml(w.username.slice(0,2).toUpperCase())}</span>
+      ${stars ? `<span class="wc-stars">${escapeHtml(stars)}</span>` : ""}
+    </span>`;
+  }).join("");
+
+  const noWatchers = watchers.length === 0;
+
+  div.innerHTML = `
+    <div class="wc-poster-wrap">
+      ${film.poster_url
+        ? `<img class="wc-poster" src="${escapeHtml(film.poster_url)}" alt="${escapeHtml(film.title)}" loading="lazy"/>`
+        : `<div class="wc-poster wc-poster--ph"><span>${escapeHtml((film.title||"").slice(0,2).toUpperCase())}</span></div>`
+      }
+      <div class="wc-trophy">🏆</div>
+    </div>
+    <div class="wc-body">
+      <div class="wc-week">${escapeHtml(week.title)}</div>
+      <div class="wc-title">${escapeHtml(film.title)}${film.year ? `<span class="wc-year"> (${film.year})</span>` : ""}</div>
+      ${film.director ? `<div class="wc-director">Dir. ${escapeHtml(film.director)}</div>` : ""}
+      ${!noWatchers ? `
+        <div class="wc-watchers">
+          <div class="wc-watchers__row">${watcherAvatars}</div>
+          ${avg != null ? `<div class="wc-avg"><span class="wc-avg__stars">${escapeHtml(starsHTML(parseFloat(avg)))}</span><span class="wc-avg__num">${avg}</span></div>` : ""}
+        </div>
+      ` : `<div class="wc-unseen">Ninguém viu ainda</div>`}
+    </div>
+  `;
+
+  return div;
 }
 
 /* ── Submit film ── */

@@ -1516,3 +1516,207 @@ code {
     width: 100%;
   }
 }
+
+/* ═══════════════════════════════════════════
+   VISTO PELO CLUBE — watched section
+   ═══════════════════════════════════════════ */
+
+.watched-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 18px;
+  margin-top: 4px;
+}
+
+/* ── Card ── */
+.watched-card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--ink-10);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+  display: flex;
+  flex-direction: column;
+}
+
+.watched-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Poster ── */
+.wc-poster-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2/3;
+  overflow: hidden;
+  background: var(--parchment);
+  flex-shrink: 0;
+}
+
+.wc-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .4s var(--ease-soft);
+}
+
+.watched-card:hover .wc-poster {
+  transform: scale(1.04);
+}
+
+.wc-poster--ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, var(--parchment) 0%, rgba(181,41,78,.08) 100%);
+  font-family: var(--font-display);
+  font-size: 32px;
+  color: var(--ink-30);
+}
+
+.wc-trophy {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 16px;
+  background: rgba(245,240,232,.92);
+  border-radius: var(--radius-pill);
+  padding: 3px 8px;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px rgba(14,11,16,.12);
+  backdrop-filter: blur(4px);
+  font-family: var(--font-body);
+}
+
+/* ── Body ── */
+.wc-body {
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.wc-week {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--rouge);
+}
+
+.wc-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.25;
+  color: var(--ink);
+  letter-spacing: -.01em;
+}
+
+.wc-year {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-60);
+  font-style: normal;
+}
+
+.wc-director {
+  font-size: 11px;
+  color: var(--ink-60);
+  margin-top: 1px;
+}
+
+/* ── Watchers ── */
+.wc-watchers {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wc-watchers__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.wc-watcher {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: default;
+}
+
+.wc-avatar {
+  width: 30px !important;
+  height: 30px !important;
+  font-size: 11px;
+  border: 2px solid var(--ink-10);
+  transition: transform .15s var(--ease), border-color .15s;
+}
+
+.wc-watcher:hover .wc-avatar {
+  transform: scale(1.15);
+  border-color: var(--rouge);
+}
+
+.wc-stars {
+  font-size: 9px;
+  color: #c8922a;
+  line-height: 1;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+}
+
+/* ── Average rating ── */
+.wc-avg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: var(--parchment);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--ink-10);
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.wc-avg__stars {
+  font-size: 12px;
+  color: #c8922a;
+  letter-spacing: -.02em;
+}
+
+.wc-avg__num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-60);
+  font-family: var(--font-mono);
+}
+
+/* ── No watchers state ── */
+.wc-unseen {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--ink-30);
+  font-style: italic;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .watched-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .watched-grid {
+    grid-template-columns: 1fr;
+  }
+}
