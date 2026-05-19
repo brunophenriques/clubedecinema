@@ -255,48 +255,107 @@ function updateHeaderAvatar(me) {
   }
 }
 
-/* ── Letterboxd connect popup ── */
+/* ── Letterboxd connect / settings popup ── */
 function showLetterboxdPopup() {
-  if (el("lbPopup")) return; // already showing
+  if (el("lbPopup")) el("lbPopup").remove();
+
+  const me = _currentUser;
+  const isConnected = !!(me?.letterboxd_username);
+  const avatarUrl = me?.letterboxd_avatar_url || "";
+
   const pop = document.createElement("div");
   pop.id = "lbPopup";
   pop.innerHTML = `
     <div class="lb-popup__panel">
       <button class="lb-popup__close" id="lbPopupClose" type="button" aria-label="Fechar">✕</button>
+
       <div class="lb-popup__logo">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Letterboxd
       </div>
-      <div class="lb-popup__title">Liga o teu Letterboxd</div>
-      <div class="lb-popup__sub">Vê quem já viu os filmes e as suas avaliações.</div>
-      <div style="display:flex;gap:8px;margin-top:4px;">
-        <input id="lbPopupInput" class="input" placeholder="O teu username" autocomplete="off" style="flex:1" />
-        <button class="btn primary" id="lbPopupSave" type="button">Ligar</button>
+
+      <div class="lb-popup__title">${isConnected ? "Definições de perfil" : "Liga o teu Letterboxd"}</div>
+      <div class="lb-popup__sub">${isConnected ? `Ligado como <strong>@${escapeHtml(me.letterboxd_username)}</strong>` : "Vê quem já viu os filmes e as suas avaliações."}</div>
+
+      <!-- Avatar preview + change -->
+      <div class="lb-popup__avatar-row">
+        <div class="lb-popup__avatar-preview" id="lbAvatarPreview">
+          ${avatarUrl
+            ? `<img src="${escapeHtml(avatarUrl)}" alt="avatar" id="lbAvatarImg" />`
+            : `<div class="lb-avatar lb-avatar--initials" style="width:52px;height:52px;font-size:18px">${escapeHtml((me?.username||"?").slice(0,2).toUpperCase())}</div>`
+          }
+        </div>
+        <div class="lb-popup__avatar-inputs">
+          <label class="lb-popup__label">Foto de perfil (URL)</label>
+          <div style="display:flex;gap:6px">
+            <input id="lbAvatarInput" class="input" placeholder="https://..." value="${escapeHtml(avatarUrl)}" autocomplete="off" style="flex:1;font-size:12px" />
+            <button class="btn" id="lbAvatarSave" type="button" style="flex-shrink:0;padding:0 12px">✓</button>
+          </div>
+          <div class="lb-popup__avatar-hint">Cola o URL direto da tua foto do Letterboxd</div>
+        </div>
       </div>
+
+      <!-- Username -->
+      <label class="lb-popup__label">Username do Letterboxd</label>
+      <div style="display:flex;gap:8px">
+        <input id="lbPopupInput" class="input" placeholder="username" value="${escapeHtml(me?.letterboxd_username || "")}" autocomplete="off" style="flex:1" />
+        <button class="btn primary" id="lbPopupSave" type="button">${isConnected ? "Atualizar" : "Ligar"}</button>
+      </div>
+
       <div class="lb-popup__msg" id="lbPopupMsg"></div>
-      <button class="btn ghost lb-popup__skip" id="lbPopupSkip" type="button">Mais tarde</button>
+
+      ${isConnected ? `<button class="btn lb-popup__sync" id="lbPopupSync" type="button">↻ Sincronizar agora</button>` : ""}
+      <button class="btn ghost lb-popup__skip" id="lbPopupSkip" type="button">Fechar</button>
     </div>
   `;
   document.body.appendChild(pop);
 
+  // Close
   el("lbPopupClose")?.addEventListener("click", () => pop.remove());
   el("lbPopupSkip")?.addEventListener("click", () => pop.remove());
 
+  // Live avatar preview when URL changes
+  el("lbAvatarInput")?.addEventListener("input", () => {
+    const url = el("lbAvatarInput").value.trim();
+    const preview = el("lbAvatarPreview");
+    if (url) {
+      preview.innerHTML = `<img src="${escapeHtml(url)}" alt="avatar" id="lbAvatarImg" onerror="this.style.opacity='.3'" />`;
+    } else {
+      preview.innerHTML = `<div class="lb-avatar lb-avatar--initials" style="width:52px;height:52px;font-size:18px">${escapeHtml((me?.username||"?").slice(0,2).toUpperCase())}</div>`;
+    }
+  });
+
+  // Save avatar URL
+  el("lbAvatarSave")?.addEventListener("click", async () => {
+    const url = (el("lbAvatarInput")?.value || "").trim();
+    const btn = el("lbAvatarSave");
+    btn.disabled = true;
+    try {
+      await apiPatch("/auth/letterboxd", { avatar_url: url }, { auth: true });
+      invalidateLbCache();
+      await refreshAuthState();
+      el("lbPopupMsg").textContent = "Foto atualizada ✓";
+      el("lbPopupMsg").style.color = "#2a9d5c";
+      setTimeout(() => { if (el("lbPopupMsg")) { el("lbPopupMsg").textContent = ""; el("lbPopupMsg").style.color = ""; } }, 2500);
+    } catch (e) {
+      el("lbPopupMsg").textContent = String(e?.message || "Erro.");
+      el("lbPopupMsg").style.color = "";
+    } finally { btn.disabled = false; }
+  });
+
+  // Save username + sync
   el("lbPopupSave")?.addEventListener("click", async () => {
     const username = (el("lbPopupInput")?.value || "").trim();
     if (!username) { el("lbPopupMsg").textContent = "Introduz o teu username."; return; }
-
     const btn = el("lbPopupSave");
     btn.disabled = true;
     btn.textContent = "A ligar…";
     el("lbPopupMsg").textContent = "";
-
     try {
       const res = await apiPatch("/auth/letterboxd", { letterboxd_username: username }, { auth: true });
       if (res.error && res.synced === 0) {
         el("lbPopupMsg").textContent = `Erro: ${res.error}`;
-        btn.disabled = false;
-        btn.textContent = "Ligar";
+        btn.disabled = false; btn.textContent = isConnected ? "Atualizar" : "Ligar";
         return;
       }
       invalidateLbCache();
@@ -306,9 +365,23 @@ function showLetterboxdPopup() {
       await load();
     } catch (e) {
       el("lbPopupMsg").textContent = String(e?.message || "Erro ao ligar.");
-      btn.disabled = false;
-      btn.textContent = "Ligar";
+      btn.disabled = false; btn.textContent = isConnected ? "Atualizar" : "Ligar";
     }
+  });
+
+  // Manual sync
+  el("lbPopupSync")?.addEventListener("click", async () => {
+    const btn = el("lbPopupSync");
+    btn.disabled = true; btn.textContent = "A sincronizar…";
+    try {
+      const res = await apiPost("/auth/letterboxd/sync", {}, { auth: true });
+      invalidateLbCache();
+      toast(`Sincronizado! ${res.synced} entradas.`, "success", 3000);
+      el("lbPopupMsg").textContent = `Última sync: agora · ${res.synced} entradas`;
+      el("lbPopupMsg").style.color = "#2a9d5c";
+    } catch (e) {
+      el("lbPopupMsg").textContent = String(e?.message || "Erro na sync.");
+    } finally { btn.disabled = false; btn.textContent = "↻ Sincronizar agora"; }
   });
 
   el("lbPopupInput")?.addEventListener("keydown", (e) => {
@@ -594,41 +667,46 @@ function buildWatchedCard(week, film, watchers) {
   const div = document.createElement("div");
   div.className = "watched-card";
 
-  const avgRating = watchers.length
-    ? watchers.filter(w => w.rating != null).reduce((s, w, _, a) => s + w.rating / a.length, 0)
-    : null;
-
-  // Compute avg only from those who rated
   const raters = watchers.filter(w => w.rating != null);
   const avg = raters.length
     ? (raters.reduce((s, w) => s + w.rating, 0) / raters.length).toFixed(1)
     : null;
 
+  // Watcher avatars — each is a link to their Letterboxd profile
   const watcherAvatars = watchers.map(w => {
-    const url = w.avatar_url;
     const stars = starsHTML(w.rating);
     const tip = `@${w.username}${w.rating != null ? ` · ${stars}` : ""}`;
-    if (url) {
-      return `<span class="wc-watcher" title="${escapeHtml(tip)}">
-        <img class="lb-avatar wc-avatar" src="${escapeHtml(url)}" alt="${escapeHtml(w.username)}" width="30" height="30"/>
-        ${stars ? `<span class="wc-stars">${escapeHtml(stars)}</span>` : ""}
-      </span>`;
-    }
-    return `<span class="wc-watcher" title="${escapeHtml(tip)}">
-      <span class="lb-avatar lb-avatar--initials wc-avatar" style="width:30px;height:30px;font-size:11px">${escapeHtml(w.username.slice(0,2).toUpperCase())}</span>
-      ${stars ? `<span class="wc-stars">${escapeHtml(stars)}</span>` : ""}
-    </span>`;
+    const href = w.letterboxd_url
+      ? `https://letterboxd.com/${escapeHtml(w.username || "")}/`
+      : `https://letterboxd.com/${escapeHtml(w.username || "")}/`;
+
+    const avatarEl = w.avatar_url
+      ? `<img class="wc-avatar" src="${escapeHtml(w.avatar_url)}" alt="@${escapeHtml(w.username)}" title="${escapeHtml(tip)}" width="36" height="36"/>`
+      : `<div class="wc-avatar wc-avatar--initials" title="${escapeHtml(tip)}">${escapeHtml((w.username||"?").slice(0,2).toUpperCase())}</div>`;
+
+    return `<a class="wc-watcher" href="${href}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(tip)}">
+      ${avatarEl}
+      ${stars ? `<span class="wc-stars">${escapeHtml(stars)}</span>` : `<span class="wc-stars" style="opacity:0">·</span>`}
+    </a>`;
   }).join("");
 
   const noWatchers = watchers.length === 0;
+
+  // avg badge shown on poster on hover
+  const avgBadge = avg != null ? `
+    <div class="wc-avg-badge">
+      <span class="wc-avg-badge__stars">${escapeHtml(starsHTML(parseFloat(avg)))}</span>
+      <span class="wc-avg-badge__num">${avg}</span>
+    </div>` : "";
 
   div.innerHTML = `
     <div class="wc-poster-wrap">
       ${film.poster_url
         ? `<img class="wc-poster" src="${escapeHtml(film.poster_url)}" alt="${escapeHtml(film.title)}" loading="lazy"/>`
-        : `<div class="wc-poster wc-poster--ph"><span>${escapeHtml((film.title||"").slice(0,2).toUpperCase())}</span></div>`
+        : `<div class="wc-poster wc-poster--ph">${escapeHtml((film.title||"").slice(0,2).toUpperCase())}</div>`
       }
       <div class="wc-trophy">🏆</div>
+      ${avgBadge}
     </div>
     <div class="wc-body">
       <div class="wc-week">${escapeHtml(week.title)}</div>
@@ -636,8 +714,8 @@ function buildWatchedCard(week, film, watchers) {
       ${film.director ? `<div class="wc-director">Dir. ${escapeHtml(film.director)}</div>` : ""}
       ${!noWatchers ? `
         <div class="wc-watchers">
+          <div class="wc-watchers__label">Visto por</div>
           <div class="wc-watchers__row">${watcherAvatars}</div>
-          ${avg != null ? `<div class="wc-avg"><span class="wc-avg__stars">${escapeHtml(starsHTML(parseFloat(avg)))}</span><span class="wc-avg__num">${avg}</span></div>` : ""}
         </div>
       ` : `<div class="wc-unseen">Ninguém viu ainda</div>`}
     </div>
@@ -760,6 +838,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     else window.open(url, "_blank", "noopener,noreferrer");
   });
 
-  // Letterboxd settings button
+    // Letterboxd settings button + avatar both open popup
   el("btnLetterboxd")?.addEventListener("click", () => showLetterboxdPopup());
+  el("authAvatarPill")?.addEventListener("click", () => { if (getToken()) showLetterboxdPopup(); });
 });
