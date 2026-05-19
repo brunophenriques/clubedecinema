@@ -261,7 +261,7 @@ function showLetterboxdPopup() {
 
   const me = _currentUser;
   const isConnected = !!(me?.letterboxd_username);
-  const avatarUrl = me?.letterboxd_avatar_url || "";
+  const avatarUrl = me?.avatar_url || "";
 
   const pop = document.createElement("div");
   pop.id = "lbPopup";
@@ -269,31 +269,39 @@ function showLetterboxdPopup() {
     <div class="lb-popup__panel">
       <button class="lb-popup__close" id="lbPopupClose" type="button" aria-label="Fechar">✕</button>
 
-      <div class="lb-popup__logo">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Letterboxd
-      </div>
+      <div class="lb-popup__title">Perfil</div>
 
-      <div class="lb-popup__title">${isConnected ? "Definições de perfil" : "Liga o teu Letterboxd"}</div>
-      <div class="lb-popup__sub">${isConnected ? `Ligado como <strong>@${escapeHtml(me.letterboxd_username)}</strong>` : "Vê quem já viu os filmes e as suas avaliações."}</div>
-
-      <!-- Avatar preview + change -->
+      <!-- Avatar upload -->
       <div class="lb-popup__avatar-row">
         <div class="lb-popup__avatar-preview" id="lbAvatarPreview">
           ${avatarUrl
-            ? `<img src="${escapeHtml(avatarUrl)}" alt="avatar" id="lbAvatarImg" />`
-            : `<div class="lb-avatar lb-avatar--initials" style="width:52px;height:52px;font-size:18px">${escapeHtml((me?.username||"?").slice(0,2).toUpperCase())}</div>`
+            ? `<img src="${escapeHtml(avatarUrl)}" alt="avatar" />`
+            : `<div class="lb-avatar lb-avatar--initials" style="width:60px;height:60px;font-size:20px">${escapeHtml((me?.username||"?").slice(0,2).toUpperCase())}</div>`
           }
         </div>
         <div class="lb-popup__avatar-inputs">
-          <label class="lb-popup__label">Foto de perfil (URL)</label>
-          <div style="display:flex;gap:6px">
-            <input id="lbAvatarInput" class="input" placeholder="https://..." value="${escapeHtml(avatarUrl)}" autocomplete="off" style="flex:1;font-size:12px" />
-            <button class="btn" id="lbAvatarSave" type="button" style="flex-shrink:0;padding:0 12px">✓</button>
-          </div>
-          <div class="lb-popup__avatar-hint">Cola o URL direto da tua foto do Letterboxd</div>
+          <div class="lb-popup__label">Foto de perfil</div>
+          <label class="lb-popup__upload-btn" for="lbAvatarFile">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Escolher imagem
+          </label>
+          <input type="file" id="lbAvatarFile" accept="image/*" style="display:none" />
+          <div class="lb-popup__avatar-hint">JPG, PNG ou GIF · máx 2MB</div>
+          <button class="btn primary" id="lbAvatarSave" type="button" style="display:none;margin-top:4px">Guardar foto</button>
         </div>
       </div>
+
+      ${isConnected
+        ? `<div class="lb-popup__logo">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Letterboxd · <strong>@${escapeHtml(me.letterboxd_username)}</strong>
+          </div>`
+        : `<div class="lb-popup__logo">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Letterboxd
+          </div>
+          <div class="lb-popup__sub">Liga para ver quem viu os filmes e as suas avaliações.</div>`
+      }
 
       <!-- Username -->
       <label class="lb-popup__label">Username do Letterboxd</label>
@@ -304,7 +312,7 @@ function showLetterboxdPopup() {
 
       <div class="lb-popup__msg" id="lbPopupMsg"></div>
 
-      ${isConnected ? `<button class="btn lb-popup__sync" id="lbPopupSync" type="button">↻ Sincronizar agora</button>` : ""}
+      ${isConnected ? `<button class="btn lb-popup__sync" id="lbPopupSync" type="button">↻ Sincronizar Letterboxd</button>` : ""}
       <button class="btn ghost lb-popup__skip" id="lbPopupSkip" type="button">Fechar</button>
     </div>
   `;
@@ -314,33 +322,46 @@ function showLetterboxdPopup() {
   el("lbPopupClose")?.addEventListener("click", () => pop.remove());
   el("lbPopupSkip")?.addEventListener("click", () => pop.remove());
 
-  // Live avatar preview when URL changes
-  el("lbAvatarInput")?.addEventListener("input", () => {
-    const url = el("lbAvatarInput").value.trim();
-    const preview = el("lbAvatarPreview");
-    if (url) {
-      preview.innerHTML = `<img src="${escapeHtml(url)}" alt="avatar" id="lbAvatarImg" onerror="this.style.opacity='.3'" />`;
-    } else {
-      preview.innerHTML = `<div class="lb-avatar lb-avatar--initials" style="width:52px;height:52px;font-size:18px">${escapeHtml((me?.username||"?").slice(0,2).toUpperCase())}</div>`;
+  // Clicking the preview also opens file picker
+  el("lbAvatarPreview")?.addEventListener("click", () => el("lbAvatarFile")?.click());
+
+  // File picker → base64 preview
+  el("lbAvatarFile")?.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2_500_000) {
+      el("lbPopupMsg").textContent = "Imagem demasiado grande (máx 2MB).";
+      return;
     }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      el("lbAvatarPreview").innerHTML = `<img src="${escapeHtml(dataUrl)}" alt="avatar" />`;
+      el("lbAvatarSave").style.display = "";
+      el("lbAvatarSave").dataset.dataUrl = dataUrl;
+    };
+    reader.readAsDataURL(file);
   });
 
-  // Save avatar URL
+  // Save avatar
   el("lbAvatarSave")?.addEventListener("click", async () => {
-    const url = (el("lbAvatarInput")?.value || "").trim();
+    const dataUrl = el("lbAvatarSave").dataset.dataUrl;
+    if (!dataUrl) return;
     const btn = el("lbAvatarSave");
-    btn.disabled = true;
+    btn.disabled = true; btn.textContent = "A guardar…";
     try {
-      await apiPatch("/auth/letterboxd", { avatar_url: url }, { auth: true });
+      await apiPatch("/auth/avatar", { avatar_url: dataUrl }, { auth: true });
       invalidateLbCache();
       await refreshAuthState();
-      el("lbPopupMsg").textContent = "Foto atualizada ✓";
-      el("lbPopupMsg").style.color = "#2a9d5c";
+      const msg = el("lbPopupMsg");
+      if (msg) { msg.textContent = "Foto atualizada ✓"; msg.style.color = "#2a9d5c"; }
+      btn.style.display = "none";
       setTimeout(() => { if (el("lbPopupMsg")) { el("lbPopupMsg").textContent = ""; el("lbPopupMsg").style.color = ""; } }, 2500);
     } catch (e) {
-      el("lbPopupMsg").textContent = String(e?.message || "Erro.");
-      el("lbPopupMsg").style.color = "";
-    } finally { btn.disabled = false; }
+      const msg = el("lbPopupMsg");
+      if (msg) { msg.textContent = String(e?.message || "Erro ao guardar."); msg.style.color = ""; }
+      btn.disabled = false; btn.textContent = "Guardar foto";
+    }
   });
 
   // Save username + sync
@@ -348,8 +369,7 @@ function showLetterboxdPopup() {
     const username = (el("lbPopupInput")?.value || "").trim();
     if (!username) { el("lbPopupMsg").textContent = "Introduz o teu username."; return; }
     const btn = el("lbPopupSave");
-    btn.disabled = true;
-    btn.textContent = "A ligar…";
+    btn.disabled = true; btn.textContent = "A ligar…";
     el("lbPopupMsg").textContent = "";
     try {
       const res = await apiPatch("/auth/letterboxd", { letterboxd_username: username }, { auth: true });
@@ -376,24 +396,14 @@ function showLetterboxdPopup() {
     try {
       const res = await apiPost("/auth/letterboxd/sync", {}, { auth: true });
       invalidateLbCache();
-      await refreshAuthState(); // refreshes avatar in header
+      await refreshAuthState();
       toast(`Sincronizado! ${res.synced} entradas.`, "success", 3000);
       const msg = el("lbPopupMsg");
-      if (msg) {
-        msg.textContent = `Última sync: agora · ${res.synced} entradas${res.avatar_url ? " · foto atualizada ✓" : ""}`;
-        msg.style.color = "#2a9d5c";
-      }
-      // Refresh avatar preview inside popup
-      if (res.avatar_url) {
-        const preview = el("lbAvatarPreview");
-        const input = el("lbAvatarInput");
-        if (preview) preview.innerHTML = `<img src="${escapeHtml(res.avatar_url)}" alt="avatar" />`;
-        if (input) input.value = res.avatar_url;
-      }
+      if (msg) { msg.textContent = `Última sync: agora · ${res.synced} entradas`; msg.style.color = "#2a9d5c"; }
     } catch (e) {
       const msg = el("lbPopupMsg");
       if (msg) { msg.textContent = String(e?.message || "Erro na sync."); msg.style.color = ""; }
-    } finally { btn.disabled = false; btn.textContent = "↻ Sincronizar agora"; }
+    } finally { btn.disabled = false; btn.textContent = "↻ Sincronizar Letterboxd"; }
   });
 
   el("lbPopupInput")?.addEventListener("keydown", (e) => {

@@ -27,6 +27,9 @@ class User(Base):
     letterboxd_avatar_url = Column(String, nullable=True)
     letterboxd_synced_at = Column(Integer, nullable=True)  # unix timestamp
 
+    # Profile avatar (user-set, takes priority over letterboxd)
+    avatar_url = Column(String, nullable=True)
+
     # sessions (login tokens)
     sessions = relationship(
         "Session",

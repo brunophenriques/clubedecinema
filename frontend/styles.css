@@ -1658,12 +1658,19 @@ code {
 
 .lb-popup__avatar-preview {
   flex-shrink: 0;
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid var(--ink-10);
   background: var(--cream);
+  cursor: pointer;
+  transition: border-color .15s, opacity .15s;
+}
+
+.lb-popup__avatar-preview:hover {
+  border-color: var(--rouge);
+  opacity: .85;
 }
 
 .lb-popup__avatar-preview img {
@@ -1678,7 +1685,30 @@ code {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
+}
+
+.lb-popup__upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--card);
+  border: 1px solid var(--ink-10);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .1s;
+  width: fit-content;
+}
+
+.lb-popup__upload-btn:hover {
+  background: var(--parchment);
+  border-color: var(--ink-30);
+  transform: translateY(-1px);
 }
 
 .lb-popup__label {

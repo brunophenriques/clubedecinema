@@ -399,6 +399,7 @@ def login(body: dict = Body(...), db: Session = Depends(get_db)):
 @app.get("/auth/me")
 def me(db: Session = Depends(get_db), authorization: str | None = Header(None)):
     u = get_current_user(db, authorization)
+    effective_avatar = u.avatar_url or u.letterboxd_avatar_url
     return {
         "id": u.id,
         "username": u.username,
@@ -406,7 +407,33 @@ def me(db: Session = Depends(get_db), authorization: str | None = Header(None)):
         "letterboxd_username": u.letterboxd_username,
         "letterboxd_avatar_url": u.letterboxd_avatar_url,
         "letterboxd_synced_at": u.letterboxd_synced_at,
+        "avatar_url": effective_avatar,
     }
+
+
+@app.patch("/auth/avatar")
+def set_avatar(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    """Set user avatar as a URL or base64 data URI."""
+    user = get_current_user(db, authorization)
+    avatar = (body.get("avatar_url") or "").strip()
+
+    # Accept either a https URL or a data: URI (base64 image)
+    if avatar and not (avatar.startswith("https://") or avatar.startswith("http://") or avatar.startswith("data:image/")):
+        raise HTTPException(400, "avatar_url must be a valid URL or base64 data URI")
+
+    # Limit base64 size to ~2MB
+    if avatar.startswith("data:image/") and len(avatar) > 2_500_000:
+        raise HTTPException(400, "Image too large (max ~2MB)")
+
+    user.avatar_url = avatar or None
+    db.commit()
+    db.refresh(user)
+    effective_avatar = user.avatar_url or user.letterboxd_avatar_url
+    return {"ok": True, "avatar_url": effective_avatar}
 
 
 @app.post("/auth/logout")
@@ -1309,7 +1336,7 @@ def get_film_letterboxd_data(
             "user_id": user.id,
             "username": user.username,
             "letterboxd_username": user.letterboxd_username,
-            "avatar_url": user.letterboxd_avatar_url,
+            "avatar_url": user.avatar_url or user.letterboxd_avatar_url,
             "rating": entry.rating,
             "watched_date": entry.watched_date,
             "letterboxd_url": entry.letterboxd_url,
@@ -1329,7 +1356,7 @@ def get_all_members_letterboxd(
         {
             "user_id": u.id,
             "username": u.username,
-            "avatar_url": u.letterboxd_avatar_url,
+            "avatar_url": u.avatar_url or u.letterboxd_avatar_url,
             "letterboxd_username": u.letterboxd_username,
             "letterboxd_synced_at": u.letterboxd_synced_at,
         }
