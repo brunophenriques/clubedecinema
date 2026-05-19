@@ -376,11 +376,23 @@ function showLetterboxdPopup() {
     try {
       const res = await apiPost("/auth/letterboxd/sync", {}, { auth: true });
       invalidateLbCache();
+      await refreshAuthState(); // refreshes avatar in header
       toast(`Sincronizado! ${res.synced} entradas.`, "success", 3000);
-      el("lbPopupMsg").textContent = `Última sync: agora · ${res.synced} entradas`;
-      el("lbPopupMsg").style.color = "#2a9d5c";
+      const msg = el("lbPopupMsg");
+      if (msg) {
+        msg.textContent = `Última sync: agora · ${res.synced} entradas${res.avatar_url ? " · foto atualizada ✓" : ""}`;
+        msg.style.color = "#2a9d5c";
+      }
+      // Refresh avatar preview inside popup
+      if (res.avatar_url) {
+        const preview = el("lbAvatarPreview");
+        const input = el("lbAvatarInput");
+        if (preview) preview.innerHTML = `<img src="${escapeHtml(res.avatar_url)}" alt="avatar" />`;
+        if (input) input.value = res.avatar_url;
+      }
     } catch (e) {
-      el("lbPopupMsg").textContent = String(e?.message || "Erro na sync.");
+      const msg = el("lbPopupMsg");
+      if (msg) { msg.textContent = String(e?.message || "Erro na sync."); msg.style.color = ""; }
     } finally { btn.disabled = false; btn.textContent = "↻ Sincronizar agora"; }
   });
 
@@ -463,6 +475,45 @@ function posterHTML(f) {
         </button>
       </div>
     </div>`;
+}
+
+/* ── Player Modal ── */
+function openPlayerModal(vidkingUrl, title) {
+  let modal = document.getElementById("playerModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "playerModal";
+    modal.innerHTML = `
+      <div class="player-modal__backdrop" id="playerBackdrop"></div>
+      <div class="player-modal__panel" role="dialog" aria-modal="true">
+        <div class="player-modal__head">
+          <div class="player-modal__title" id="playerTitle"></div>
+          <button class="btn ghost" id="playerClose" type="button">✕</button>
+        </div>
+        <div class="player-modal__body">
+          <iframe id="playerIframe" allowfullscreen allow="fullscreen; picture-in-picture" frameborder="0"></iframe>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById("playerBackdrop").addEventListener("click", closePlayerModal);
+    document.getElementById("playerClose").addEventListener("click", closePlayerModal);
+    window.addEventListener("keydown", (e) => { if (e.key === "Escape") closePlayerModal(); });
+  }
+  document.getElementById("playerTitle").textContent = title;
+  document.getElementById("playerIframe").src = vidkingUrl;
+  modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
+}
+
+function closePlayerModal() {
+  const modal = document.getElementById("playerModal");
+  if (modal) {
+    modal.style.display = "none";
+    const iframe = document.getElementById("playerIframe");
+    if (iframe) iframe.src = "";
+    document.body.style.overflow = "";
+  }
 }
 
 /* ── Film card ── */

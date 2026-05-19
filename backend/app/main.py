@@ -1087,15 +1087,38 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
         "tmdb": "https://www.themoviedb.org/",
     }
 
-    # ── Avatar: grab from <image><url> in channel
+    # ── Avatar: scrape from profile page instead of RSS (RSS <image> is feed logo, not user avatar)
     avatar_url = None
-    channel = root.find("channel")
-    if channel is not None:
-        img_el = channel.find("image")
-        if img_el is not None:
-            url_el = img_el.find("url")
-            if url_el is not None and url_el.text:
-                avatar_url = url_el.text.strip()
+    try:
+        profile_resp = requests.get(
+            f"https://letterboxd.com/{lb_username}/",
+            timeout=8,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; ClubeDecinemasBot/1.0)"}
+        )
+        if profile_resp.status_code == 200:
+            # Letterboxd avatar is in <img class="avatar" src="..."> or og:image meta
+            html = profile_resp.text
+            # Try og:image first (highest quality)
+            og_match = re.search(r'<meta property="og:image" content="([^"]+)"', html)
+            if og_match:
+                candidate = og_match.group(1)
+                # og:image is sometimes the site logo, filter it out
+                if "a.ltrbxd.com" in candidate and "/userpics/" in candidate:
+                    avatar_url = candidate
+            # Fallback: look for avatar img tag
+            if not avatar_url:
+                av_match = re.search(r'<img[^>]+class="[^"]*avatar[^"]*"[^>]+src="([^"]+)"', html)
+                if av_match:
+                    avatar_url = av_match.group(1)
+            # Fallback 2: any ltrbxd userpics URL
+            if not avatar_url:
+                up_match = re.search(r'(https://a\.ltrbxd\.com/resized/avatar[^"\']+)', html)
+                if not up_match:
+                    up_match = re.search(r'(https://a\.ltrbxd\.com/[^"\']*userpic[^"\']+)', html)
+                if up_match:
+                    avatar_url = up_match.group(1)
+    except Exception:
+        pass  # avatar is optional, don't fail the whole sync
 
     # ── Parse diary items
     items = root.findall(".//item")
