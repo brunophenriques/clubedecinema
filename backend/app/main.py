@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 import requests
 from rapidfuzz import fuzz
+import xml.etree.ElementTree as ET
+import re
 
 import time
 import secrets
@@ -397,7 +399,14 @@ def login(body: dict = Body(...), db: Session = Depends(get_db)):
 @app.get("/auth/me")
 def me(db: Session = Depends(get_db), authorization: str | None = Header(None)):
     u = get_current_user(db, authorization)
-    return {"id": u.id, "username": u.username, "is_admin": bool(getattr(u, "is_admin", False))}
+    return {
+        "id": u.id,
+        "username": u.username,
+        "is_admin": bool(getattr(u, "is_admin", False)),
+        "letterboxd_username": u.letterboxd_username,
+        "letterboxd_avatar_url": u.letterboxd_avatar_url,
+        "letterboxd_synced_at": u.letterboxd_synced_at,
+    }
 
 
 @app.post("/auth/logout")
@@ -1010,3 +1019,281 @@ def admin_rematch_film(
         return {"ok": True, "film_id": film_id}
     db.refresh(week)
     return week_payload(db, week, include_submitter=True)
+
+# ─────────────────────────────────────────────
+# Letterboxd RSS sync
+# ─────────────────────────────────────────────
+
+# Letterboxd star ratings come as Unicode star strings like ★★★½
+_STAR_MAP = {"★": 1.0, "½": 0.5}
+
+def _parse_lb_rating(text: str) -> float | None:
+    """Convert '★★★½' → 3.5, empty/None → None."""
+    if not text:
+        return None
+    score = sum(_STAR_MAP.get(ch, 0.0) for ch in text)
+    return score if score > 0 else None
+
+
+def _parse_lb_date(date_str: str) -> int | None:
+    """Parse RSS pubDate or letterboxd:watchedDate → unix timestamp."""
+    if not date_str:
+        return None
+    # letterboxd:watchedDate is YYYY-MM-DD
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", date_str.strip())
+    if m:
+        import calendar, datetime
+        d = datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        return calendar.timegm(d.timetuple())
+    return None
+
+
+def _tmdb_id_from_lb_url(url: str) -> int | None:
+    """
+    Letterboxd film pages sometimes embed a TMDB link in the description.
+    We try to extract from the letterboxd film URL by hitting TMDB search
+    but that's expensive; instead we rely on title+year matching done elsewhere.
+    For now just return None — we match by title/year in the upsert logic.
+    """
+    return None
+
+
+def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
+    """
+    Fetch the user's Letterboxd RSS diary feed, parse entries, upsert into DB.
+    Returns {"synced": N, "avatar_url": str|None, "error": str|None}
+    """
+    lb_username = (user.letterboxd_username or "").strip()
+    if not lb_username:
+        return {"synced": 0, "avatar_url": None, "error": "no letterboxd username set"}
+
+    rss_url = f"https://letterboxd.com/{lb_username}/rss/"
+    try:
+        resp = requests.get(rss_url, timeout=10, headers={"User-Agent": "ClubeDecinemaSyncBot/1.0"})
+        if resp.status_code == 404:
+            return {"synced": 0, "avatar_url": None, "error": "letterboxd user not found"}
+        if resp.status_code != 200:
+            return {"synced": 0, "avatar_url": None, "error": f"RSS returned {resp.status_code}"}
+    except Exception as exc:
+        return {"synced": 0, "avatar_url": None, "error": str(exc)}
+
+    try:
+        root = ET.fromstring(resp.text)
+    except ET.ParseError as exc:
+        return {"synced": 0, "avatar_url": None, "error": f"XML parse error: {exc}"}
+
+    ns = {
+        "lb": "https://letterboxd.com",
+        "tmdb": "https://www.themoviedb.org/",
+    }
+
+    # ── Avatar: grab from <image><url> in channel
+    avatar_url = None
+    channel = root.find("channel")
+    if channel is not None:
+        img_el = channel.find("image")
+        if img_el is not None:
+            url_el = img_el.find("url")
+            if url_el is not None and url_el.text:
+                avatar_url = url_el.text.strip()
+
+    # ── Parse diary items
+    items = root.findall(".//item")
+    synced = 0
+
+    for item in items:
+        # Only process diary entries (have letterboxd:watchedDate)
+        watched_date_el = item.find("lb:watchedDate", ns)
+        if watched_date_el is None:
+            continue
+
+        title_el = item.find("lb:filmTitle", ns)
+        year_el = item.find("lb:filmYear", ns)
+        rating_el = item.find("lb:memberRating", ns)
+        rewatch_el = item.find("lb:rewatch", ns)
+        link_el = item.find("link")
+
+        film_title = (title_el.text or "").strip() if title_el is not None else ""
+        if not film_title:
+            continue
+
+        film_year_raw = (year_el.text or "").strip() if year_el is not None else ""
+        film_year = int(film_year_raw) if film_year_raw.isdigit() else None
+
+        # memberRating is numeric e.g. "3.5" in newer RSS, or star text in older
+        rating_raw = (rating_el.text or "").strip() if rating_el is not None else ""
+        try:
+            rating = float(rating_raw) if rating_raw else None
+        except ValueError:
+            rating = _parse_lb_rating(rating_raw)
+
+        watched_date = _parse_lb_date((watched_date_el.text or "").strip())
+        is_rewatch = (rewatch_el is not None and (rewatch_el.text or "").strip().lower() == "yes")
+        lb_url = (link_el.text or "").strip() if link_el is not None else None
+
+        # Try to match to a TMDB id from our films table
+        tmdb_id = None
+        film_match = (
+            db.query(models.Film)
+            .filter(models.Film.title.ilike(film_title))
+            .filter(models.Film.year == film_year if film_year else True)
+            .filter(models.Film.tmdb_id.isnot(None))
+            .first()
+        )
+        if film_match:
+            tmdb_id = film_match.tmdb_id
+
+        # Upsert: if we have a tmdb_id use that unique key, else skip dedup
+        existing = None
+        if tmdb_id:
+            existing = (
+                db.query(models.LetterboxdEntry)
+                .filter(
+                    models.LetterboxdEntry.user_id == user.id,
+                    models.LetterboxdEntry.tmdb_id == tmdb_id,
+                )
+                .first()
+            )
+
+        if existing:
+            # Update if newer watch date or more info
+            if watched_date and (existing.watched_date is None or watched_date > existing.watched_date):
+                existing.watched_date = watched_date
+                existing.rating = rating
+                existing.is_rewatch = is_rewatch
+                existing.letterboxd_url = lb_url
+        else:
+            entry = models.LetterboxdEntry(
+                user_id=user.id,
+                tmdb_id=tmdb_id,
+                film_title=film_title,
+                film_year=film_year,
+                rating=rating,
+                watched_date=watched_date,
+                letterboxd_url=lb_url,
+                is_rewatch=is_rewatch,
+            )
+            db.add(entry)
+
+        synced += 1
+
+    # Update user avatar + sync timestamp
+    if avatar_url:
+        user.letterboxd_avatar_url = avatar_url
+    user.letterboxd_synced_at = int(time.time())
+
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        return {"synced": 0, "avatar_url": avatar_url, "error": f"DB error: {exc}"}
+
+    return {"synced": synced, "avatar_url": avatar_url, "error": None}
+
+
+# ─────────────────────────────────────────────
+# Letterboxd API endpoints
+# ─────────────────────────────────────────────
+
+@app.patch("/auth/letterboxd")
+def set_letterboxd_username(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    """Set or update the user's Letterboxd username, then trigger a sync."""
+    user = get_current_user(db, authorization)
+    lb_username = (body.get("letterboxd_username") or "").strip()
+
+    if not lb_username:
+        # Allow clearing
+        user.letterboxd_username = None
+        user.letterboxd_avatar_url = None
+        user.letterboxd_synced_at = None
+        db.commit()
+        return {"ok": True, "letterboxd_username": None, "synced": 0}
+
+    user.letterboxd_username = lb_username
+    db.commit()
+
+    result = fetch_and_sync_letterboxd(db, user)
+    db.refresh(user)
+
+    return {
+        "ok": True,
+        "letterboxd_username": user.letterboxd_username,
+        "letterboxd_avatar_url": user.letterboxd_avatar_url,
+        "synced": result["synced"],
+        "error": result["error"],
+    }
+
+
+@app.post("/auth/letterboxd/sync")
+def sync_letterboxd(
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    """Manually trigger a Letterboxd RSS sync for the current user."""
+    user = get_current_user(db, authorization)
+    if not user.letterboxd_username:
+        raise HTTPException(400, "No Letterboxd username set")
+
+    result = fetch_and_sync_letterboxd(db, user)
+    db.refresh(user)
+
+    return {
+        "ok": True,
+        "synced": result["synced"],
+        "avatar_url": result.get("avatar_url"),
+        "error": result["error"],
+        "letterboxd_synced_at": user.letterboxd_synced_at,
+    }
+
+
+@app.get("/letterboxd/film/{tmdb_id}")
+def get_film_letterboxd_data(
+    tmdb_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Return all club members' Letterboxd data for a given TMDB film ID.
+    Used by the frontend to show who watched it and their ratings.
+    """
+    entries = (
+        db.query(models.LetterboxdEntry, models.User)
+        .join(models.User, models.LetterboxdEntry.user_id == models.User.id)
+        .filter(models.LetterboxdEntry.tmdb_id == tmdb_id)
+        .all()
+    )
+
+    result = []
+    for entry, user in entries:
+        result.append({
+            "user_id": user.id,
+            "username": user.username,
+            "avatar_url": user.letterboxd_avatar_url,
+            "rating": entry.rating,
+            "watched_date": entry.watched_date,
+            "letterboxd_url": entry.letterboxd_url,
+            "is_rewatch": entry.is_rewatch,
+        })
+
+    return result
+
+
+@app.get("/letterboxd/members")
+def get_all_members_letterboxd(
+    db: Session = Depends(get_db),
+):
+    """Return all users with their Letterboxd info (for avatar display everywhere)."""
+    users = db.query(models.User).all()
+    return [
+        {
+            "user_id": u.id,
+            "username": u.username,
+            "avatar_url": u.letterboxd_avatar_url,
+            "letterboxd_username": u.letterboxd_username,
+            "letterboxd_synced_at": u.letterboxd_synced_at,
+        }
+        for u in users
+    ]

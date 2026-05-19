@@ -7,7 +7,7 @@ const API = "";
 function el(id) { return document.getElementById(id); }
 
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({
+  return String(s).replace(/[&<>\"']/g, (c) => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[c]));
 }
@@ -18,6 +18,21 @@ function getToken() { return localStorage.getItem(TOKEN_KEY); }
 function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
 function clearToken() { localStorage.removeItem(TOKEN_KEY); }
 function votedKey(weekId) { return `cinema_club_voted_week_${weekId}`; }
+
+/* ── Letterboxd member cache ── */
+let _lbMembers = null; // { userId: {avatar_url, username, letterboxd_username} }
+
+async function getLbMembers() {
+  if (_lbMembers) return _lbMembers;
+  try {
+    const list = await apiGet("/letterboxd/members");
+    _lbMembers = {};
+    for (const m of list) _lbMembers[m.user_id] = m;
+  } catch { _lbMembers = {}; }
+  return _lbMembers;
+}
+
+function invalidateLbCache() { _lbMembers = null; }
 
 /* ── Toast system ── */
 function ensureToastRoot() {
@@ -134,6 +149,9 @@ function setAuthMode(mode) {
     : "";
 }
 
+/* ── Current user (global) ── */
+let _currentUser = null;
+
 /* ── Auth state ── */
 async function refreshAuthState() {
   const line = el("authStatusLine");
@@ -145,20 +163,45 @@ async function refreshAuthState() {
 
   const token = getToken();
   if (!token) {
+    _currentUser = null;
     if (line) line.textContent = "Não autenticado.";
     if (btnLogin) btnLogin.style.display = "";
     if (btnLogout) btnLogout.style.display = "none";
+    const avatarPillOut = el("authAvatarPill");
+    if (avatarPillOut) avatarPillOut.style.display = "none";
+    const btnLbOut = el("btnLetterboxd");
+    if (btnLbOut) btnLbOut.style.display = "none";
     return null;
   }
 
   try {
     const me = await apiGet("/auth/me", { auth: true });
+    _currentUser = me;
+
+    // Update avatar in header
+    updateHeaderAvatar(me);
+    const avatarPill = el("authAvatarPill");
+    if (avatarPill) avatarPill.style.display = me.letterboxd_avatar_url ? "" : "none";
+    const btnLb = el("btnLetterboxd");
+    if (btnLb) {
+      btnLb.style.display = "";
+      btnLb.title = me.letterboxd_username ? `Letterboxd: @${me.letterboxd_username}` : "Ligar Letterboxd";
+      btnLb.classList.toggle("lb-connect-btn--connected", !!me.letterboxd_username);
+    }
+
     if (line) line.textContent = `@${me.username}`;
     if (btnLogin) btnLogin.style.display = "none";
     if (btnLogout) btnLogout.style.display = "";
     if (navAdmin && me?.is_admin) navAdmin.style.display = "";
+
+    // Show letterboxd connect popup if not yet connected
+    if (!me.letterboxd_username) {
+      setTimeout(() => showLetterboxdPopup(), 800);
+    }
+
     return me;
   } catch {
+    _currentUser = null;
     clearToken();
     if (line) line.textContent = "Sessão expirada.";
     if (btnLogin) btnLogin.style.display = "";
@@ -190,15 +233,137 @@ function setWeekStatus(week, alreadyVoted) {
   }
 }
 
+/* ── Avatar helpers ── */
+function avatarHTML(user, size = 28) {
+  const url = user?.avatar_url || user?.letterboxd_avatar_url;
+  const name = user?.username || "?";
+  if (url) {
+    return `<img class="lb-avatar" src="${escapeHtml(url)}" alt="${escapeHtml(name)}" title="@${escapeHtml(name)}" width="${size}" height="${size}" style="width:${size}px;height:${size}px" />`;
+  }
+  const initials = name.slice(0, 2).toUpperCase();
+  return `<div class="lb-avatar lb-avatar--initials" title="@${escapeHtml(name)}" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.38)}px">${escapeHtml(initials)}</div>`;
+}
+
+function updateHeaderAvatar(me) {
+  let pill = el("authAvatarPill");
+  if (!pill) return;
+  const url = me?.letterboxd_avatar_url;
+  if (url) {
+    pill.innerHTML = `<img class="lb-avatar" src="${escapeHtml(url)}" alt="@${escapeHtml(me.username)}" width="28" height="28" />`;
+  } else {
+    pill.textContent = (me?.username || "?").slice(0, 2).toUpperCase();
+  }
+}
+
+/* ── Letterboxd connect popup ── */
+function showLetterboxdPopup() {
+  if (el("lbPopup")) return; // already showing
+  const pop = document.createElement("div");
+  pop.id = "lbPopup";
+  pop.innerHTML = `
+    <div class="lb-popup__panel">
+      <button class="lb-popup__close" id="lbPopupClose" type="button" aria-label="Fechar">✕</button>
+      <div class="lb-popup__logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Letterboxd
+      </div>
+      <div class="lb-popup__title">Liga o teu Letterboxd</div>
+      <div class="lb-popup__sub">Vê quem já viu os filmes e as suas avaliações.</div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <input id="lbPopupInput" class="input" placeholder="O teu username" autocomplete="off" style="flex:1" />
+        <button class="btn primary" id="lbPopupSave" type="button">Ligar</button>
+      </div>
+      <div class="lb-popup__msg" id="lbPopupMsg"></div>
+      <button class="btn ghost lb-popup__skip" id="lbPopupSkip" type="button">Mais tarde</button>
+    </div>
+  `;
+  document.body.appendChild(pop);
+
+  el("lbPopupClose")?.addEventListener("click", () => pop.remove());
+  el("lbPopupSkip")?.addEventListener("click", () => pop.remove());
+
+  el("lbPopupSave")?.addEventListener("click", async () => {
+    const username = (el("lbPopupInput")?.value || "").trim();
+    if (!username) { el("lbPopupMsg").textContent = "Introduz o teu username."; return; }
+
+    const btn = el("lbPopupSave");
+    btn.disabled = true;
+    btn.textContent = "A ligar…";
+    el("lbPopupMsg").textContent = "";
+
+    try {
+      const res = await apiPatch("/auth/letterboxd", { letterboxd_username: username }, { auth: true });
+      if (res.error && res.synced === 0) {
+        el("lbPopupMsg").textContent = `Erro: ${res.error}`;
+        btn.disabled = false;
+        btn.textContent = "Ligar";
+        return;
+      }
+      invalidateLbCache();
+      toast(`Letterboxd ligado! ${res.synced} entradas sincronizadas.`, "success", 4000);
+      pop.remove();
+      await refreshAuthState();
+      await load();
+    } catch (e) {
+      el("lbPopupMsg").textContent = String(e?.message || "Erro ao ligar.");
+      btn.disabled = false;
+      btn.textContent = "Ligar";
+    }
+  });
+
+  el("lbPopupInput")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") el("lbPopupSave")?.click();
+  });
+
+  requestAnimationFrame(() => pop.classList.add("lb-popup--visible"));
+}
+
+/* ── HTTP PATCH helper ── */
+async function apiPatch(path, body, { auth = false } = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (auth && getToken()) headers["Authorization"] = `Bearer ${getToken()}`;
+  const res = await fetch(`${API}${path}`, { method: "PATCH", headers, body: JSON.stringify(body ?? {}) });
+  if (!res.ok) {
+    const err = await parseError(res);
+    throw Object.assign(new Error(err.detail), { status: err.status });
+  }
+  return res.json();
+}
+
+/* ── Letterboxd watcher strip ── */
+async function buildWatcherStrip(tmdbId) {
+  if (!tmdbId) return "";
+  try {
+    const watchers = await apiGet(`/letterboxd/film/${tmdbId}`);
+    if (!watchers || watchers.length === 0) return "";
+
+    const stars = (r) => {
+      if (r == null) return "";
+      const full = Math.floor(r);
+      const half = (r % 1) >= 0.5 ? 1 : 0;
+      return "★".repeat(full) + (half ? "½" : "");
+    };
+
+    const avatars = watchers.map(w =>
+      `<span class="lb-watcher" title="@${escapeHtml(w.username)}${w.rating != null ? ` · ${stars(w.rating)}` : ''}">
+        ${avatarHTML(w, 24)}
+        ${w.rating != null ? `<span class="lb-watcher__stars">${stars(w.rating)}</span>` : ""}
+      </span>`
+    ).join("");
+
+    return `<div class="lb-strip"><span class="lb-strip__label">Visto por</span><div class="lb-strip__avatars">${avatars}</div></div>`;
+  } catch {
+    return "";
+  }
+}
+
 /* ── Poster HTML ── */
 function posterHTML(f) {
-  // Build Letterboxd search URL using tmdb: search trigger if tmdb_id exists, otherwise title+year
   const lbQuery = f.tmdb_id
     ? `tmdb:${f.tmdb_id}`
     : encodeURIComponent(`${f.title}${f.year ? ` ${f.year}` : ""}`);
   const letterboxdUrl = `https://letterboxd.com/search/${lbQuery}/`;
 
-  // VidKing embed URL — uses TMDB id if available, otherwise falls back to title search
   const vidkingUrl = f.tmdb_id
     ? `https://www.vidking.net/embed/movie/${f.tmdb_id}`
     : `https://www.vidking.net/search/${encodeURIComponent(f.title + (f.year ? ` ${f.year}` : ""))}`;
@@ -211,7 +376,7 @@ function posterHTML(f) {
   const posterClass = f.poster_url ? "poster" : "poster placeholder";
 
   return `
-    <div class="${posterClass}" data-letterboxd="${escapeHtml(letterboxdUrl)}" data-vidking="${vidkingUrl ? escapeHtml(vidkingUrl) : ""}" data-title="${escapeHtml(f.title)}">
+    <div class="${posterClass}" data-letterboxd="${escapeHtml(letterboxdUrl)}" data-vidking="${escapeHtml(vidkingUrl)}" data-title="${escapeHtml(f.title)}">
       ${posterContent}
       <div class="poster-overlay">
         <a class="poster-btn poster-btn--know" href="${escapeHtml(letterboxdUrl)}" target="_blank" rel="noopener noreferrer">
@@ -224,45 +389,6 @@ function posterHTML(f) {
         </button>
       </div>
     </div>`;
-}
-
-/* ── Player Modal ── */
-function openPlayerModal(vidkingUrl, title) {
-  let modal = document.getElementById("playerModal");
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "playerModal";
-    modal.innerHTML = `
-      <div class="player-modal__backdrop" id="playerBackdrop"></div>
-      <div class="player-modal__panel" role="dialog" aria-modal="true">
-        <div class="player-modal__head">
-          <div class="player-modal__title" id="playerTitle"></div>
-          <button class="btn ghost" id="playerClose" type="button">✕</button>
-        </div>
-        <div class="player-modal__body">
-          <iframe id="playerIframe" allowfullscreen allow="fullscreen; picture-in-picture" frameborder="0"></iframe>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    document.getElementById("playerBackdrop").addEventListener("click", closePlayerModal);
-    document.getElementById("playerClose").addEventListener("click", closePlayerModal);
-    window.addEventListener("keydown", (e) => { if (e.key === "Escape") closePlayerModal(); });
-  }
-  document.getElementById("playerTitle").textContent = title;
-  document.getElementById("playerIframe").src = vidkingUrl;
-  modal.style.display = "flex";
-  document.body.style.overflow = "hidden";
-}
-
-function closePlayerModal() {
-  const modal = document.getElementById("playerModal");
-  if (modal) {
-    modal.style.display = "none";
-    const iframe = document.getElementById("playerIframe");
-    if (iframe) iframe.src = "";
-    document.body.style.overflow = "";
-  }
 }
 
 /* ── Film card ── */
@@ -291,6 +417,7 @@ function filmCard(week, f, alreadyVoted) {
         <div class="film-meta">
           ${f.director ? `Dir. ${escapeHtml(f.director)} · ` : ""}${f.votes} voto${f.votes !== 1 ? "s" : ""}
         </div>
+        <div class="lb-strip-placeholder"></div>
       </div>
       <div class="film-actions">
         <button class="btn${canVote ? " primary" : ""}" ${canVote ? "" : "disabled"}>
@@ -300,6 +427,17 @@ function filmCard(week, f, alreadyVoted) {
       </div>
     </div>
   `;
+
+  // Async: inject watcher strip once loaded
+  if (f.tmdb_id) {
+    buildWatcherStrip(f.tmdb_id).then(html => {
+      const placeholder = div.querySelector(".lb-strip-placeholder");
+      if (placeholder && html) placeholder.outerHTML = html;
+      else if (placeholder) placeholder.remove();
+    });
+  } else {
+    div.querySelector(".lb-strip-placeholder")?.remove();
+  }
 
   const btn = div.querySelector("button");
   btn.addEventListener("click", async () => {
@@ -487,7 +625,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await refreshAuthState();
   await load();
 
-  // Permanent delegated handler for play buttons — lives on the stable #films container
+  // Permanent delegated handler for play buttons
   el("films")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".poster-btn--play");
     if (!btn) return;
@@ -500,4 +638,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (isEmbed) openPlayerModal(url, title);
     else window.open(url, "_blank", "noopener,noreferrer");
   });
+
+  // Letterboxd settings button
+  el("btnLetterboxd")?.addEventListener("click", () => showLetterboxdPopup());
 });

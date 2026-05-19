@@ -22,9 +22,21 @@ class User(Base):
     # Admin flag
     is_admin = Column(Boolean, default=False, nullable=False)
 
+    # Letterboxd integration
+    letterboxd_username = Column(String, nullable=True)
+    letterboxd_avatar_url = Column(String, nullable=True)
+    letterboxd_synced_at = Column(Integer, nullable=True)  # unix timestamp
+
     # sessions (login tokens)
     sessions = relationship(
         "Session",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    letterboxd_entries = relationship(
+        "LetterboxdEntry",
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
@@ -122,4 +134,29 @@ class Vote(Base):
 
     __table_args__ = (
         UniqueConstraint("week_id", "voter_key", name="unique_vote_per_week_per_voter"),
+    )
+
+class LetterboxdEntry(Base):
+    """Cached diary entries fetched from a user's Letterboxd RSS feed."""
+    __tablename__ = "letterboxd_entries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Film identity — we match on tmdb_id when possible, otherwise title+year
+    tmdb_id = Column(Integer, nullable=True, index=True)
+    film_title = Column(String, nullable=False)
+    film_year = Column(Integer, nullable=True)
+
+    # Letterboxd data
+    rating = Column(Float, nullable=True)          # 0.5 – 5.0 (half-stars)
+    watched_date = Column(Integer, nullable=True)  # unix timestamp
+    letterboxd_url = Column(String, nullable=True)
+    is_rewatch = Column(Boolean, default=False, nullable=False)
+
+    user = relationship("User", back_populates="letterboxd_entries")
+
+    __table_args__ = (
+        # one entry per user per tmdb film (most recent watch wins on upsert)
+        UniqueConstraint("user_id", "tmdb_id", name="uq_lb_entry_user_tmdb"),
     )
