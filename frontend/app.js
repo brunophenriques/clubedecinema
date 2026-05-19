@@ -598,14 +598,14 @@ function filmCard(week, f, alreadyVoted) {
         <div class="lb-strip-placeholder"></div>
       </div>
       <div class="reaction-bar" id="reactions-${f.id}">
-        <button class="reaction-add-btn" data-film="${f.id}" title="Reagir">
-          <span>😊</span>
+        <div class="reaction-add-wrap">
+          <button class="reaction-add-btn" data-film="${f.id}" title="Reagir">😊</button>
           <div class="reaction-picker" id="picker-${f.id}">
             ${REACTION_EMOJIS.map(e => `
               <button class="reaction-picker__btn" data-film="${f.id}" data-emoji="${escapeHtml(e)}">${e}</button>
             `).join("")}
           </div>
-        </button>
+        </div>
         <div class="reaction-chips" id="chips-${f.id}"></div>
       </div>
       <div class="film-actions">
@@ -1075,11 +1075,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const addBtn = e.target.closest(".reaction-add-btn");
     if (addBtn) {
       e.preventDefault(); e.stopPropagation();
-      // Close all other pickers
+      const picker = addBtn.closest(".reaction-add-wrap")?.querySelector(".reaction-picker");
       document.querySelectorAll(".reaction-picker--open").forEach(p => {
-        if (p.closest(".reaction-add-btn") !== addBtn) p.classList.remove("reaction-picker--open");
+        if (p !== picker) p.classList.remove("reaction-picker--open");
       });
-      addBtn.querySelector(".reaction-picker")?.classList.toggle("reaction-picker--open");
+      picker?.classList.toggle("reaction-picker--open");
       return;
     }
     // Picker emoji click

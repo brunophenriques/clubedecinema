@@ -2053,8 +2053,12 @@ code {
 }
 
 /* ── Add button ── */
-.reaction-add-btn {
+.reaction-add-wrap {
   position: relative;
+  flex-shrink: 0;
+}
+
+.reaction-add-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2066,7 +2070,6 @@ code {
   cursor: pointer;
   font-size: 16px;
   transition: border-color .12s, background .12s, transform .12s var(--ease);
-  flex-shrink: 0;
 }
 
 .reaction-add-btn:hover {
