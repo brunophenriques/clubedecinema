@@ -221,6 +221,11 @@ async function refreshAuthState() {
     const me = await apiGet("/auth/me", { auth: true });
     _currentUser = me;
 
+    // Force username fix if invalid
+    if (!isValidUsername(me.username)) {
+      setTimeout(() => showForceUsernamePopup(me.username), 500);
+    }
+
     // Update avatar in header
     updateHeaderAvatar(me);
     const avatarPill = el("authAvatarPill");
@@ -891,7 +896,59 @@ async function submitFilmCurrentWeek() {
   }
 }
 
-/* ── Theme toggle ── */
+/* ── Username validation ── */
+const USERNAME_RE = /^[a-zA-Z0-9_.\-]{3,32}$/;
+
+function isValidUsername(u) { return USERNAME_RE.test(u || ""); }
+
+function showForceUsernamePopup(currentUsername) {
+  if (el("forceUsernamePopup")) return;
+
+  const pop = document.createElement("div");
+  pop.id = "forceUsernamePopup";
+  pop.innerHTML = `
+    <div class="force-username__backdrop"></div>
+    <div class="force-username__panel">
+      <div class="force-username__icon">⚠️</div>
+      <div class="force-username__title">O teu username precisa de ser alterado</div>
+      <div class="force-username__sub">
+        O username <strong>${escapeHtml(currentUsername)}</strong> tem caracteres inválidos.<br>
+        Usa apenas letras, números, <code>_</code>, <code>.</code> ou <code>-</code> (sem espaços ou ~).
+      </div>
+      <input id="forceUsernameInput" class="input" placeholder="novo username" maxlength="32" autocomplete="off" />
+      <div class="force-username__rules">3–32 caracteres · letras, números, _ . -</div>
+      <button class="btn primary" id="forceUsernameSave" type="button" style="width:100%">Guardar username</button>
+      <div class="force-username__msg" id="forceUsernameMsg"></div>
+    </div>
+  `;
+  document.body.appendChild(pop);
+  requestAnimationFrame(() => pop.classList.add("force-username--visible"));
+  el("forceUsernameInput")?.focus();
+
+  el("forceUsernameSave")?.addEventListener("click", async () => {
+    const val = (el("forceUsernameInput")?.value || "").trim();
+    const msg = el("forceUsernameMsg");
+    if (!isValidUsername(val)) {
+      msg.textContent = "Username inválido — usa só letras, números, _ . -";
+      return;
+    }
+    const btn = el("forceUsernameSave");
+    btn.disabled = true; btn.textContent = "A guardar…";
+    try {
+      await apiPatch("/auth/username", { username: val }, { auth: true });
+      pop.remove();
+      await refreshAuthState();
+      toast(`Username alterado para @${val} ✓`, "success", 3000);
+    } catch (e) {
+      msg.textContent = String(e?.message || "Erro ao guardar.");
+      btn.disabled = false; btn.textContent = "Guardar username";
+    }
+  });
+
+  el("forceUsernameInput")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") el("forceUsernameSave")?.click();
+  });
+}
 function initTheme() {
   const saved = localStorage.getItem("cc_theme") || "light";
   document.documentElement.setAttribute("data-theme", saved);
