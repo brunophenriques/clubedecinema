@@ -232,7 +232,9 @@ async function refreshAuthState() {
       btnLb.classList.toggle("lb-connect-btn--connected", !!me.letterboxd_username);
     }
 
-    if (line) line.textContent = `@${me.username}`;
+    if (line) {
+      line.innerHTML = `<a class="auth-pill__user--link" href="/profile/${encodeURIComponent(me.username)}">@${escapeHtml(me.username)}</a>`;
+    }
     if (btnLogin) btnLogin.style.display = "none";
     if (btnLogout) btnLogout.style.display = "";
     if (navAdmin && me?.is_admin) navAdmin.style.display = "";
@@ -889,6 +891,21 @@ async function submitFilmCurrentWeek() {
   }
 }
 
+/* ── Theme toggle ── */
+function initTheme() {
+  const saved = localStorage.getItem("cc_theme") || "light";
+  document.documentElement.setAttribute("data-theme", saved);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") || "light";
+  const next = current === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("cc_theme", next);
+}
+
+initTheme();
+
 /* ── Chat ── */
 let _chatWeekId = null;
 let _chatPollInterval = null;
@@ -1129,6 +1146,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     e.target.style.height = "auto";
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
   });
+
+  el("btnTheme")?.addEventListener("click", toggleTheme);
 
   // Letterboxd settings button + avatar both open popup
   el("btnLetterboxd")?.addEventListener("click", () => showLetterboxdPopup());

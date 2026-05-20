@@ -1557,3 +1557,93 @@ def delete_chat_message(
     db.delete(msg)
     db.commit()
     return {"ok": True}
+
+
+# ─────────────────────────────────────────────
+# Profile page
+# ─────────────────────────────────────────────
+
+@app.get("/profile/{username}")
+async def profile_page(username: str):
+    from fastapi.responses import FileResponse
+    return FileResponse("frontend/profile.html")
+
+
+@app.get("/users/{username}/profile")
+def get_user_profile(username: str, db: Session = Depends(get_db)):
+    """Public profile data for a user."""
+    user = db.query(models.User).filter(
+        func.lower(models.User.username) == username.lower()
+    ).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    # Films submitted
+    submitted = db.query(models.Film).filter(models.Film.submitter_id == user.id).all()
+
+    # Votes cast
+    votes = db.query(models.Vote).filter(models.Vote.voter_key == f"user:{user.id}").all()
+
+    # Winning submissions (films they submitted that became winners)
+    won_films = [
+        f for f in submitted
+        if f.week and not f.week.is_open and f.week.winner_film_id == f.id
+    ]
+
+    # Reactions given
+    reactions = db.query(models.Reaction).filter(models.Reaction.user_id == user.id).all()
+    reaction_counts = {}
+    for r in reactions:
+        reaction_counts[r.emoji] = reaction_counts.get(r.emoji, 0) + 1
+
+    # Letterboxd entries
+    lb_entries = db.query(models.LetterboxdEntry).filter(
+        models.LetterboxdEntry.user_id == user.id
+    ).order_by(models.LetterboxdEntry.watched_date.desc()).limit(20).all()
+
+    # Build submitted films list with week info
+    submitted_list = []
+    for f in sorted(submitted, key=lambda x: x.id, reverse=True):
+        week = f.week
+        is_winner = week and not week.is_open and week.winner_film_id == f.id
+        submitted_list.append({
+            "id": f.id,
+            "title": f.title,
+            "year": f.year,
+            "director": f.director,
+            "poster_url": f.poster_url,
+            "tmdb_id": f.tmdb_id,
+            "week_title": week.title if week else None,
+            "week_id": week.id if week else None,
+            "is_winner": is_winner,
+            "votes": len(f.votes) if f.votes else 0,
+        })
+
+    return {
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "avatar_url": user.avatar_url or user.letterboxd_avatar_url,
+            "letterboxd_username": user.letterboxd_username,
+        },
+        "stats": {
+            "films_submitted": len(submitted),
+            "films_won": len(won_films),
+            "votes_cast": len(votes),
+            "reactions_given": len(reactions),
+            "win_rate": round(len(won_films) / len(submitted) * 100) if submitted else 0,
+        },
+        "reaction_counts": reaction_counts,
+        "submitted_films": submitted_list,
+        "letterboxd_entries": [
+            {
+                "film_title": e.film_title,
+                "film_year": e.film_year,
+                "rating": e.rating,
+                "watched_date": e.watched_date,
+                "letterboxd_url": e.letterboxd_url,
+                "tmdb_id": e.tmdb_id,
+            }
+            for e in lb_entries
+        ],
+    }

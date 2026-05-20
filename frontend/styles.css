@@ -40,6 +40,58 @@
   --ease-soft: cubic-bezier(.4, 0, .2, 1);
 }
 
+/* ── Dark mode ── */
+[data-theme="dark"] {
+  --ink:       #F0EBE3;
+  --ink-60:    rgba(240, 235, 227, .60);
+  --ink-30:    rgba(240, 235, 227, .30);
+  --ink-10:    rgba(240, 235, 227, .10);
+  --ink-06:    rgba(240, 235, 227, .06);
+
+  --cream:     #161218;
+  --cream-80:  rgba(22, 18, 24, .80);
+  --parchment: #1E1820;
+  --card:      #231E26;
+
+  --rouge:     #D4476A;
+  --rouge-dim: rgba(212, 71, 106, .15);
+  --rouge-mid: rgba(212, 71, 106, .28);
+  --gold:      #D4A84B;
+  --gold-dim:  rgba(212, 168, 75, .15);
+
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.25);
+  --shadow-md: 0 8px 28px rgba(0,0,0,.35);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,.50);
+}
+
+/* ── Dark mode theme toggle button ── */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--ink-10);
+  background: transparent;
+  color: var(--ink-60);
+  cursor: pointer;
+  transition: color .15s, background .15s, border-color .15s;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+  background: var(--ink-06);
+  border-color: var(--ink-30);
+}
+
+.theme-toggle .icon-moon { display: block; }
+.theme-toggle .icon-sun  { display: none;  }
+
+[data-theme="dark"] .theme-toggle .icon-moon { display: none;  }
+[data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -2437,4 +2489,350 @@ code {
   .chat-panel {
     width: 100vw;
   }
+}
+
+/* ═══════════════════════════════════════════
+   PROFILE PAGE
+   ═══════════════════════════════════════════ */
+
+.profile-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+}
+
+.profile-error {
+  text-align: center;
+  padding: 80px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-error__icon { font-size: 48px; }
+.profile-error__msg { font-size: 18px; color: var(--ink-60); }
+
+/* ── Hero ── */
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 40px 0 32px;
+  border-bottom: 1px solid var(--ink-10);
+  margin-bottom: 32px;
+}
+
+.profile-hero__avatar {
+  flex-shrink: 0;
+}
+
+.profile-hero__name {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 42px);
+  letter-spacing: -.02em;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.profile-hero__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--ink-60);
+  flex-wrap: wrap;
+}
+
+.profile-lb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #00c030;
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity .15s;
+}
+
+.profile-lb-link:hover { opacity: .75; }
+
+/* ── Stats ── */
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.profile-stat {
+  background: var(--card);
+  border: 1px solid var(--ink-10);
+  border-radius: var(--radius-lg);
+  padding: 20px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--shadow-sm);
+  transition: transform .18s var(--ease), box-shadow .18s;
+}
+
+.profile-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.profile-stat__icon { font-size: 22px; }
+
+.profile-stat__value {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: -.02em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.profile-stat__label {
+  font-size: 11px;
+  color: var(--ink-60);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+/* ── Reactions ── */
+.profile-reactions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-reactions__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-30);
+}
+
+.profile-reactions__chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ── Films grid ── */
+.profile-films-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.profile-film-card {
+  background: var(--card);
+  border: 1px solid var(--ink-10);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform .2s var(--ease), box-shadow .2s;
+}
+
+.profile-film-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.profile-film-card--winner {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold), var(--shadow-sm);
+}
+
+.profile-film-card__poster {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2/3;
+  overflow: hidden;
+  background: var(--parchment);
+}
+
+.profile-film-card__poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .4s var(--ease-soft);
+}
+
+.profile-film-card:hover .profile-film-card__poster img {
+  transform: scale(1.05);
+}
+
+.profile-film-card__poster-ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 32px;
+  color: var(--ink-30);
+}
+
+.profile-film-card__trophy {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 13px;
+  background: rgba(245,240,232,.95);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .profile-film-card__trophy {
+  background: rgba(35,30,38,.95);
+}
+
+.profile-film-card__body {
+  padding: 11px 12px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-film-card__week {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--rouge);
+}
+
+.profile-film-card__title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--ink);
+  letter-spacing: -.01em;
+}
+
+.profile-film-card__year {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--ink-60);
+}
+
+.profile-film-card__dir {
+  font-size: 10px;
+  color: var(--ink-60);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-film-card__votes {
+  font-size: 10px;
+  color: var(--ink-30);
+  margin-top: 2px;
+}
+
+/* ── Letterboxd diary list ── */
+.profile-lb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--ink-10);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-lb-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ink-06);
+  text-decoration: none;
+  color: var(--ink);
+  transition: background .12s;
+}
+
+.profile-lb-entry:last-child { border-bottom: none; }
+
+.profile-lb-entry:hover { background: var(--parchment); }
+
+.profile-lb-entry__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.profile-lb-entry__year {
+  font-weight: 400;
+  color: var(--ink-60);
+  font-size: 12px;
+}
+
+.profile-lb-entry__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.profile-lb-entry__stars {
+  color: #c8922a;
+  font-size: 13px;
+  letter-spacing: -.02em;
+}
+
+.profile-lb-entry__date {
+  font-size: 11px;
+  color: var(--ink-30);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+
+/* ── Section flat variant ── */
+.section--flat {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .profile-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .profile-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .profile-films-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Auth username clickable as profile link ── */
+.auth-pill__user--link {
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: color .15s;
+}
+
+.auth-pill__user--link:hover {
+  color: var(--rouge);
 }

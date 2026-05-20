@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Perfil — Clube de Cinema</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/profile.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <div class="brand">
+        <a href="/" class="brand-link" style="display:contents">
+          <div class="logo-badge" aria-hidden="true"><span id="editionNum">67</span></div>
+          <div class="brand-copy">
+            <div class="brand-title"><span>Clube de Cinema</span></div>
+            <div class="brand-sub" id="weekTitle">—</div>
+          </div>
+        </a>
+      </div>
+      <div class="top-right">
+        <nav class="nav">
+          <a class="nav-link" href="/">Semana</a>
+          <a class="nav-link" href="/archive">Arquivo</a>
+        </nav>
+        <div class="auth-pill">
+          <div class="auth-pill__avatar" id="authAvatarPill" style="display:none"></div>
+          <span class="auth-pill__user" id="authStatusLine">Não autenticado.</span>
+          <button class="btn" id="btnLogin" type="button" style="display:none">Entrar</button>
+          <button class="btn" id="btnLogout" type="button" style="display:none">Sair</button>
+          <button class="theme-toggle" id="btnTheme" type="button" title="Mudar tema">
+            <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" style="padding-top:48px;padding-bottom:80px">
+    <!-- Loading -->
+    <div id="profileLoading" class="profile-loading">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Error -->
+    <div id="profileError" class="profile-error" style="display:none">
+      <div class="profile-error__icon">🎬</div>
+      <div class="profile-error__msg">Utilizador não encontrado.</div>
+      <a href="/" class="btn primary" style="margin-top:16px">Voltar ao início</a>
+    </div>
+
+    <!-- Profile content -->
+    <div id="profileContent" style="display:none">
+
+      <!-- Hero -->
+      <section class="profile-hero">
+        <div class="profile-hero__avatar" id="profileAvatar"></div>
+        <div class="profile-hero__info">
+          <h1 class="profile-hero__name" id="profileName"></h1>
+          <div class="profile-hero__meta" id="profileMeta"></div>
+        </div>
+      </section>
+
+      <!-- Stats row -->
+      <div class="profile-stats" id="profileStats"></div>
+
+      <!-- Reactions given -->
+      <div class="profile-reactions" id="profileReactions"></div>
+
+      <!-- Submitted films -->
+      <section class="section section--flat" style="margin-top:32px">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Filmografia</div>
+            <h2>Filmes Submetidos</h2>
+          </div>
+        </div>
+        <div class="profile-films-grid" id="profileFilms"></div>
+      </section>
+
+      <!-- Letterboxd diary -->
+      <section class="section section--flat" id="profileLbSection" style="margin-top:32px;display:none">
+        <div class="section-head">
+          <div>
+            <div class="kicker kicker--soft">Letterboxd</div>
+            <h2>Visto Recentemente</h2>
+          </div>
+        </div>
+        <div class="profile-lb-list" id="profileLbList"></div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer footer--centered">
+    <span>Clube de Cinema</span>
+  </footer>
+</body>
+</html>
