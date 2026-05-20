@@ -1577,13 +1577,23 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(404, "User not found")
 
+    submitter_key = str(user.id)
+
     # Films submitted
-    submitted = db.query(models.Film).filter(models.Film.submitter_id == user.id).all()
+    submitted = (
+        db.query(models.Film)
+        .filter(models.Film.submitter_key == submitter_key)
+        .all()
+    )
 
     # Votes cast
-    votes = db.query(models.Vote).filter(models.Vote.voter_key == f"user:{user.id}").all()
+    votes = (
+        db.query(models.Vote)
+        .filter(models.Vote.voter_key == submitter_key)
+        .all()
+    )
 
-    # Winning submissions (films they submitted that became winners)
+    # Winning submissions
     won_films = [
         f for f in submitted
         if f.week and not f.week.is_open and f.week.winner_film_id == f.id
@@ -1596,9 +1606,13 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
         reaction_counts[r.emoji] = reaction_counts.get(r.emoji, 0) + 1
 
     # Letterboxd entries
-    lb_entries = db.query(models.LetterboxdEntry).filter(
-        models.LetterboxdEntry.user_id == user.id
-    ).order_by(models.LetterboxdEntry.watched_date.desc()).limit(20).all()
+    lb_entries = (
+        db.query(models.LetterboxdEntry)
+        .filter(models.LetterboxdEntry.user_id == user.id)
+        .order_by(models.LetterboxdEntry.watched_date.desc())
+        .limit(20)
+        .all()
+    )
 
     # Build submitted films list with week info
     submitted_list = []
