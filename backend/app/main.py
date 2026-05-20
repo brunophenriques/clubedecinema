@@ -1150,6 +1150,7 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
     # ── Parse diary items
     items = root.findall(".//item")
     synced = 0
+    seen_keys = set()  # dedupe within this sync run
 
     for item in items:
         # Only process diary entries (have letterboxd:watchedDate)
@@ -1170,6 +1171,15 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
         film_year_raw = (year_el.text or "").strip() if year_el is not None else ""
         film_year = int(film_year_raw) if film_year_raw.isdigit() else None
 
+        watched_date_raw = (watched_date_el.text or "").strip()
+        watched_date = _parse_lb_date(watched_date_raw)
+
+        # Dedupe within this sync: same film on same day = duplicate RSS entry
+        dedup_key = f"{film_title.lower()}|{film_year}|{watched_date_raw}"
+        if dedup_key in seen_keys:
+            continue
+        seen_keys.add(dedup_key)
+
         # memberRating is numeric e.g. "3.5" in newer RSS, or star text in older
         rating_raw = (rating_el.text or "").strip() if rating_el is not None else ""
         try:
@@ -1177,7 +1187,6 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
         except ValueError:
             rating = _parse_lb_rating(rating_raw)
 
-        watched_date = _parse_lb_date((watched_date_el.text or "").strip())
         is_rewatch = (rewatch_el is not None and (rewatch_el.text or "").strip().lower() == "yes")
         lb_url = (link_el.text or "").strip() if link_el is not None else None
 
@@ -1193,7 +1202,7 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
         if film_match:
             tmdb_id = film_match.tmdb_id
 
-        # Upsert: if we have a tmdb_id use that unique key, else skip dedup
+        # Upsert by tmdb_id if available, else by title+year
         existing = None
         if tmdb_id:
             existing = (
@@ -1201,6 +1210,17 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
                 .filter(
                     models.LetterboxdEntry.user_id == user.id,
                     models.LetterboxdEntry.tmdb_id == tmdb_id,
+                )
+                .first()
+            )
+        else:
+            existing = (
+                db.query(models.LetterboxdEntry)
+                .filter(
+                    models.LetterboxdEntry.user_id == user.id,
+                    models.LetterboxdEntry.tmdb_id.is_(None),
+                    func.lower(models.LetterboxdEntry.film_title) == film_title.lower(),
+                    models.LetterboxdEntry.film_year == film_year,
                 )
                 .first()
             )
@@ -1301,6 +1321,23 @@ def sync_letterboxd(
     user = get_current_user(db, authorization)
     if not user.letterboxd_username:
         raise HTTPException(400, "No Letterboxd username set")
+
+    # Clean up existing duplicates before syncing
+    # Keep only the entry with the latest watched_date for each title+year combo
+    all_entries = (
+        db.query(models.LetterboxdEntry)
+        .filter(models.LetterboxdEntry.user_id == user.id)
+        .order_by(models.LetterboxdEntry.watched_date.desc())
+        .all()
+    )
+    seen = set()
+    for entry in all_entries:
+        key = f"{entry.film_title.lower()}|{entry.film_year}"
+        if key in seen:
+            db.delete(entry)
+        else:
+            seen.add(key)
+    db.commit()
 
     result = fetch_and_sync_letterboxd(db, user)
     db.refresh(user)
