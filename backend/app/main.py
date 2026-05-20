@@ -356,19 +356,33 @@ def health():
 
 # ---- Auth endpoints ----
 
+import re as _re
+
+USERNAME_RE = _re.compile(r'^[a-zA-Z0-9_.-]{3,32}$')
+
+def validate_username(username: str):
+    if not username:
+        raise HTTPException(400, "Username obrigatório.")
+    if len(username) < 3:
+        raise HTTPException(400, "Username demasiado curto (mín. 3 caracteres).")
+    if len(username) > 32:
+        raise HTTPException(400, "Username demasiado longo (máx. 32 caracteres).")
+    if not USERNAME_RE.match(username):
+        raise HTTPException(400, "Username só pode ter letras, números, _, . e - (sem espaços ou ~).")
+
+
 @app.post("/auth/register")
 def register(body: dict = Body(...), db: Session = Depends(get_db)):
-    username = normalize_username(body.get("username"))
+    username = (body.get("username") or "").strip()
     password = body.get("password") or ""
 
-    if not username:
-        raise HTTPException(status_code=400, detail="username required")
-    if len(username) < 3:
-        raise HTTPException(status_code=400, detail="username too short (min 3)")
+    validate_username(username)
 
-    exists = db.query(models.User).filter(models.User.username == username).first()
+    exists = db.query(models.User).filter(
+        func.lower(models.User.username) == username.lower()
+    ).first()
     if exists:
-        raise HTTPException(status_code=409, detail="username already exists")
+        raise HTTPException(status_code=409, detail="Username já existe.")
 
     u = models.User(username=username, password_hash=hash_password(password))
     db.add(u)
@@ -377,6 +391,31 @@ def register(body: dict = Body(...), db: Session = Depends(get_db)):
 
     token = create_session(db, u)
     return {"user": {"id": u.id, "username": u.username}, "token": token}
+
+
+@app.patch("/auth/username")
+def change_username(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    """Allow user to change their username (needed to fix invalid ones)."""
+    user = get_current_user(db, authorization)
+    new_username = (body.get("username") or "").strip()
+
+    validate_username(new_username)
+
+    exists = db.query(models.User).filter(
+        func.lower(models.User.username) == new_username.lower(),
+        models.User.id != user.id,
+    ).first()
+    if exists:
+        raise HTTPException(409, "Username já existe.")
+
+    user.username = new_username
+    db.commit()
+    db.refresh(user)
+    return {"ok": True, "username": user.username}
 
 
 
