@@ -13,9 +13,12 @@ function initTheme() {
   document.documentElement.setAttribute("data-theme", saved);
 }
 function toggleTheme() {
-  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", next);
+  const html = document.documentElement;
+  html.classList.add("theme-transitioning");
+  const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  html.setAttribute("data-theme", next);
   localStorage.setItem("cc_theme", next);
+  setTimeout(() => html.classList.remove("theme-transitioning"), 300);
 }
 initTheme();
 

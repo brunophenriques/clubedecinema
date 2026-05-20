@@ -1563,10 +1563,9 @@ def delete_chat_message(
 # Profile page
 # ─────────────────────────────────────────────
 
-@app.get("/profile/{username}")
-async def profile_page(username: str):
-    from fastapi.responses import FileResponse
-    return FileResponse("frontend/profile.html")
+@app.get("/profile/{username}", include_in_schema=False)
+def serve_profile(username: str):
+    return FileResponse(str(FRONTEND_DIR / "profile.html"))
 
 
 @app.get("/users/{username}/profile")

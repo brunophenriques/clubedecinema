@@ -64,7 +64,147 @@
   --shadow-lg: 0 20px 60px rgba(0,0,0,.50);
 }
 
-/* ── Dark mode theme toggle button ── */
+/* ── Dark mode specific overrides ── */
+[data-theme="dark"] body {
+  background: var(--cream);
+}
+
+[data-theme="dark"] .hero-backdrop {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(212,71,106,.18), transparent 40%),
+    radial-gradient(circle at 50% 65%, rgba(212,71,106,.06), transparent 50%);
+}
+
+[data-theme="dark"] .top {
+  background: rgba(22,18,24,.85);
+  border-bottom-color: rgba(240,235,227,.08);
+}
+
+[data-theme="dark"] .section,
+[data-theme="dark"] .section--elevated {
+  background: var(--card);
+  border-color: rgba(240,235,227,.08);
+}
+
+[data-theme="dark"] .film-card,
+[data-theme="dark"] .watched-card,
+[data-theme="dark"] .profile-stat,
+[data-theme="dark"] .profile-film-card,
+[data-theme="dark"] .profile-lb-list {
+  border-color: rgba(240,235,227,.08);
+}
+
+[data-theme="dark"] .input,
+[data-theme="dark"] .chat-input {
+  background: var(--parchment);
+  border-color: rgba(240,235,227,.12);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .input::placeholder,
+[data-theme="dark"] .chat-input::placeholder {
+  color: var(--ink-30);
+}
+
+[data-theme="dark"] .lb-popup__panel {
+  background: var(--card);
+  border-color: rgba(240,235,227,.1);
+}
+
+[data-theme="dark"] .lb-popup__avatar-row {
+  background: var(--parchment);
+  border-color: rgba(240,235,227,.08);
+}
+
+[data-theme="dark"] .lb-popup__upload-btn {
+  background: var(--parchment);
+  border-color: rgba(240,235,227,.12);
+}
+
+[data-theme="dark"] .lb-popup__upload-btn:hover {
+  background: rgba(240,235,227,.1);
+}
+
+[data-theme="dark"] .chat-panel {
+  background: var(--card);
+  border-left-color: rgba(240,235,227,.08);
+}
+
+[data-theme="dark"] .chat-panel__head,
+[data-theme="dark"] .chat-panel__week,
+[data-theme="dark"] .chat-panel__input-wrap {
+  background: var(--parchment);
+  border-color: rgba(240,235,227,.08);
+}
+
+[data-theme="dark"] .chat-msg__text {
+  background: var(--parchment);
+  border-color: rgba(240,235,227,.08);
+}
+
+[data-theme="dark"] .chat-msg--me .chat-msg__text {
+  background: var(--rouge);
+  color: #fff;
+  border-color: transparent;
+}
+
+[data-theme="dark"] .reaction-add-btn,
+[data-theme="dark"] .reaction-chip {
+  background: var(--parchment);
+  border-color: rgba(240,235,227,.12);
+}
+
+[data-theme="dark"] .poster.placeholder {
+  background: linear-gradient(160deg, var(--parchment) 0%, rgba(212,71,106,.08) 100%);
+}
+
+[data-theme="dark"] .wc-poster--ph,
+[data-theme="dark"] .profile-film-card__poster-ph {
+  background: linear-gradient(160deg, var(--parchment) 0%, rgba(212,71,106,.08) 100%);
+}
+
+[data-theme="dark"] .profile-lb-entry:hover {
+  background: var(--parchment);
+}
+
+[data-theme="dark"] .auth-pill {
+  background: rgba(35,30,38,.8);
+  border-color: rgba(240,235,227,.1);
+}
+
+[data-theme="dark"] .nav-link {
+  color: rgba(240,235,227,.6);
+}
+
+[data-theme="dark"] .nav-link:hover,
+[data-theme="dark"] .nav-link.active {
+  color: var(--ink);
+  background: rgba(240,235,227,.08);
+}
+
+[data-theme="dark"] .btn {
+  border-color: rgba(240,235,227,.12);
+}
+
+[data-theme="dark"] .btn.ghost {
+  color: var(--ink-60);
+}
+
+[data-theme="dark"] .logo-badge {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+[data-theme="dark"] .wc-trophy {
+  background: rgba(35,30,38,.95);
+}
+
+/* smooth theme transition — only applied briefly during switch */
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color .25s var(--ease-soft), border-color .25s var(--ease-soft), color .25s var(--ease-soft) !important;
+}
 .theme-toggle {
   display: inline-flex;
   align-items: center;
