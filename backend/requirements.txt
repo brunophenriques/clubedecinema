@@ -6,4 +6,4 @@ python-dotenv
 alembic
 requests
 rapidfuzz
-psycopg[binary]
+psycopg2-binary
