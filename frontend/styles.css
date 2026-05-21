@@ -3080,3 +3080,285 @@ code {
   color: #e05070;
   min-height: 14px;
 }
+
+/* ═══════════════════════════════════════════
+   MOBILE OPTIMIZATIONS (max-width: 480px)
+   ═══════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+
+  /* ── Layout ── */
+  .wrap {
+    padding: 0 14px;
+  }
+
+  /* ── Header ── */
+  .top-inner {
+    min-height: 58px;
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  .brand-title {
+    font-size: 18px;
+  }
+
+  .brand-sub {
+    display: none;
+  }
+
+  .logo-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .logo-badge span {
+    font-size: 13px;
+  }
+
+  /* Hide nav text labels on mobile, keep icons */
+  .nav-link {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  /* ── Auth pill — compact on mobile ── */
+  .auth-pill {
+    gap: 5px;
+    padding: 5px 6px 5px 8px;
+  }
+
+  .auth-pill__user {
+    display: none;
+  }
+
+  .auth-pill__avatar {
+    display: flex !important;
+  }
+
+  .lb-connect-btn,
+  .chat-header-btn,
+  .theme-toggle {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+  }
+
+  .btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 28px 0 18px;
+  }
+
+  .hero-inner h1 {
+    font-size: clamp(36px, 12vw, 56px);
+  }
+
+  .hero p.muted {
+    font-size: 14px;
+  }
+
+  .hero-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* ── Sections ── */
+  .section {
+    padding: 14px;
+    border-radius: 18px;
+    margin-top: 12px;
+  }
+
+  .section-head {
+    margin-bottom: 14px;
+  }
+
+  .section-head h2 {
+    font-size: 20px;
+  }
+
+  .kicker {
+    font-size: 9px;
+  }
+
+  /* ── Film grid ── */
+  .film-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+  }
+
+  .film-card {
+    border-radius: var(--radius-md);
+  }
+
+  .film-title {
+    font-size: 13px;
+  }
+
+  .film-meta {
+    font-size: 11px;
+  }
+
+  .film-body {
+    padding: 10px 10px 12px;
+  }
+
+  /* ── Reaction bar ── */
+  .reaction-bar {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+
+  .reaction-add-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .reaction-chip {
+    padding: 3px 7px;
+    font-size: 12px;
+  }
+
+  /* ── Submit form ── */
+  .submit-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .submit-row .input {
+    max-width: 100% !important;
+  }
+
+  /* ── Watched grid ── */
+  .watched-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+  }
+
+  .wc-body {
+    padding: 10px 10px 12px;
+  }
+
+  .wc-title {
+    font-size: 13px;
+  }
+
+  /* ── Profile ── */
+  .profile-hero {
+    padding: 24px 0 20px;
+    gap: 16px;
+  }
+
+  .profile-hero__name {
+    font-size: 24px;
+  }
+
+  .profile-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .profile-stat {
+    padding: 14px 10px;
+  }
+
+  .profile-stat__value {
+    font-size: 22px;
+  }
+
+  .profile-films-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  /* ── Chat panel ── */
+  .chat-panel {
+    width: 100vw;
+    border-left: none;
+    border-top: 1px solid var(--ink-10);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    top: auto;
+    bottom: 0;
+    height: 85vh;
+    transform: translateY(100%);
+  }
+
+  .chat-panel--open {
+    transform: translateY(0);
+  }
+
+  /* ── Letterboxd popup ── */
+  #lbPopup {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    top: auto;
+  }
+
+  .lb-popup__panel {
+    width: 100%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-bottom: none;
+    padding-bottom: 32px;
+  }
+
+  /* ── Player modal ── */
+  .player-modal__panel {
+    width: 100%;
+    max-width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  /* ── Force username popup ── */
+  .force-username__panel {
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 100%;
+    padding-bottom: 32px;
+  }
+
+  /* ── Archive page ── */
+  .hof-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    padding: 16px;
+    font-size: 11px;
+  }
+}
+
+/* ── Slightly larger phones / small tablets ── */
+@media (max-width: 640px) and (min-width: 481px) {
+  .film-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .watched-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profile-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .auth-pill__user {
+    max-width: 80px;
+  }
+}
