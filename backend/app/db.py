@@ -19,6 +19,12 @@ if DATABASE_URL.startswith("postgresql://") and "+psycopg" not in DATABASE_URL:
 engine_kwargs = {}
 if DATABASE_URL.startswith("sqlite"):
     engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    # Supabase Session pooler has a limit of 15 connections on free tier
+    engine_kwargs["pool_size"] = 5
+    engine_kwargs["max_overflow"] = 5
+    engine_kwargs["pool_pre_ping"] = True
+    engine_kwargs["pool_recycle"] = 300
 
 engine = create_engine(DATABASE_URL, **engine_kwargs)
 
