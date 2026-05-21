@@ -46,6 +46,12 @@ if not FRONTEND_DIR:
 # assets (css/js/img)
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
+
+@app.get("/sw.js", include_in_schema=False)
+def serve_sw():
+    from fastapi.responses import FileResponse
+    return FileResponse(str(FRONTEND_DIR / "sw.js"), media_type="application/javascript")
+
 @app.get("/", include_in_schema=False)
 def serve_index():
     return FileResponse(str(FRONTEND_DIR / "index.html"))
@@ -1361,21 +1367,10 @@ def sync_letterboxd(
     if not user.letterboxd_username:
         raise HTTPException(400, "No Letterboxd username set")
 
-    # Clean up existing duplicates before syncing
-    # Keep only the entry with the latest watched_date for each title+year combo
-    all_entries = (
-        db.query(models.LetterboxdEntry)
-        .filter(models.LetterboxdEntry.user_id == user.id)
-        .order_by(models.LetterboxdEntry.watched_date.desc())
-        .all()
-    )
-    seen = set()
-    for entry in all_entries:
-        key = f"{entry.film_title.lower()}|{entry.film_year}"
-        if key in seen:
-            db.delete(entry)
-        else:
-            seen.add(key)
+    # Wipe all existing entries for this user and re-sync fresh — cleanest dedup
+    db.query(models.LetterboxdEntry).filter(
+        models.LetterboxdEntry.user_id == user.id
+    ).delete()
     db.commit()
 
     result = fetch_and_sync_letterboxd(db, user)

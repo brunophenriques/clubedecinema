@@ -949,6 +949,14 @@ function showForceUsernamePopup(currentUsername) {
     if (e.key === "Enter") el("forceUsernameSave")?.click();
   });
 }
+/* ── Service Worker ── */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
+
+/* ── Theme ── */
 function initTheme() {
   const saved = localStorage.getItem("cc_theme") || "light";
   document.documentElement.setAttribute("data-theme", saved);
