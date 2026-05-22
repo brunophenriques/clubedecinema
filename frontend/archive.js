@@ -215,17 +215,14 @@ async function loadCinema() {
             ? `<img src="${f.poster_url}" alt="${f.title}" loading="lazy"/>`
             : `<div class="cinema-card__poster-ph">${(f.title||"").slice(0,2).toUpperCase()}</div>`
           }
-          <div class="cinema-card__overlay">
-            <a class="poster-btn poster-btn--know" href="${lbUrl}" target="_blank" rel="noopener">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-              Saber mais
-            </a>
-          </div>
         </div>
         <div class="cinema-card__body">
-          <div class="cinema-card__badge">🎬 Cinema</div>
           <div class="cinema-card__title">${f.title}${f.year ? ` <span class="cinema-card__year">(${f.year})</span>` : ""}</div>
           ${f.director ? `<div class="cinema-card__dir">Dir. ${f.director}</div>` : ""}
+          <a class="cinema-card__lb" href="${lbUrl}" target="_blank" rel="noopener">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Saber mais
+          </a>
         </div>
       `;
       grid.appendChild(card);
