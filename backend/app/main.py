@@ -498,7 +498,9 @@ def logout(db: Session = Depends(get_db), authorization: str | None = Header(Non
 
 @app.get("/weeks/current")
 def current_week(db: Session = Depends(get_db)):
-    week = db.query(models.Week).order_by(models.Week.id.desc()).first()
+    week = db.query(models.Week).filter(
+        models.Week.is_special == False
+    ).order_by(models.Week.id.desc()).first()
     if not week:
         raise HTTPException(404, "No week created yet")
     return week_payload(db, week, include_submitter=False)
@@ -506,7 +508,18 @@ def current_week(db: Session = Depends(get_db)):
 
 @app.get("/weeks")
 def list_weeks(db: Session = Depends(get_db)):
-    weeks = db.query(models.Week).order_by(models.Week.id.desc()).all()
+    weeks = db.query(models.Week).filter(
+        models.Week.is_special == False
+    ).order_by(models.Week.id.desc()).all()
+    return [week_payload(db, w, include_submitter=False) for w in weeks]
+
+
+@app.get("/weeks/cinema")
+def list_cinema_weeks(db: Session = Depends(get_db)):
+    """Return special cinema weeks."""
+    weeks = db.query(models.Week).filter(
+        models.Week.is_special == True
+    ).order_by(models.Week.id.desc()).all()
     return [week_payload(db, w, include_submitter=False) for w in weeks]
 
 

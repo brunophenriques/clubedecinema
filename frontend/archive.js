@@ -187,9 +187,53 @@ function setView(next) {
   view = next;
   el("viewArchive").classList.toggle("is-active", view === "archive");
   el("viewHof").classList.toggle("is-active", view === "hof");
+  el("viewCinema").classList.toggle("is-active", view === "cinema");
   el("weeks").style.display = view === "archive" ? "" : "none";
   el("hof").style.display   = view === "hof" ? "" : "none";
-  apply();
+  el("cinema").style.display = view === "cinema" ? "" : "none";
+  if (view === "cinema") loadCinema();
+  else apply();
+}
+
+let cinemaLoaded = false;
+async function loadCinema() {
+  if (cinemaLoaded) return;
+  const grid = el("cinemaGrid");
+  grid.innerHTML = "<p class='muted small'>A carregar...</p>";
+  try {
+    const weeks = await apiGet("/weeks/cinema");
+    const films = weeks.flatMap(w => w.films || []);
+    if (!films.length) { grid.innerHTML = "<p class='muted'>Nenhum filme de cinema ainda.</p>"; return; }
+    grid.innerHTML = "";
+    films.forEach(f => {
+      const card = document.createElement("div");
+      card.className = "cinema-card fade-in";
+      const lbUrl = f.tmdb_id ? `https://letterboxd.com/search/tmdb:${f.tmdb_id}/` : `https://letterboxd.com/search/${encodeURIComponent(f.title)}/`;
+      card.innerHTML = `
+        <div class="cinema-card__poster">
+          ${f.poster_url
+            ? `<img src="${f.poster_url}" alt="${f.title}" loading="lazy"/>`
+            : `<div class="cinema-card__poster-ph">${(f.title||"").slice(0,2).toUpperCase()}</div>`
+          }
+          <div class="cinema-card__overlay">
+            <a class="poster-btn poster-btn--know" href="${lbUrl}" target="_blank" rel="noopener">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Saber mais
+            </a>
+          </div>
+        </div>
+        <div class="cinema-card__body">
+          <div class="cinema-card__badge">🎬 Cinema</div>
+          <div class="cinema-card__title">${f.title}${f.year ? ` <span class="cinema-card__year">(${f.year})</span>` : ""}</div>
+          ${f.director ? `<div class="cinema-card__dir">Dir. ${f.director}</div>` : ""}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+    cinemaLoaded = true;
+  } catch (e) {
+    grid.innerHTML = "<p class='muted'>Erro ao carregar.</p>";
+  }
 }
 
 /* ── Archive card ── */
@@ -360,6 +404,7 @@ el("onlyClosed").addEventListener("change", apply);
 el("sort").addEventListener("change", apply);
 el("viewArchive").addEventListener("click", () => setView("archive"));
 el("viewHof").addEventListener("click", () => setView("hof"));
+el("viewCinema").addEventListener("click", () => setView("cinema"));
 
 setView("archive");
 refreshNavAdmin();

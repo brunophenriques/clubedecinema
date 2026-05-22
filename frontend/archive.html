@@ -64,6 +64,7 @@
         <div class="seg">
           <button id="viewArchive" class="seg-btn is-active" type="button">Arquivo</button>
           <button id="viewHof" class="seg-btn" type="button">Hall of Fame</button>
+          <button id="viewCinema" class="seg-btn" type="button">🎬 Cinema</button>
         </div>
 
         <input id="q" class="input" placeholder="Pesquisar…" style="max-width: 420px;" />
@@ -99,6 +100,12 @@
 
       <!-- HALL OF FAME -->
       <div id="hof" class="hof-grid" style="display:none"></div>
+
+      <!-- CINEMA -->
+      <div id="cinema" style="display:none">
+        <p class="muted small" style="margin-bottom:16px">Filmes que o clube foi ver ao cinema. 🍿</p>
+        <div id="cinemaGrid" class="cinema-grid"></div>
+      </div>
     </section>
 
     <!-- Modal (só usado no Hall of Fame para ver detalhes) -->

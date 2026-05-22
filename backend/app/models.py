@@ -72,6 +72,8 @@ class Week(Base):
     # winner points to a film in films table (creates FK cycle with Film.week_id)
     winner_film_id = Column(Integer, ForeignKey("films.id"), nullable=True)
 
+    is_special = Column(Boolean, default=False, nullable=False)
+
     films = relationship(
         "Film",
         back_populates="week",
