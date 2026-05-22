@@ -708,7 +708,9 @@ def admin_current_week(
     authorization: str | None = Header(None),
 ):
     require_admin_user(db, authorization)
-    week = db.query(models.Week).order_by(models.Week.id.desc()).first()
+    week = db.query(models.Week).filter(
+        models.Week.is_special == False
+    ).order_by(models.Week.id.desc()).first()
     if not week:
         raise HTTPException(404, "No week created yet")
     return week_payload(db, week, include_submitter=True)
@@ -720,7 +722,9 @@ def admin_list_weeks(
     authorization: str | None = Header(None),
 ):
     require_admin_user(db, authorization)
-    weeks = db.query(models.Week).order_by(models.Week.id.desc()).all()
+    weeks = db.query(models.Week).filter(
+        models.Week.is_special == False
+    ).order_by(models.Week.id.desc()).all()
     return [week_payload(db, w, include_submitter=True) for w in weeks]
 
 
