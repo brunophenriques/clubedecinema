@@ -210,19 +210,20 @@ async function loadCinema() {
       card.className = "cinema-card fade-in";
       const lbUrl = f.tmdb_id ? `https://letterboxd.com/search/tmdb:${f.tmdb_id}/` : `https://letterboxd.com/search/${encodeURIComponent(f.title)}/`;
       card.innerHTML = `
-        <div class="cinema-card__poster">
-          ${f.poster_url
-            ? `<img src="${f.poster_url}" alt="${f.title}" loading="lazy"/>`
-            : `<div class="cinema-card__poster-ph">${(f.title||"").slice(0,2).toUpperCase()}</div>`
-          }
-        </div>
+        <a href="${lbUrl}" target="_blank" rel="noopener" class="cinema-card__poster-link">
+          <div class="cinema-card__poster">
+            ${f.poster_url
+              ? `<img src="${f.poster_url}" alt="${f.title}" loading="lazy"/>`
+              : `<div class="cinema-card__poster-ph">${(f.title||"").slice(0,2).toUpperCase()}</div>`
+            }
+            <div class="cinema-card__overlay">
+              <span class="cinema-card__overlay-text">Saber mais</span>
+            </div>
+          </div>
+        </a>
         <div class="cinema-card__body">
           <div class="cinema-card__title">${f.title}${f.year ? ` <span class="cinema-card__year">(${f.year})</span>` : ""}</div>
           ${f.director ? `<div class="cinema-card__dir">Dir. ${f.director}</div>` : ""}
-          <a class="cinema-card__lb" href="${lbUrl}" target="_blank" rel="noopener">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            Saber mais
-          </a>
         </div>
       `;
       grid.appendChild(card);

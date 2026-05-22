@@ -3367,39 +3367,102 @@ code {
    CINEMA SECTION
    ═══════════════════════════════════════════ */
 
-.cinema-grid {
+/* ── Hero banner ── */
+.cinema-hero {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  background: var(--ink);
+  border-radius: var(--radius-xl);
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  overflow: hidden;
+  position: relative;
+}
+
+[data-theme="dark"] .cinema-hero {
+  background: #1a1520;
+  border: 1px solid rgba(240,235,227,.08);
+}
+
+.cinema-hero__gif {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+}
+
+.cinema-hero__text {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 8px;
-  max-width: 560px;
+  gap: 6px;
+}
+
+.cinema-hero__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--rouge);
+}
+
+.cinema-hero__title {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 4vw, 32px);
+  line-height: 1.15;
+  color: #fff;
+  letter-spacing: -.02em;
+  margin: 0;
+}
+
+.cinema-hero__sub {
+  font-size: 15px;
+  color: rgba(255,255,255,.55);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.cinema-hero__aside {
+  font-size: 13px;
+  color: rgba(255,255,255,.35);
+  font-style: italic;
+}
+
+/* ── Films grid ── */
+.cinema-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
 }
 
 .cinema-card {
   display: flex;
-  gap: 20px;
-  align-items: center;
+  flex-direction: column;
   background: var(--card);
   border: 1px solid var(--ink-10);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  overflow: hidden;
   box-shadow: var(--shadow-sm);
   transition: transform .22s var(--ease), box-shadow .22s;
 }
 
 .cinema-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-md);
 }
 
+.cinema-card__poster-link {
+  display: block;
+  text-decoration: none;
+}
+
 .cinema-card__poster {
-  flex-shrink: 0;
-  width: 80px;
+  position: relative;
+  width: 100%;
   aspect-ratio: 2/3;
-  border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--parchment);
-  box-shadow: var(--shadow-sm);
 }
 
 .cinema-card__poster img {
@@ -3421,21 +3484,47 @@ code {
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 36px;
   color: var(--ink-30);
 }
 
+.cinema-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(14,11,16,.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .22s var(--ease-soft);
+}
+
+.cinema-card:hover .cinema-card__overlay {
+  opacity: 1;
+}
+
+.cinema-card__overlay-text {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  background: rgba(255,255,255,.15);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255,255,255,.25);
+}
+
 .cinema-card__body {
+  padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  flex: 1;
-  min-width: 0;
+  gap: 3px;
 }
 
 .cinema-card__title {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 15px;
   line-height: 1.2;
   color: var(--ink);
   letter-spacing: -.01em;
@@ -3443,34 +3532,26 @@ code {
 
 .cinema-card__year {
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 12px;
   color: var(--ink-60);
 }
 
 .cinema-card__dir {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--ink-60);
 }
 
-.cinema-card__lb {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--rouge);
-  text-decoration: none;
-  width: fit-content;
-  transition: opacity .15s;
-}
-
-.cinema-card__lb:hover {
-  opacity: .7;
-}
-
 @media (max-width: 480px) {
-  .cinema-card__title {
-    font-size: 16px;
+  .cinema-hero {
+    padding: 20px 18px;
+    gap: 16px;
+  }
+  .cinema-hero__gif {
+    width: 80px;
+    height: 80px;
+  }
+  .cinema-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 }
