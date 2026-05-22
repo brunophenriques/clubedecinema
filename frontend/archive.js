@@ -36,17 +36,72 @@ function toast(message, type = "info", ms = 3400) {
 /* ── Auth helpers ── */
 function getToken() { return localStorage.getItem("cinema_club_token"); }
 
+/* ── Theme ── */
+function initTheme() {
+  const saved = localStorage.getItem("cc_theme") || "light";
+  document.documentElement.setAttribute("data-theme", saved);
+}
+function toggleTheme() {
+  const html = document.documentElement;
+  html.classList.add("theme-transitioning");
+  const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  html.setAttribute("data-theme", next);
+  localStorage.setItem("cc_theme", next);
+  setTimeout(() => html.classList.remove("theme-transitioning"), 300);
+}
+initTheme();
+
+document.getElementById("btnTheme")?.addEventListener("click", toggleTheme);
+document.getElementById("btnLogout")?.addEventListener("click", () => {
+  localStorage.removeItem("cinema_club_token");
+  window.location.href = "/";
+});
+document.getElementById("btnLogin")?.addEventListener("click", () => {
+  window.location.href = "/";
+});
+
 async function refreshNavAdmin() {
   const navAdmin = document.getElementById("navAdmin");
-  if (!navAdmin) return;
-  navAdmin.style.display = "none";
+  const btnLogin = document.getElementById("btnLogin");
+  const btnLogout = document.getElementById("btnLogout");
+  const authLine = document.getElementById("authStatusLine");
+  const avatarPill = document.getElementById("authAvatarPill");
+  const btnLb = document.getElementById("btnLetterboxd");
+
+  if (navAdmin) navAdmin.style.display = "none";
   const token = getToken();
-  if (!token) return;
+
+  if (!token) {
+    if (btnLogin) btnLogin.style.display = "";
+    if (btnLogout) btnLogout.style.display = "none";
+    return;
+  }
+
   try {
     const res = await fetch(`${API}/auth/me`, { headers: { "Authorization": `Bearer ${token}` } });
-    if (!res.ok) return;
+    if (!res.ok) { localStorage.removeItem("cinema_club_token"); return; }
     const me = await res.json();
-    if (me?.is_admin) navAdmin.style.display = "";
+
+    if (me?.is_admin && navAdmin) navAdmin.style.display = "";
+    if (btnLogin) btnLogin.style.display = "none";
+    if (btnLogout) btnLogout.style.display = "";
+
+    if (authLine) {
+      authLine.innerHTML = `<a href="/profile/${encodeURIComponent(me.username)}" style="color:inherit;text-decoration:none">@${me.username}</a>`;
+    }
+
+    if (avatarPill && me.avatar_url) {
+      avatarPill.innerHTML = `<img src="${me.avatar_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover" alt="avatar"/>`;
+      avatarPill.style.display = "";
+      avatarPill.style.cursor = "pointer";
+      avatarPill.onclick = () => window.location.href = `/profile/${encodeURIComponent(me.username)}`;
+    }
+
+    if (btnLb) {
+      btnLb.style.display = "";
+      btnLb.title = me.letterboxd_username ? `@${me.letterboxd_username}` : "Ligar Letterboxd";
+      if (me.letterboxd_username) btnLb.classList.add("lb-connect-btn--connected");
+    }
   } catch {}
 }
 

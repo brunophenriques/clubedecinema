@@ -6,16 +6,23 @@
   <title>Admin — Clube de Cinema</title>
   <link rel="stylesheet" href="/static/styles.css" />
   <script src="/static/admin.js" defer></script>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="theme-color" content="#B5294E" />
 </head>
 <body>
   <header class="top">
     <div class="wrap top-inner">
       <div class="brand">
-        <div class="logo wordmark" aria-hidden="true"><span class="logo-main">CC</span><span class="logo-alt">67</span></div>
-        <div class="brand-copy">
-          <div class="brand-title">Admin</div>
-          <div class="brand-sub">Criar semana • adicionar filmes • abrir/fechar votação</div>
-        </div>
+        <a href="/" class="brand-link" style="display:contents">
+          <div class="logo-badge" aria-hidden="true"><span>67</span></div>
+          <div class="brand-copy">
+            <div class="brand-title">Clube de Cinema</div>
+            <div class="brand-sub">Admin</div>
+          </div>
+        </a>
       </div>
 
       <div class="top-right">
@@ -26,8 +33,18 @@
         </nav>
 
         <div class="auth-pill">
+          <div class="auth-pill__avatar" id="authAvatarPill" style="display:none"></div>
           <span class="auth-pill__user" id="authStatusLine">Não autenticado.</span>
-          <button class="btn" id="btnLogin" type="button">Login</button>
+          <button class="btn" id="btnLogin" type="button">Entrar</button>
+          <button class="btn" id="btnLogout" type="button" style="display:none">Sair</button>
+          <button class="theme-toggle" id="btnTheme" type="button" title="Mudar tema">
+            <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
           <button class="btn" id="btnLogout" type="button" style="display:none">Logout</button>
         </div>
       </div>

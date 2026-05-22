@@ -242,6 +242,7 @@ async function refreshAuthState() {
   const line = $("authStatusLine");
   const btnLogin = $("btnLogin");
   const btnLogout = $("btnLogout");
+  const avatarPill = $("authAvatarPill");
   const token = getToken();
   if (!token) {
     if (line) line.textContent = "Não autenticado.";
@@ -251,9 +252,13 @@ async function refreshAuthState() {
   }
   try {
     const me = await apiGet("/auth/me", { auth: true });
-    if (line) line.textContent = `@${me.username}`;
+    if (line) line.innerHTML = `<a href="/profile/${encodeURIComponent(me.username)}" style="color:inherit;text-decoration:none">@${me.username}</a>`;
     if (btnLogin) btnLogin.style.display = "none";
     if (btnLogout) btnLogout.style.display = "";
+    if (avatarPill && me.avatar_url) {
+      avatarPill.innerHTML = `<img src="${me.avatar_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover" alt="avatar"/>`;
+      avatarPill.style.display = "";
+    }
     return me;
   } catch {
     clearToken();
@@ -493,6 +498,18 @@ async function load() {
 
 /* ── Boot ── */
 document.addEventListener("DOMContentLoaded", async () => {
+  // Theme
+  const savedTheme = localStorage.getItem("cc_theme") || "light";
+  document.documentElement.setAttribute("data-theme", savedTheme);
+  $("btnTheme")?.addEventListener("click", () => {
+    const html = document.documentElement;
+    html.classList.add("theme-transitioning");
+    const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    html.setAttribute("data-theme", next);
+    localStorage.setItem("cc_theme", next);
+    setTimeout(() => html.classList.remove("theme-transitioning"), 300);
+  });
+
   const ok = await guardAdminOrRedirect();
   if (!ok) return;
 
