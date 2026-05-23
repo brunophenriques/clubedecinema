@@ -151,11 +151,11 @@ function prettyVoteError(e) {
   const s = e?.status;
   const m = String(e?.message || "");
   if (s === 401) return "Tens de fazer login para votar.";
-  if (s === 403) return "Sem permissão (só submitters podem votar).";
+  if (m.includes("own film")) return "Deixa de ser paneleiro e não votes no teu próprio filme.";
+  if (s === 403) return "Só quem submeteu um filme pode votar.";
   if (m.includes("already voted")) return "Já votaste esta semana.";
   if (m.includes("Voting is closed")) return "A votação está fechada.";
   if (m.includes("Voting not started")) return "A votação ainda não começou.";
-  if (m.includes("own film")) return "Não podes votar no teu próprio filme.";
   return "Erro ao votar. Vê a consola.";
 }
 
