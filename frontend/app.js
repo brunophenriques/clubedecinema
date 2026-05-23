@@ -635,7 +635,7 @@ function filmCard(week, f, alreadyVoted) {
     div.querySelector(".lb-strip-placeholder")?.remove();
   }
 
-  const btn = div.querySelector("button");
+  const btn = div.querySelector(".film-actions button");
   btn.addEventListener("click", async () => {
     if (!canVote) return;
     if (!getToken()) { toast("Precisas de login para votar.", "info"); openAuthModal("login"); return; }
