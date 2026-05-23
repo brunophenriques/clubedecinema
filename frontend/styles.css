@@ -228,6 +228,40 @@ html.theme-transitioning *::before,
 html.theme-transitioning *::after {
   transition: background-color .25s var(--ease-soft), border-color .25s var(--ease-soft), color .25s var(--ease-soft) !important;
 }
+/* ── Logo 67 gesture animation ── */
+@keyframes six-seesaw {
+  0%, 100% { transform: translateY(-3px); }
+  50%       { transform: translateY(3px); }
+}
+@keyframes seven-seesaw {
+  0%, 100% { transform: translateY(3px); }
+  50%       { transform: translateY(-3px); }
+}
+
+.logo-badge .logo-six,
+.logo-badge .logo-seven {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: .04em;
+}
+
+.logo-badge {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.logo-badge:hover .logo-six {
+  animation: six-seesaw .8s ease-in-out infinite;
+}
+
+.logo-badge:hover .logo-seven {
+  animation: seven-seesaw .8s ease-in-out infinite;
+}
+
 .theme-toggle {
   display: inline-flex;
   align-items: center;
