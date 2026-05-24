@@ -1,4 +1,4 @@
-const CACHE = "clubedecinema-v1";
+const CACHE = "clubedecinema-v2";
 const STATIC = [
   "/",
   "/static/styles.css",
@@ -38,7 +38,21 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // Static assets — cache first, fallback to network
+  // JS and CSS — network first, fallback to cache
+  if (url.pathname.endsWith(".js") || url.pathname.endsWith(".css")) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Everything else — cache first, fallback to network
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
