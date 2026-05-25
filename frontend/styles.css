@@ -3589,3 +3589,231 @@ code {
     gap: 12px;
   }
 }
+
+/* ═══════════════════════════════════════════
+   WATCH PAGE
+   ═══════════════════════════════════════════ */
+
+/* ── Search bar ── */
+.watch-search-wrap {
+  max-width: 600px;
+  margin: 0 auto 32px;
+}
+
+.watch-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.watch-search-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--ink-30);
+  pointer-events: none;
+}
+
+.watch-search-input {
+  width: 100%;
+  padding: 14px 48px 14px 48px;
+  border: 1.5px solid var(--ink-10);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  transition: border-color .15s, box-shadow .15s;
+  box-shadow: var(--shadow-sm);
+}
+
+.watch-search-input:focus {
+  outline: none;
+  border-color: var(--rouge);
+  box-shadow: 0 0 0 3px var(--rouge-dim);
+}
+
+.watch-search-input::placeholder {
+  color: var(--ink-30);
+}
+
+.watch-search-clear {
+  position: absolute;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: var(--ink-30);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 6px;
+  border-radius: 50%;
+  transition: color .12s, background .12s;
+}
+
+.watch-search-clear:hover {
+  color: var(--ink);
+  background: var(--ink-06);
+}
+
+/* ── Status ── */
+.watch-status {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-30);
+  margin-bottom: 16px;
+  min-height: 18px;
+  font-family: var(--font-mono);
+}
+
+/* ── Grid ── */
+.watch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+/* ── Card ── */
+.watch-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--ink-10);
+  box-shadow: var(--shadow-sm);
+  transition: transform .2s var(--ease), box-shadow .2s;
+}
+
+.watch-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.watch-card__poster {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2/3;
+  overflow: hidden;
+  background: var(--parchment);
+}
+
+.watch-card__poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .4s var(--ease-soft);
+}
+
+.watch-card:hover .watch-card__poster img {
+  transform: scale(1.05);
+}
+
+.watch-card__poster-ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 32px;
+  color: var(--ink-30);
+}
+
+.watch-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(14,11,16,.65);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .2s var(--ease-soft);
+}
+
+.watch-card:hover .watch-card__overlay {
+  opacity: 1;
+}
+
+.watch-play-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  background: linear-gradient(160deg, #cb315d 0%, var(--rouge) 100%);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(181,41,78,.4);
+  transition: transform .12s var(--ease), box-shadow .12s;
+}
+
+.watch-play-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(181,41,78,.5);
+}
+
+.watch-card__body {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.watch-card__title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 1.25;
+  color: var(--ink);
+  letter-spacing: -.01em;
+}
+
+.watch-card__year {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--ink-60);
+}
+
+.watch-card__rating {
+  font-size: 11px;
+  color: #c8922a;
+  font-weight: 600;
+}
+
+/* ── Empty / Initial states ── */
+.watch-empty,
+.watch-initial {
+  text-align: center;
+  padding: 80px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.watch-empty__icon,
+.watch-initial__icon {
+  font-size: 48px;
+}
+
+.watch-empty__text,
+.watch-initial__text {
+  font-size: 16px;
+  color: var(--ink-30);
+}
+
+@media (max-width: 480px) {
+  .watch-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .watch-search-input {
+    font-size: 14px;
+    padding: 12px 44px;
+  }
+}

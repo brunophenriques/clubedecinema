@@ -1651,7 +1651,39 @@ def delete_chat_message(
 # Profile page
 # ─────────────────────────────────────────────
 
-@app.get("/profile/{username}", include_in_schema=False)
+@app.get("/search/movies")
+def search_movies(q: str, page: int = 1, db: Session = Depends(get_db)):
+    """Proxy TMDB search — keeps API key server-side."""
+    api_key = os.getenv("TMDB_API_KEY")
+    if not api_key:
+        raise HTTPException(500, "TMDB not configured")
+    try:
+        r = requests.get(
+            "https://api.themoviedb.org/3/search/movie",
+            params={"api_key": api_key, "query": q, "page": page, "language": "pt-PT"},
+            timeout=8
+        )
+        data = r.json()
+        results = []
+        for m in data.get("results", [])[:12]:
+            poster = m.get("poster_path")
+            results.append({
+                "id": m["id"],
+                "title": m.get("title", ""),
+                "year": (m.get("release_date") or "")[:4],
+                "poster_url": f"https://image.tmdb.org/t/p/w300{poster}" if poster else None,
+                "overview": m.get("overview", ""),
+                "rating": m.get("vote_average", 0),
+            })
+        return {"results": results, "total": data.get("total_results", 0)}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.get("/watch", include_in_schema=False)
+def serve_watch():
+    from fastapi.responses import FileResponse
+    return FileResponse(str(FRONTEND_DIR / "watch.html"))
 def serve_profile(username: str):
     return FileResponse(str(FRONTEND_DIR / "profile.html"))
 

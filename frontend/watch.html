@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ver — Clube de Cinema</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/watch.js" defer></script>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="theme-color" content="#B5294E" />
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <div class="brand">
+        <a href="/" class="brand-link" style="display:contents">
+          <div class="logo-badge" aria-hidden="true"><span class="logo-six">6</span><span class="logo-seven">7</span></div>
+          <div class="brand-copy">
+            <div class="brand-title">Clube de Cinema</div>
+            <div class="brand-sub">Ver</div>
+          </div>
+        </a>
+      </div>
+      <div class="top-right">
+        <nav class="nav">
+          <a class="nav-link" href="/">Semana</a>
+          <a class="nav-link" href="/archive">Arquivo</a>
+          <a class="nav-link active" href="/watch">Ver</a>
+          <a class="nav-link" id="navAdmin" href="/admin" style="display:none">Admin</a>
+        </nav>
+        <div class="auth-pill">
+          <div class="auth-pill__avatar" id="authAvatarPill" style="display:none"></div>
+          <span class="auth-pill__user" id="authStatusLine">Não autenticado.</span>
+          <button class="btn" id="btnLogin" type="button" style="display:none">Entrar</button>
+          <button class="btn" id="btnLogout" type="button" style="display:none">Sair</button>
+          <button class="theme-toggle" id="btnTheme" type="button" title="Mudar tema">
+            <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" style="padding-top:40px;padding-bottom:80px">
+    <!-- Search bar -->
+    <div class="watch-search-wrap">
+      <div class="watch-search-box">
+        <svg class="watch-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="watchInput" class="watch-search-input" type="text" placeholder="Pesquisa um filme..." autocomplete="off" />
+        <button class="watch-search-clear" id="watchClear" style="display:none">✕</button>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div id="watchStatus" class="watch-status"></div>
+
+    <!-- Results grid -->
+    <div id="watchGrid" class="watch-grid"></div>
+
+    <!-- Empty state -->
+    <div id="watchEmpty" class="watch-empty" style="display:none">
+      <div class="watch-empty__icon">🎬</div>
+      <div class="watch-empty__text">Nenhum resultado encontrado.</div>
+    </div>
+
+    <!-- Initial state -->
+    <div id="watchInitial" class="watch-initial">
+      <div class="watch-initial__icon">🍿</div>
+      <div class="watch-initial__text">Pesquisa um filme para começar.</div>
+    </div>
+  </main>
+
+  <!-- Player modal -->
+  <div id="watchPlayerModal" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center">
+    <div id="watchPlayerBackdrop" style="position:absolute;inset:0;background:rgba(14,11,16,.85);backdrop-filter:blur(10px)"></div>
+    <div style="position:relative;width:calc(100% - 32px);max-width:960px;display:flex;flex-direction:column;background:#0E0B10;border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-xl);box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03)">
+        <div id="watchPlayerTitle" style="font-family:var(--font-display);font-size:18px;color:rgba(255,255,255,.92);letter-spacing:-.01em"></div>
+        <button id="watchPlayerClose" class="btn ghost" style="color:rgba(255,255,255,.5)">✕</button>
+      </div>
+      <div style="position:relative;width:100%;aspect-ratio:16/9;background:#000">
+        <iframe id="watchPlayerIframe" allowfullscreen allow="fullscreen; picture-in-picture" frameborder="0" style="position:absolute;inset:0;width:100%;height:100%;border:none"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer footer--centered">
+    <span>Clube de Cinema</span>
+  </footer>
+</body>
+</html>
