@@ -1684,7 +1684,11 @@ def search_movies(q: str, page: int = 1, db: Session = Depends(get_db)):
 def serve_watch():
     from fastapi.responses import FileResponse
     return FileResponse(str(FRONTEND_DIR / "watch.html"))
+
+
+@app.get("/profile/{username}", include_in_schema=False)
 def serve_profile(username: str):
+    from fastapi.responses import FileResponse
     return FileResponse(str(FRONTEND_DIR / "profile.html"))
 
 
