@@ -511,8 +511,8 @@ function posterHTML(f) {
   const letterboxdUrl = `https://letterboxd.com/search/${lbQuery}/`;
 
   const vidkingUrl = f.tmdb_id
-    ? `https://vidsrc.to/embed/movie/${f.tmdb_id}`
-    : `https://vidsrc.to/search/${encodeURIComponent(f.title + (f.year ? ` ${f.year}` : ""))}`;
+    ? `https://www.vidking.net/embed/movie/${f.tmdb_id}`
+    : `https://www.vidking.net/search/${encodeURIComponent(f.title + (f.year ? ` ${f.year}` : ""))}`;
   const vidkingIsEmbed = !!f.tmdb_id;
 
   const posterContent = f.poster_url
