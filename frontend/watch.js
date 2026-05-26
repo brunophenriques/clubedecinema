@@ -100,7 +100,7 @@ async function search(q) {
 
 /* ── Player ── */
 function openPlayer(tmdbId, title) {
-  const url = `https://www.vidking.net/embed/movie/${tmdbId}`;
+  const url = `https://vidsrc.to/embed/movie/${tmdbId}`;
   el("watchPlayerTitle").textContent = title;
   el("watchPlayerIframe").src = url;
   el("watchPlayerModal").style.display = "flex";
