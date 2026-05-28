@@ -970,21 +970,15 @@ function applyItalianTheme() {
   if (!ITALIAN_THEME) return;
   document.body.classList.add("theme-italian");
 
-  const stripeTop = el("itStripeTop");
-  const coliseum = el("itColiseum");
-  const lambreta = el("itLambreta");
-  const whyBtn = el("itWhyBtn");
-  const brandSub = document.querySelector(".brand-sub");
+  const toShow = ["itStripeTop","itColiseum","itPisatower","itLambreta","itPizza","itPinocchio","itFarioli","itWhyBtn"];
+  toShow.forEach(id => { const e = el(id); if (e) e.style.display = ""; });
 
-  if (stripeTop) stripeTop.style.display = "flex";
-  if (coliseum) coliseum.style.display = "";
-  if (lambreta) lambreta.style.display = "";
-  if (whyBtn) whyBtn.style.display = "inline-flex";
+  const brandSub = document.querySelector(".brand-sub");
   if (brandSub) brandSub.textContent = "Settimana Italiana";
 
   const bd = el("itPopupBd");
   if (bd) {
-    whyBtn?.addEventListener("click", () => { bd.style.display = "flex"; });
+    el("itWhyBtn")?.addEventListener("click", () => { bd.style.display = "flex"; });
     el("itPopupClose")?.addEventListener("click", () => { bd.style.display = "none"; });
     el("itPopupX")?.addEventListener("click", () => { bd.style.display = "none"; });
     bd.addEventListener("click", (e) => { if (e.target === bd) bd.style.display = "none"; });

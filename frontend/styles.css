@@ -3834,30 +3834,39 @@ code {
 .it-stripe-g { flex: 1; background: #008C45; }
 .it-stripe-w { flex: 1; background: #fff; }
 .it-stripe-r { flex: 1; background: #CD212A; }
-
-.it-coliseum {
-  position: absolute;
-  left: -20px;
+body.theme-italian::before,
+body.theme-italian::after {
+  content: '';
+  position: fixed;
+  top: 0;
   bottom: 0;
-  height: 160px;
-  opacity: 0.08;
+  width: 6px;
+  z-index: 9999;
   pointer-events: none;
-  filter: grayscale(1);
-  z-index: 1;
-  object-fit: contain;
 }
 
-.it-lambreta {
-  position: absolute;
-  right: -5px;
-  bottom: 0;
-  height: 120px;
-  pointer-events: none;
-  z-index: 2;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 16px rgba(0,0,0,.15));
-  opacity: 0.85;
+body.theme-italian::before {
+  left: 0;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(0,140,69,.15) 15%,
+    rgba(0,140,69,.25) 50%,
+    rgba(0,140,69,.15) 85%,
+    transparent 100%
+  );
 }
+
+body.theme-italian::after {
+  right: 0;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(205,33,42,.15) 15%,
+    rgba(205,33,42,.25) 50%,
+    rgba(205,33,42,.15) 85%,
+    transparent 100%
+  );
+}
+
 body.theme-italian {
   --rouge: #CD212A;
   --rouge-dim: rgba(205,33,42,.12);
@@ -3878,13 +3887,10 @@ body.theme-italian .hero::before {
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(90deg,
-      rgba(0,140,69,.06) 0%,
-      rgba(255,255,255,.02) 33%,
-      rgba(255,255,255,.02) 66%,
-      rgba(205,33,42,.06) 100%
-    );
+  background-image: url('/static/italy.gif');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.07;
   pointer-events: none;
   z-index: 0;
 }
@@ -3926,29 +3932,64 @@ body.theme-italian .btn.primary {
   border-color: #CD212A;
 }
 
-/* ── Italian images ── */
-.it-coliseum {
+/* ── Italian decorative images ── */
+.it-deco {
   position: absolute;
-  left: -20px;
-  bottom: 0;
-  height: 160px;
-  opacity: 0.08;
   pointer-events: none;
   filter: grayscale(1);
-  z-index: 1;
   object-fit: contain;
+  z-index: 1;
+}
+
+.it-coliseum {
+  left: -15px;
+  bottom: 0;
+  height: 190px;
+  opacity: 0.10;
+}
+
+.it-pinocchio {
+  left: 60px;
+  bottom: 0;
+  height: 120px;
+  opacity: 0.09;
+}
+
+.it-pizza {
+  left: 180px;
+  top: 12px;
+  height: 85px;
+  opacity: 0.09;
+  transform: rotate(-18deg);
 }
 
 .it-lambreta {
-  position: absolute;
-  right: -5px;
+  right: 155px;
   bottom: 0;
-  height: 120px;
-  pointer-events: none;
-  z-index: 1;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 16px rgba(0,0,0,.15));
-  opacity: 0.85;
+  height: 115px;
+  opacity: 0.10;
+}
+
+.it-pisatower {
+  right: 20px;
+  bottom: 0;
+  height: 165px;
+  opacity: 0.10;
+}
+
+.it-farioli {
+  right: -12px;
+  bottom: 0;
+  height: 155px;
+  opacity: 0.05;
+  filter: grayscale(1) blur(1px);
+}
+
+@media (max-width: 640px) {
+  .it-pinocchio, .it-pizza, .it-lambreta { display: none !important; }
+  .it-coliseum  { height: 120px; }
+  .it-pisatower { height: 110px; }
+  .it-farioli   { height: 100px; }
 }
 
 /* ── Why button ── */
