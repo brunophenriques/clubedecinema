@@ -662,7 +662,13 @@ function filmCard(week, f, alreadyVoted) {
 function render(week) {
   _chatWeekId = week.id;
   el("weekTitle").textContent = week.title;
-  el("heroTitle").textContent = week.title;
+  el("heroTitle").textContent = ITALIAN_THEME ? "Settimana Italiana" : week.title;
+  if (ITALIAN_THEME) {
+    const kicker = el("heroKicker");
+    if (kicker) kicker.textContent = `${week.title} · Tema especial`;
+    const sub = el("heroSub");
+    if (sub) sub.textContent = "Uma semana dedicada ao melhor do cinema italiano.";
+  }
 
   // Show chat button
   const btnChat = el("btnChat");
@@ -957,6 +963,34 @@ if ("serviceWorker" in navigator) {
 }
 
 /* ── Theme ── */
+/* ── Italian theme ── */
+const ITALIAN_THEME = new URLSearchParams(window.location.search).get("theme") === "italian";
+
+function applyItalianTheme() {
+  if (!ITALIAN_THEME) return;
+  document.body.classList.add("theme-italian");
+
+  const stripeTop = el("itStripeTop");
+  const coliseum = el("itColiseum");
+  const lambreta = el("itLambreta");
+  const whyBtn = el("itWhyBtn");
+  const brandSub = document.querySelector(".brand-sub");
+
+  if (stripeTop) stripeTop.style.display = "flex";
+  if (coliseum) coliseum.style.display = "";
+  if (lambreta) lambreta.style.display = "";
+  if (whyBtn) whyBtn.style.display = "inline-flex";
+  if (brandSub) brandSub.textContent = "Settimana Italiana";
+
+  const bd = el("itPopupBd");
+  if (bd) {
+    whyBtn?.addEventListener("click", () => { bd.style.display = "flex"; });
+    el("itPopupClose")?.addEventListener("click", () => { bd.style.display = "none"; });
+    el("itPopupX")?.addEventListener("click", () => { bd.style.display = "none"; });
+    bd.addEventListener("click", (e) => { if (e.target === bd) bd.style.display = "none"; });
+  }
+}
+
 function initTheme() {
   const saved = localStorage.getItem("cc_theme") || "light";
   document.documentElement.setAttribute("data-theme", saved);
@@ -1139,8 +1173,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await refreshAuthState();
   await load();
-
-  // Permanent delegated handler for play buttons
+  applyItalianTheme();
   el("films")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".poster-btn--play");
     if (!btn) return;

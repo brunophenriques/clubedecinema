@@ -96,18 +96,48 @@
   </aside>
 
   <main class="wrap page-shell">
-    <section class="hero hero--centered fade-in">
+    <section class="hero hero--centered fade-in" id="heroSection">
       <div class="hero-backdrop" aria-hidden="true"></div>
 
+      <!-- Italian theme elements (hidden by default) -->
+      <div class="it-stripe" id="itStripeTop" style="display:none">
+        <div class="it-stripe-g"></div><div class="it-stripe-w"></div><div class="it-stripe-r"></div>
+      </div>
+      <img id="itColiseum" class="it-coliseum" src="/static/coliseum.png" aria-hidden="true" style="display:none" />
+      <img id="itLambreta" class="it-lambreta" src="/static/lambreta.png" aria-hidden="true" style="display:none" />
+
       <div class="hero-inner">
-        <div class="kicker">Esta semana</div>
+        <div class="kicker" id="heroKicker">Esta semana</div>
         <h1 id="heroTitle">Clube de Cinema</h1>
         <p id="heroSub" class="muted">Submete um filme e vota no favorito da semana.</p>
+
+        <!-- Italian why button (hidden by default) -->
+        <button class="it-why-btn" id="itWhyBtn" style="display:none">
+          <span class="it-why-dot"></span>
+          Porquê esta semana?
+        </button>
 
         <div class="hero-actions hero-actions--centered">
           <button id="refresh" class="btn primary" type="button">↻ Atualizar</button>
           <a class="btn" href="/archive">Ver arquivo</a>
           <div class="week-status" id="weekStatus" data-state="pending">A carregar…</div>
+        </div>
+      </div>
+
+      <!-- Italian popup -->
+      <div class="it-popup-backdrop" id="itPopupBd" style="display:none">
+        <div class="it-popup">
+          <button class="it-popup-x" id="itPopupX">×</button>
+          <div class="it-popup-stripe">
+            <div style="background:#008C45;flex:1"></div>
+            <div style="background:#fff;flex:1"></div>
+            <div style="background:#CD212A;flex:1"></div>
+          </div>
+          <div class="it-popup-date">2 de junho de 1946</div>
+          <div class="it-popup-title">Festa della Repubblica</div>
+          <div class="it-popup-sub">Dia Nacional de Itália</div>
+          <div class="it-popup-body">A 2 de junho de 1946, os italianos votaram em referendo pelo fim da monarquia e o nascimento da República Italiana. Para celebrar, esta semana é dedicada ao melhor do cinema italiano.</div>
+          <button class="it-popup-cta" id="itPopupClose">Capito!</button>
         </div>
       </div>
     </section>
