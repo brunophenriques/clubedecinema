@@ -73,6 +73,7 @@ class Week(Base):
     winner_film_id = Column(Integer, ForeignKey("films.id"), nullable=True)
 
     is_special = Column(Boolean, default=False, nullable=False)
+    theme = Column(String, nullable=True, default=None)
 
     films = relationship(
         "Film",

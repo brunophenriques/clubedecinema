@@ -348,6 +348,7 @@ def week_payload(db: Session, week: models.Week, include_submitter: bool = False
         "winner_film_id": week.winner_film_id,
         "films": films,
         "is_ready": week.is_ready,
+        "theme": week.theme,
     }
 
 
@@ -737,10 +738,11 @@ def create_week(
     require_admin_user(db, authorization)
 
     title = (body.get("title") or "").strip()
+    theme = (body.get("theme") or "").strip() or None
     if not title:
         raise HTTPException(400, "title required")
 
-    week = models.Week(title=title, is_open=True)
+    week = models.Week(title=title, is_open=True, theme=theme)
     db.add(week)
     db.commit()
     db.refresh(week)

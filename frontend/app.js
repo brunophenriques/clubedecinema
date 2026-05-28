@@ -662,13 +662,10 @@ function filmCard(week, f, alreadyVoted) {
 function render(week) {
   _chatWeekId = week.id;
   el("weekTitle").textContent = week.title;
-  el("heroTitle").textContent = ITALIAN_THEME ? "Settimana Italiana" : week.title;
-  if (ITALIAN_THEME) {
-    const kicker = el("heroKicker");
-    if (kicker) kicker.textContent = `${week.title} · Tema especial`;
-    const sub = el("heroSub");
-    if (sub) sub.textContent = "Uma semana dedicada ao melhor do cinema italiano.";
-  }
+  el("heroTitle").textContent = week.title;
+
+  // Apply week theme if set
+  if (week.theme) applyTheme(week.theme);
 
   // Show chat button
   const btnChat = el("btnChat");
@@ -964,24 +961,37 @@ if ("serviceWorker" in navigator) {
 
 /* ── Theme ── */
 /* ── Italian theme ── */
-const ITALIAN_THEME = new URLSearchParams(window.location.search).get("theme") === "italian";
+let _activeTheme = null;
 
-function applyItalianTheme() {
-  if (!ITALIAN_THEME) return;
-  document.body.classList.add("theme-italian");
+function applyTheme(theme) {
+  if (!theme || _activeTheme === theme) return;
+  _activeTheme = theme;
 
-  const toShow = ["itStripeTop","itColiseum","itPisatower","itLambreta","itPizza","itPinocchio","itFarioli","itWhyBtn"];
-  toShow.forEach(id => { const e = el(id); if (e) e.style.display = ""; });
+  if (theme === "italian") {
+    document.body.classList.add("theme-italian");
 
-  const brandSub = document.querySelector(".brand-sub");
-  if (brandSub) brandSub.textContent = "Settimana Italiana";
+    // Inject flag side divs
+    if (!document.querySelector(".it-flag-left")) {
+      const l = document.createElement("div"); l.className = "it-flag-left";
+      const r = document.createElement("div"); r.className = "it-flag-right";
+      document.body.appendChild(l);
+      document.body.appendChild(r);
+    }
 
-  const bd = el("itPopupBd");
-  if (bd) {
-    el("itWhyBtn")?.addEventListener("click", () => { bd.style.display = "flex"; });
-    el("itPopupClose")?.addEventListener("click", () => { bd.style.display = "none"; });
-    el("itPopupX")?.addEventListener("click", () => { bd.style.display = "none"; });
-    bd.addEventListener("click", (e) => { if (e.target === bd) bd.style.display = "none"; });
+    const toShow = ["itStripeTop","itColiseum","itPisatower","itLambreta","itPizza","itPinocchio","itFarioli","itWhyBtn"];
+    toShow.forEach(id => { const e = el(id); if (e) e.style.display = ""; });
+
+    const brandSub = document.querySelector(".brand-sub");
+    if (brandSub) brandSub.textContent = "Settimana Italiana";
+
+    const bd = el("itPopupBd");
+    if (bd && !bd._wired) {
+      bd._wired = true;
+      el("itWhyBtn")?.addEventListener("click", () => { bd.style.display = "flex"; });
+      el("itPopupClose")?.addEventListener("click", () => { bd.style.display = "none"; });
+      el("itPopupX")?.addEventListener("click", () => { bd.style.display = "none"; });
+      bd.addEventListener("click", (e) => { if (e.target === bd) bd.style.display = "none"; });
+    }
   }
 }
 
@@ -1167,7 +1177,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await refreshAuthState();
   await load();
-  applyItalianTheme();
+
+  // Permanent delegated handler for play buttons
   el("films")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".poster-btn--play");
     if (!btn) return;

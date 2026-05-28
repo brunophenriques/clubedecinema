@@ -564,11 +564,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("createWeek")?.addEventListener("click", async () => {
     const btn = $("createWeek");
     const title = $("newWeekTitle").value.trim();
+    const theme = $("newWeekTheme")?.value.trim() || null;
     if (!title) { toast("Insere um título para a semana.", "error"); $("newWeekTitle").focus(); return; }
     try {
       setBusy(btn, true, "A criar…");
-      await apiPost("/admin/weeks", { title }, { auth: true });
+      await apiPost("/admin/weeks", { title, theme }, { auth: true });
       $("newWeekTitle").value = "";
+      if ($("newWeekTheme")) $("newWeekTheme").value = "";
       toast(`Semana "${title}" criada ✓`, "success");
       await load();
     } catch (e) { toast(`Erro: ${e.message}`, "error", 5000); }
