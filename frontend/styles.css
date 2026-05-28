@@ -3822,7 +3822,6 @@ code {
    ITALIAN THEME
    ═══════════════════════════════════════════ */
 
-/* ── Stripe ── */
 .it-stripe {
   display: flex;
   height: 5px;
@@ -3830,13 +3829,35 @@ code {
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 3;
+  z-index: 4;
 }
 .it-stripe-g { flex: 1; background: #008C45; }
 .it-stripe-w { flex: 1; background: #fff; }
 .it-stripe-r { flex: 1; background: #CD212A; }
 
-/* ── Hero Italian overrides ── */
+.it-coliseum {
+  position: absolute;
+  left: -20px;
+  bottom: 0;
+  height: 160px;
+  opacity: 0.08;
+  pointer-events: none;
+  filter: grayscale(1);
+  z-index: 1;
+  object-fit: contain;
+}
+
+.it-lambreta {
+  position: absolute;
+  right: -5px;
+  bottom: 0;
+  height: 120px;
+  pointer-events: none;
+  z-index: 2;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,.15));
+  opacity: 0.85;
+}
 body.theme-italian {
   --rouge: #CD212A;
   --rouge-dim: rgba(205,33,42,.12);
@@ -3866,6 +3887,11 @@ body.theme-italian .hero::before {
     );
   pointer-events: none;
   z-index: 0;
+}
+
+body.theme-italian .hero .hero-inner {
+  position: relative;
+  z-index: 3;
 }
 
 body.theme-italian .hero .kicker {
@@ -3903,10 +3929,10 @@ body.theme-italian .btn.primary {
 /* ── Italian images ── */
 .it-coliseum {
   position: absolute;
-  left: -10px;
+  left: -20px;
   bottom: 0;
-  height: 200px;
-  opacity: 0.1;
+  height: 160px;
+  opacity: 0.08;
   pointer-events: none;
   filter: grayscale(1);
   z-index: 1;
@@ -3915,13 +3941,14 @@ body.theme-italian .btn.primary {
 
 .it-lambreta {
   position: absolute;
-  right: -8px;
+  right: -5px;
   bottom: 0;
-  height: 155px;
+  height: 120px;
   pointer-events: none;
   z-index: 1;
   object-fit: contain;
   filter: drop-shadow(0 4px 16px rgba(0,0,0,.15));
+  opacity: 0.85;
 }
 
 /* ── Why button ── */
