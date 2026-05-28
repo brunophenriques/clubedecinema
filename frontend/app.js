@@ -961,7 +961,7 @@ if ("serviceWorker" in navigator) {
 
 /* ── Theme ── */
 /* ── Italian theme ── */
-let _activeTheme = null;
+let _activeTheme = new URLSearchParams(window.location.search).get("theme") || null;
 
 function applyTheme(theme) {
   if (!theme || _activeTheme === theme) return;
@@ -1178,7 +1178,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   await refreshAuthState();
   await load();
 
-  // Permanent delegated handler for play buttons
+  // Apply URL theme param for preview (e.g. ?theme=italian)
+  if (_activeTheme) applyTheme(_activeTheme);
   el("films")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".poster-btn--play");
     if (!btn) return;
