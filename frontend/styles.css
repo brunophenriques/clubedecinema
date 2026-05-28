@@ -3834,13 +3834,27 @@ code {
 .it-stripe-g { flex: 1; background: #008C45; }
 .it-stripe-w { flex: 1; background: #fff; }
 .it-stripe-r { flex: 1; background: #CD212A; }
+body.theme-italian {
+  --rouge: #CD212A;
+  --rouge-dim: rgba(205,33,42,.12);
+  --rouge-mid: rgba(205,33,42,.25);
+  background: linear-gradient(to right,
+    rgba(0,140,69,.18) 0%,
+    rgba(0,140,69,.08) 8%,
+    transparent 18%,
+    transparent 82%,
+    rgba(205,33,42,.08) 92%,
+    rgba(205,33,42,.18) 100%
+  ) !important;
+}
+
 body.theme-italian::before,
 body.theme-italian::after {
   content: '';
   position: fixed;
   top: 0;
   bottom: 0;
-  width: 6px;
+  width: 4px;
   z-index: 9999;
   pointer-events: none;
 }
@@ -3849,9 +3863,9 @@ body.theme-italian::before {
   left: 0;
   background: linear-gradient(to bottom,
     transparent 0%,
-    rgba(0,140,69,.15) 15%,
-    rgba(0,140,69,.25) 50%,
-    rgba(0,140,69,.15) 85%,
+    rgba(0,140,69,.35) 20%,
+    rgba(0,140,69,.45) 50%,
+    rgba(0,140,69,.35) 80%,
     transparent 100%
   );
 }
@@ -3860,17 +3874,11 @@ body.theme-italian::after {
   right: 0;
   background: linear-gradient(to bottom,
     transparent 0%,
-    rgba(205,33,42,.15) 15%,
-    rgba(205,33,42,.25) 50%,
-    rgba(205,33,42,.15) 85%,
+    rgba(205,33,42,.35) 20%,
+    rgba(205,33,42,.45) 50%,
+    rgba(205,33,42,.35) 80%,
     transparent 100%
   );
-}
-
-body.theme-italian {
-  --rouge: #CD212A;
-  --rouge-dim: rgba(205,33,42,.12);
-  --rouge-mid: rgba(205,33,42,.25);
 }
 
 body.theme-italian .hero {
@@ -3942,54 +3950,53 @@ body.theme-italian .btn.primary {
 }
 
 .it-coliseum {
-  left: -15px;
+  left: -20px;
   bottom: 0;
-  height: 190px;
-  opacity: 0.10;
+  height: 220px;
+  opacity: 0.09;
 }
 
 .it-pinocchio {
-  left: 60px;
+  left: 30%;
   bottom: 0;
-  height: 120px;
-  opacity: 0.09;
+  height: 100px;
+  opacity: 0.08;
 }
 
 .it-pizza {
-  left: 180px;
-  top: 12px;
-  height: 85px;
-  opacity: 0.09;
-  transform: rotate(-18deg);
+  right: 35%;
+  top: 8px;
+  height: 80px;
+  opacity: 0.08;
+  transform: rotate(-15deg);
 }
 
 .it-lambreta {
-  right: 155px;
+  right: 18%;
   bottom: 0;
-  height: 115px;
-  opacity: 0.10;
+  height: 110px;
+  opacity: 0.09;
 }
 
 .it-pisatower {
-  right: 20px;
+  right: -5px;
   bottom: 0;
-  height: 165px;
-  opacity: 0.10;
+  height: 200px;
+  opacity: 0.09;
 }
 
 .it-farioli {
-  right: -12px;
+  right: 8%;
   bottom: 0;
-  height: 155px;
-  opacity: 0.05;
+  height: 130px;
+  opacity: 0.04;
   filter: grayscale(1) blur(1px);
 }
 
 @media (max-width: 640px) {
-  .it-pinocchio, .it-pizza, .it-lambreta { display: none !important; }
-  .it-coliseum  { height: 120px; }
-  .it-pisatower { height: 110px; }
-  .it-farioli   { height: 100px; }
+  .it-pinocchio, .it-pizza, .it-lambreta, .it-farioli { display: none !important; }
+  .it-coliseum  { height: 130px; }
+  .it-pisatower { height: 130px; }
 }
 
 /* ── Why button ── */
