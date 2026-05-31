@@ -1,96 +1,171 @@
 /* =====================================================
    portugal.css — estilos exclusivos do tema Portugal
-   Não importado em nenhuma outra página
    ===================================================== */
 
-/* ── Side flag stripes ── */
+/* ── Bandeiras laterais ── */
 .pt-flag-left,
 .pt-flag-right {
   position: fixed;
   top: 0; bottom: 0;
-  width: 6px;
+  width: 8px;
   z-index: 9000;
   pointer-events: none;
 }
-.pt-flag-left  { left: 0  !important;  background: #006600 !important; }
+.pt-flag-left  { left: 0  !important; background: #006600 !important; }
 .pt-flag-right { right: 0 !important; background: #d4000e !important; }
 
-/* ── Estrela da Amadora ── */
+/* ── Fundo com bandeira subtil ── */
+body.pt-active {
+  background-image: url('/static/portugal.gif');
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+}
+body.pt-active::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  z-index: 0;
+  pointer-events: none;
+}
+body.pt-active .wrap,
+body.pt-active header {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Paulo Moreira — deco lateral ── */
+.pt-paulo {
+  position: fixed;
+  bottom: 0;
+  left: 12px;
+  width: 180px;
+  z-index: 8000;
+  pointer-events: none;
+  opacity: 0.92;
+  filter: drop-shadow(0 0 18px rgba(0,102,0,0.5));
+}
+
+/* ── Escudo Estrela da Amadora ── */
 .pt-estrela-badge {
   position: fixed;
   top: 64px; right: 18px;
   z-index: 9000;
-  font-size: 1.6rem;
-  animation: ptSpin 6s linear infinite;
+  width: 52px; height: 52px;
+  animation: ptSpin 8s linear infinite;
   cursor: default;
   user-select: none;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+}
+.pt-estrela-badge img {
+  width: 100%; height: 100%;
+  object-fit: contain;
 }
 @keyframes ptSpin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
 
-/* ── Botão "Porquê esta semana?" ── */
-.pt-why-btn {
-  position: fixed;
-  bottom: 18px; right: 18px;
-  z-index: 9999;
-  background: #006600;
-  color: #fff;
-  border: none;
+/* ── Botão "Porquê esta semana?" inline ── */
+.pt-why-inline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  border: 1px solid rgba(255,255,255,0.15);
   border-radius: 20px;
-  padding: 8px 16px;
-  font-size: .85rem;
+  padding: 6px 14px;
+  font-size: .8rem;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,.3);
-  transition: background .2s;
+  margin-top: 8px;
+  transition: all .2s;
 }
-.pt-why-btn:hover { background: #d4000e; }
+.pt-why-inline-btn:hover {
+  background: rgba(0,102,0,0.2);
+  border-color: #006600;
+  color: #fff;
+}
 
 /* ── Popup "Porquê?" ── */
 .pt-why-popup {
   display: none;
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.6);
+  background: rgba(0,0,0,.7);
   align-items: center; justify-content: center;
   z-index: 99998;
 }
 .pt-why-inner {
-  background: var(--bg-card, #1e1e1e);
-  border-radius: 12px;
-  padding: 32px;
-  max-width: 400px;
+  background: var(--bg-card, #1a1a1a);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 36px;
+  max-width: 420px;
   width: 90%;
   position: relative;
   color: var(--text-primary, #fff);
   text-align: center;
-  box-shadow: 0 8px 40px rgba(0,0,0,.5);
+  box-shadow: 0 16px 60px rgba(0,0,0,.7);
 }
-.pt-why-inner h2 { margin: 0 0 16px; font-size: 1.4rem; }
-.pt-why-inner p  { margin: 0 0 12px; line-height: 1.6; opacity: .85; }
+.pt-why-inner h2 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
+.pt-why-inner .pt-why-date {
+  font-size: .8rem;
+  opacity: .5;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.pt-why-inner p {
+  margin: 0 0 10px;
+  line-height: 1.65;
+  opacity: .8;
+  font-size: .95rem;
+}
 .pt-why-close {
   position: absolute;
-  top: 10px; right: 12px;
+  top: 12px; right: 14px;
   background: none; border: none;
-  color: inherit; font-size: 1rem;
-  cursor: pointer; opacity: .6;
+  color: inherit; font-size: 1.1rem;
+  cursor: pointer; opacity: .4;
+  transition: opacity .2s;
 }
 .pt-why-close:hover { opacity: 1; }
+.pt-why-stripe {
+  display: flex;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.pt-why-stripe div:nth-child(1) { flex: 2; background: #006600; }
+.pt-why-stripe div:nth-child(2) { flex: 1; background: #fff; }
+.pt-why-stripe div:nth-child(3) { flex: 2; background: #d4000e; }
 
-/* ── Intro overlay (Ronaldo) ── */
+/* ── Intro overlay (Ronaldo gif + vídeo) ── */
 .pt-intro__overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.88);
+  background: #000;
   display: flex; align-items: center; justify-content: center;
   z-index: 99999;
+}
+.pt-intro__bg-gif {
+  position: absolute; inset: 0;
+  background: url('/static/ronaldo.gif') center/cover no-repeat;
+  opacity: 0.15;
+  pointer-events: none;
 }
 .pt-intro__box {
   position: relative;
   width: min(860px, 92vw);
   aspect-ratio: 16/9;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 0 60px rgba(0,102,0,.5);
+  box-shadow: 0 0 80px rgba(0,102,0,0.4), 0 0 0 1px rgba(255,255,255,0.06);
+  z-index: 1;
 }
 .pt-intro__box iframe {
   width: 100%; height: 100%;
@@ -98,59 +173,79 @@
 }
 .pt-intro__close {
   position: absolute;
-  top: 10px; right: 12px;
-  background: rgba(0,0,0,.75);
+  top: 12px; right: 14px;
+  background: rgba(0,0,0,.8);
   color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 14px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 7px 16px;
   cursor: pointer;
   font-size: .85rem;
   z-index: 10;
-  transition: background .2s;
+  transition: background .2s, border-color .2s;
+  letter-spacing: .02em;
 }
-.pt-intro__close:hover { background: #d4000e; }
+.pt-intro__close:hover {
+  background: #d4000e;
+  border-color: #d4000e;
+}
+.pt-intro__label {
+  position: absolute;
+  bottom: 14px; left: 14px;
+  background: rgba(0,0,0,.7);
+  color: #fff;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: .75rem;
+  opacity: .7;
+  z-index: 10;
+  letter-spacing: .04em;
+}
 
 /* ── Mute button ── */
 .pt-mute-btn {
   position: fixed;
-  bottom: 18px; left: 18px;
+  bottom: 20px; left: 20px;
   z-index: 9999;
-  background: rgba(0,0,0,.65);
+  background: rgba(10,10,10,.8);
   color: #fff;
-  border: none;
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 50%;
-  width: 58px; height: 58px;
-  font-size: 1.6rem;
+  width: 54px; height: 54px;
+  font-size: 1.5rem;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: background .2s;
-  box-shadow: 0 2px 10px rgba(0,0,0,.4);
+  transition: background .2s, transform .1s;
+  box-shadow: 0 2px 12px rgba(0,0,0,.5);
 }
-.pt-mute-btn:hover { background: #006600; }
+.pt-mute-btn:hover {
+  background: #006600;
+  transform: scale(1.08);
+}
 
 /* ── Mobile popup ── */
 .pt-mobile-popup {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.75);
+  background: rgba(0,0,0,.8);
   display: flex; align-items: center; justify-content: center;
   z-index: 99999;
 }
 .pt-mobile-inner {
-  background: var(--bg-card, #1e1e1e);
-  border-radius: 12px;
-  padding: 36px 32px;
+  background: var(--bg-card, #1a1a1a);
+  border-radius: 16px;
+  padding: 40px 32px;
   text-align: center;
   color: var(--text-primary, #fff);
   position: relative;
   font-size: 1.1rem;
-  box-shadow: 0 8px 40px rgba(0,0,0,.5);
+  box-shadow: 0 8px 40px rgba(0,0,0,.6);
+  max-width: 300px;
 }
 .pt-mobile-close {
   position: absolute;
-  top: 10px; right: 14px;
+  top: 12px; right: 16px;
   cursor: pointer;
   font-size: 1rem;
-  opacity: .6;
+  opacity: .5;
 }
 .pt-mobile-close:hover { opacity: 1; }

@@ -1,11 +1,9 @@
 /* =====================================================
    portugal.js — lógica exclusiva do tema Portugal 🇵🇹
-   Só carregado em portugal.html
    ===================================================== */
 
 const PT_INTRO_KEY = "pt_intro_seen";
 
-/* ── Reset do intro via ?reset=1 ── */
 if (new URLSearchParams(window.location.search).get("reset") === "1") {
   localStorage.removeItem(PT_INTRO_KEY);
 }
@@ -16,36 +14,51 @@ const isMobile = window.innerWidth < 768;
    DECORAÇÕES
    ══════════════════════════════════════ */
 function addDecorations() {
+  // Fundo com bandeira
+  document.body.classList.add("pt-active");
+
+  // Bandeiras laterais
   const l = document.createElement("div"); l.className = "pt-flag-left";
   const r = document.createElement("div"); r.className = "pt-flag-right";
   document.body.appendChild(l);
   document.body.appendChild(r);
 
+  // Escudo Estrela da Amadora
   const estrela = document.createElement("div");
   estrela.className = "pt-estrela-badge";
-  estrela.title = "Estrela da Amadora";
-  estrela.textContent = "⭐";
+  estrela.innerHTML = `<img src="/static/estreladamadora.png" alt="Estrela da Amadora" />`;
   document.body.appendChild(estrela);
 
-  const btn = document.createElement("button");
-  btn.className = "pt-why-btn";
-  btn.textContent = "🇵🇹 Porquê esta semana?";
-  btn.addEventListener("click", () => {
-    document.getElementById("ptWhyPopup").style.display = "flex";
-  });
-  document.body.appendChild(btn);
+  // Paulo Moreira
+  const paulo = document.createElement("img");
+  paulo.className = "pt-paulo";
+  paulo.src = "/static/paulomoreira.png";
+  paulo.alt = "Paulo Moreira";
+  document.body.appendChild(paulo);
+
+  // Botão "Porquê?" inline abaixo do subtítulo
+  const heroSub = document.getElementById("heroSub");
+  if (heroSub && !document.getElementById("ptWhyInlineBtn")) {
+    const btn = document.createElement("button");
+    btn.id = "ptWhyInlineBtn";
+    btn.className = "pt-why-inline-btn";
+    btn.innerHTML = `🇵🇹 Porquê esta semana?`;
+    btn.addEventListener("click", () => {
+      document.getElementById("ptWhyPopup").style.display = "flex";
+    });
+    heroSub.insertAdjacentElement("afterend", btn);
+  }
 }
 
 /* ══════════════════════════════════════
-   TÍTULO PORTUGUÊS
+   TÍTULO
    ══════════════════════════════════════ */
 function forcePtTitle() {
   setTimeout(() => {
     const heroTitle = document.getElementById("heroTitle");
     const brandSub  = document.querySelector(".brand-sub");
-    if (heroTitle && heroTitle.textContent.trim() !== "Clube de Cinema")
-      heroTitle.textContent = "Semana Portuguesa";
-    if (brandSub) brandSub.textContent = "Semana Portuguesa 🇵🇹";
+    if (heroTitle) heroTitle.textContent = "Semana Portuguesa";
+    if (brandSub)  brandSub.textContent  = "Semana Portuguesa 🇵🇹";
   }, 900);
 }
 
@@ -65,6 +78,7 @@ function startAnthem() {
   muteBtn.id = "ptMuteBtn";
   muteBtn.className = "pt-mute-btn";
   muteBtn.innerHTML = "🔊";
+  muteBtn.title = "Hino Nacional";
   muteBtn.addEventListener("click", () => {
     _anthemMuted = !_anthemMuted;
     iframe.src = `https://www.youtube.com/embed/_-vct5dNaNY?autoplay=1&loop=1&playlist=_-vct5dNaNY&mute=${_anthemMuted ? 1 : 0}`;
@@ -81,8 +95,10 @@ function showIntro() {
   overlay.id = "ptIntroOverlay";
   overlay.className = "pt-intro__overlay";
   overlay.innerHTML = `
+    <div class="pt-intro__bg-gif"></div>
     <div class="pt-intro__box">
       <button class="pt-intro__close" id="ptIntroClose">✕ Saltar</button>
+      <div class="pt-intro__label">🇵🇹 Semana Portuguesa</div>
       <iframe
         src="https://www.youtube.com/embed/YrZTw6uh4Yk?autoplay=1&controls=1"
         allow="autoplay; encrypted-media"
@@ -106,6 +122,7 @@ function closeIntro() {
    ══════════════════════════════════════ */
 function showMobilePopup() {
   addDecorations();
+  forcePtTitle();
   const popup = document.createElement("div");
   popup.className = "pt-mobile-popup";
   popup.innerHTML = `
