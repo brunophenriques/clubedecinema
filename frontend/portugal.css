@@ -12,8 +12,8 @@
   z-index: 9000;
   pointer-events: none;
 }
-.pt-flag-left  { left: 0;  background: #006600; }
-.pt-flag-right { right: 0; background: #d4000e; }
+.pt-flag-left  { left: 0  !important;  background: #006600 !important; }
+.pt-flag-right { right: 0 !important; background: #d4000e !important; }
 
 /* ── Estrela da Amadora ── */
 .pt-estrela-badge {

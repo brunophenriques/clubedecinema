@@ -44,7 +44,7 @@ function forcePtTitle() {
     const heroTitle = document.getElementById("heroTitle");
     const brandSub  = document.querySelector(".brand-sub");
     if (heroTitle && heroTitle.textContent.trim() !== "Clube de Cinema")
-      heroTitle.textContent = "Semana Portuguesa 🇵🇹";
+      heroTitle.textContent = "Semana Portuguesa";
     if (brandSub) brandSub.textContent = "Semana Portuguesa 🇵🇹";
   }, 900);
 }
