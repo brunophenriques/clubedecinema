@@ -964,6 +964,7 @@ if ("serviceWorker" in navigator) {
 let _activeTheme = new URLSearchParams(window.location.search).get("theme") || null;
 
 function applyTheme(theme) {
+  if (window.__PT_PAGE) return;
   if (!theme || _activeTheme === theme) return;
   _activeTheme = theme;
 
