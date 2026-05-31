@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clube de Cinema 🇵🇹</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="stylesheet" href="/static/portugal.css" />
+  <script src="/static/app.js" defer></script>
+  <script src="/static/portugal.js" defer></script>
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="theme-color" content="#006600" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Clube de Cinema" />
+
+  <!-- OG -->
+  <meta property="og:title" content="Clube de Cinema 🇵🇹" />
+  <meta property="og:description" content="Semana do Cinema Português." />
+  <meta property="og:image" content="/static/android-chrome-512x512.png" />
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <div class="brand">
+        <div class="logo-badge" aria-hidden="true">
+          <span class="logo-six">6</span><span class="logo-seven">7</span>
+        </div>
+        <div class="brand-copy">
+          <div class="brand-title"><span>Clube de Cinema</span></div>
+          <div class="brand-sub" id="weekTitle">Semana Portuguesa 🇵🇹</div>
+        </div>
+      </div>
+
+      <div class="top-right">
+        <nav class="nav">
+          <a class="nav-link active" href="/">Semana</a>
+          <a class="nav-link" href="/archive">Arquivo</a>
+          <a class="nav-link" href="/watch">Ver</a>
+          <a class="nav-link" id="navAdmin" href="/admin" style="display:none">Admin</a>
+        </nav>
+
+        <div class="auth-pill">
+          <div class="auth-pill__avatar" id="authAvatarPill" style="display:none"></div>
+          <span class="auth-pill__user" id="authStatusLine">Não autenticado.</span>
+          <button class="btn lb-connect-btn" id="btnLetterboxd" type="button" title="Ligar Letterboxd" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="btn" id="btnLogin" type="button">Entrar</button>
+          <button class="btn" id="btnLogout" type="button" style="display:none">Sair</button>
+          <button class="btn chat-header-btn" id="btnChat" type="button" title="Chat da semana" style="display:none">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="chat-header-btn__badge" id="chatBadge" style="display:none"></span>
+          </button>
+          <button class="theme-toggle" id="btnTheme" type="button" title="Mudar tema">
+            <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Chat panel ── -->
+  <div id="chatOverlay" class="chat-overlay"></div>
+  <aside id="chatPanel" class="chat-panel" aria-label="Chat da semana">
+    <div class="chat-panel__head">
+      <div class="chat-panel__title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+      </div>
+      <button class="btn ghost chat-panel__close" id="chatClose" type="button">✕</button>
+    </div>
+    <div class="chat-panel__week" id="chatWeekLabel"></div>
+    <div class="chat-panel__messages" id="chatMessages">
+      <div class="chat-empty" id="chatEmpty">Nenhuma mensagem ainda. Começa a discussão!</div>
+    </div>
+    <div class="chat-panel__input-wrap">
+      <div class="chat-panel__input-row">
+        <textarea id="chatInput" class="chat-input" placeholder="Escreve uma mensagem…" rows="1" maxlength="500"></textarea>
+        <button class="btn primary chat-send-btn" id="chatSend" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+        </button>
+      </div>
+      <div class="chat-panel__hint" id="chatHint"></div>
+    </div>
+  </aside>
+
+  <main class="wrap page-shell">
+    <section class="hero hero--centered fade-in" id="heroSection">
+      <div class="hero-backdrop" aria-hidden="true"></div>
+
+      <div class="hero-inner">
+        <div class="kicker" id="heroKicker">Esta semana</div>
+        <h1 id="heroTitle">Clube de Cinema</h1>
+        <p id="heroSub" class="muted">Submete um filme e vota no favorito da semana.</p>
+
+        <div class="hero-actions hero-actions--centered">
+          <button id="refresh" class="btn primary" type="button">↻ Atualizar</button>
+          <a class="btn" href="/archive">Ver arquivo</a>
+          <div class="week-status" id="weekStatus" data-state="pending">A carregar…</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--elevated fade-in">
+      <div class="section-head section-head--center">
+        <div>
+          <div class="kicker kicker--soft">Participação</div>
+          <h2>Submeter filme</h2>
+          <div class="muted small" id="submitHint">Faz login para submeter.</div>
+        </div>
+      </div>
+      <form id="submitForm" class="submit-form">
+        <input id="subTitle" class="input" placeholder="Título do filme" autocomplete="off" />
+        <div class="submit-row">
+          <input id="subYear" class="input" placeholder="Ano" inputmode="numeric" />
+          <input id="subDirector" class="input" placeholder="Realizador (opcional)" autocomplete="off" />
+        </div>
+        <div class="submit-actions">
+          <button id="subBtn" class="btn primary" type="submit">Submeter</button>
+          <span class="muted small">O poster é obtido do TMDB automaticamente.</span>
+        </div>
+      </form>
+    </section>
+
+    <section class="section section--elevated fade-in">
+      <div class="section-head section-head--center">
+        <div>
+          <div class="kicker kicker--soft">Seleção</div>
+          <h2>Filmes</h2>
+          <div class="muted small" id="filmsHint">Escolhe e vota.</div>
+        </div>
+      </div>
+      <div id="films" class="film-grid"></div>
+      <button id="filmsMore" class="btn" type="button" style="display:none; margin-top:14px; width:100%; justify-content:center;">Ver mais</button>
+    </section>
+
+    <div id="authModal" style="display:none">
+      <div class="hof-modal is-open" style="display:flex">
+        <div class="hof-modal__backdrop" id="authBackdrop"></div>
+        <div class="hof-modal__panel" role="dialog" aria-modal="true" style="max-width:440px">
+          <div class="hof-modal__head">
+            <div>
+              <div class="hof-modal__title">Entrar</div>
+              <div class="muted small">Sem email — só username e password.</div>
+            </div>
+            <button class="btn ghost" id="authClose" type="button">✕</button>
+          </div>
+          <div class="hof-modal__body">
+            <div class="seg" style="margin-bottom:16px">
+              <button id="tabLogin" class="seg-btn is-active" type="button">Login</button>
+              <button id="tabRegister" class="seg-btn" type="button">Criar conta</button>
+            </div>
+            <form id="authForm" style="display:grid; gap:10px;">
+              <input id="authUser" class="input" placeholder="Username" autocomplete="username" />
+              <input id="authPass" class="input" placeholder="Password" type="password" autocomplete="current-password" />
+              <button id="authSubmit" class="btn primary" type="submit" data-mode="login">Entrar</button>
+              <div class="muted small" id="authMsg"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Visto pelo Clube ── -->
+    <section class="section section--elevated fade-in" id="clubWatchedSection" style="display:none">
+      <div class="section-head section-head--center">
+        <div>
+          <div class="kicker kicker--soft">Letterboxd</div>
+          <h2>Visto pelo Clube</h2>
+          <div class="muted small" id="clubWatchedHint">O que o clube achou dos vencedores recentes.</div>
+        </div>
+      </div>
+      <div id="clubWatchedGrid" class="watched-grid"></div>
+    </section>
+
+    <!-- ── Popup "Porquê esta semana?" ── -->
+    <div id="ptWhyPopup" class="pt-why-popup">
+      <div class="pt-why-inner">
+        <button class="pt-why-close" id="ptWhyClose">✕</button>
+        <h2>🇵🇹 Dia de Portugal</h2>
+        <p>10 de junho — Dia de Portugal, de Camões e das Comunidades Portuguesas.</p>
+        <p>Esta semana o clube celebra o melhor do cinema português!</p>
+      </div>
+    </div>
+
+    <footer class="footer footer--centered">
+      <span>Clube de Cinema</span>
+      <span class="footer-dot">•</span>
+      <span>Edição 67</span>
+    </footer>
+  </main>
+</body>
+</html>

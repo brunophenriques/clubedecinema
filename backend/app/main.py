@@ -53,8 +53,15 @@ def serve_sw():
     return FileResponse(str(FRONTEND_DIR / "sw.js"), media_type="application/javascript")
 
 @app.get("/", include_in_schema=False)
-def serve_index():
+def serve_index(db: Session = Depends(get_db)):
+    week = db.query(models.Week).filter(models.Week.is_open == True).first()
+    if week and getattr(week, "theme", None) == "portugal":
+        return FileResponse(str(FRONTEND_DIR / "portugal.html"))
     return FileResponse(str(FRONTEND_DIR / "index.html"))
+
+@app.get("/portugal", include_in_schema=False)
+def serve_portugal():
+    return FileResponse(str(FRONTEND_DIR / "portugal.html"))
 
 @app.get("/admin", include_in_schema=False)
 def serve_admin():

@@ -1,0 +1,155 @@
+/* =====================================================
+   portugal.css — estilos exclusivos do tema Portugal
+   Não importado em nenhuma outra página
+   ===================================================== */
+
+/* ── Side flag stripes ── */
+.pt-flag-left,
+.pt-flag-right {
+  position: fixed;
+  top: 0; bottom: 0;
+  width: 6px;
+  z-index: 9000;
+  pointer-events: none;
+}
+.pt-flag-left  { left: 0;  background: #006600; }
+.pt-flag-right { right: 0; background: #d4000e; }
+
+/* ── Estrela da Amadora ── */
+.pt-estrela-badge {
+  position: fixed;
+  top: 64px; right: 18px;
+  z-index: 9000;
+  font-size: 1.6rem;
+  animation: ptSpin 6s linear infinite;
+  cursor: default;
+  user-select: none;
+}
+@keyframes ptSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Botão "Porquê esta semana?" ── */
+.pt-why-btn {
+  position: fixed;
+  bottom: 18px; right: 18px;
+  z-index: 9999;
+  background: #006600;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: .85rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  transition: background .2s;
+}
+.pt-why-btn:hover { background: #d4000e; }
+
+/* ── Popup "Porquê?" ── */
+.pt-why-popup {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  align-items: center; justify-content: center;
+  z-index: 99998;
+}
+.pt-why-inner {
+  background: var(--bg-card, #1e1e1e);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  position: relative;
+  color: var(--text-primary, #fff);
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,.5);
+}
+.pt-why-inner h2 { margin: 0 0 16px; font-size: 1.4rem; }
+.pt-why-inner p  { margin: 0 0 12px; line-height: 1.6; opacity: .85; }
+.pt-why-close {
+  position: absolute;
+  top: 10px; right: 12px;
+  background: none; border: none;
+  color: inherit; font-size: 1rem;
+  cursor: pointer; opacity: .6;
+}
+.pt-why-close:hover { opacity: 1; }
+
+/* ── Intro overlay (Ronaldo) ── */
+.pt-intro__overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.88);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 99999;
+}
+.pt-intro__box {
+  position: relative;
+  width: min(860px, 92vw);
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(0,102,0,.5);
+}
+.pt-intro__box iframe {
+  width: 100%; height: 100%;
+  border: 0; display: block;
+}
+.pt-intro__close {
+  position: absolute;
+  top: 10px; right: 12px;
+  background: rgba(0,0,0,.75);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: .85rem;
+  z-index: 10;
+  transition: background .2s;
+}
+.pt-intro__close:hover { background: #d4000e; }
+
+/* ── Mute button ── */
+.pt-mute-btn {
+  position: fixed;
+  bottom: 18px; left: 18px;
+  z-index: 9999;
+  background: rgba(0,0,0,.65);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 42px; height: 42px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s;
+}
+.pt-mute-btn:hover { background: #006600; }
+
+/* ── Mobile popup ── */
+.pt-mobile-popup {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 99999;
+}
+.pt-mobile-inner {
+  background: var(--bg-card, #1e1e1e);
+  border-radius: 12px;
+  padding: 36px 32px;
+  text-align: center;
+  color: var(--text-primary, #fff);
+  position: relative;
+  font-size: 1.1rem;
+  box-shadow: 0 8px 40px rgba(0,0,0,.5);
+}
+.pt-mobile-close {
+  position: absolute;
+  top: 10px; right: 14px;
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: .6;
+}
+.pt-mobile-close:hover { opacity: 1; }
