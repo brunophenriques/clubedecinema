@@ -5,6 +5,15 @@
 
 const API = "";
 const TOKEN_KEY = "cinema_club_token";
+
+/* ── Bloqueia applyTheme do app.js — esta página gere o seu próprio tema ── */
+window.__ptOverrideTheme = true;
+const _origApplyTheme = window.applyTheme;
+Object.defineProperty(window, "applyTheme", {
+  set: () => {},
+  get: () => () => {},
+  configurable: true,
+});
 const PT_INTRO_KEY = "pt_intro_seen";
 
 function el(id) { return document.getElementById(id); }
