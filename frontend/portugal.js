@@ -3,21 +3,8 @@
    Só carregado em portugal.html
    ===================================================== */
 
-const API = "";
-const TOKEN_KEY = "cinema_club_token";
-
-/* ── Bloqueia applyTheme do app.js — esta página gere o seu próprio tema ── */
-window.__ptOverrideTheme = true;
-const _origApplyTheme = window.applyTheme;
-Object.defineProperty(window, "applyTheme", {
-  set: () => {},
-  get: () => () => {},
-  configurable: true,
-});
+/* API e TOKEN_KEY já declarados pelo app.js */
 const PT_INTRO_KEY = "pt_intro_seen";
-
-function el(id) { return document.getElementById(id); }
-function getToken() { return localStorage.getItem(TOKEN_KEY); }
 
 /* ── Reset do intro via ?reset=1 ── */
 if (new URLSearchParams(window.location.search).get("reset") === "1") {
@@ -30,25 +17,22 @@ const isMobile = window.innerWidth < 768;
    DECORAÇÕES
    ══════════════════════════════════════ */
 function addDecorations() {
-  // Bandeiras laterais
   const l = document.createElement("div"); l.className = "pt-flag-left";
   const r = document.createElement("div"); r.className = "pt-flag-right";
   document.body.appendChild(l);
   document.body.appendChild(r);
 
-  // Estrela da Amadora
   const estrela = document.createElement("div");
   estrela.className = "pt-estrela-badge";
   estrela.title = "Estrela da Amadora";
   estrela.textContent = "⭐";
   document.body.appendChild(estrela);
 
-  // Botão "Porquê esta semana?"
   const btn = document.createElement("button");
   btn.className = "pt-why-btn";
   btn.textContent = "🇵🇹 Porquê esta semana?";
   btn.addEventListener("click", () => {
-    el("ptWhyPopup").style.display = "flex";
+    document.getElementById("ptWhyPopup").style.display = "flex";
   });
   document.body.appendChild(btn);
 }
@@ -94,12 +78,12 @@ function showIntro() {
       </iframe>
     </div>`;
   document.body.appendChild(overlay);
-  el("ptIntroClose").addEventListener("click", closeIntro);
+  document.getElementById("ptIntroClose").addEventListener("click", closeIntro);
 }
 
 function closeIntro() {
   localStorage.setItem(PT_INTRO_KEY, "1");
-  el("ptIntroOverlay")?.remove();
+  document.getElementById("ptIntroOverlay")?.remove();
   startAnthem();
   addDecorations();
 }
@@ -117,25 +101,22 @@ function showMobilePopup() {
       <p>🖥️ Vai ao PC ver a magia!</p>
     </div>`;
   document.body.appendChild(popup);
-  el("ptMobClose").addEventListener("click", () => popup.remove());
+  document.getElementById("ptMobClose").addEventListener("click", () => popup.remove());
 }
 
 /* ══════════════════════════════════════
    INIT
    ══════════════════════════════════════ */
 document.addEventListener("DOMContentLoaded", () => {
-  // Popup "Porquê?" wiring (está no HTML estático)
-  el("ptWhyClose")?.addEventListener("click", () => {
-    el("ptWhyPopup").style.display = "none";
+  document.getElementById("ptWhyClose")?.addEventListener("click", () => {
+    document.getElementById("ptWhyPopup").style.display = "none";
   });
-  el("ptWhyPopup")?.addEventListener("click", e => {
-    if (e.target === el("ptWhyPopup")) el("ptWhyPopup").style.display = "none";
+  document.getElementById("ptWhyPopup")?.addEventListener("click", e => {
+    if (e.target === document.getElementById("ptWhyPopup"))
+      document.getElementById("ptWhyPopup").style.display = "none";
   });
 
-  if (isMobile) {
-    showMobilePopup();
-    return;
-  }
+  if (isMobile) { showMobilePopup(); return; }
 
   if (!localStorage.getItem(PT_INTRO_KEY)) {
     showIntro();
