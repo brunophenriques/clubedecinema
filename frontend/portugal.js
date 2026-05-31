@@ -3,7 +3,6 @@
    Só carregado em portugal.html
    ===================================================== */
 
-/* API e TOKEN_KEY já declarados pelo app.js */
 const PT_INTRO_KEY = "pt_intro_seen";
 
 /* ── Reset do intro via ?reset=1 ── */
@@ -38,6 +37,19 @@ function addDecorations() {
 }
 
 /* ══════════════════════════════════════
+   TÍTULO PORTUGUÊS
+   ══════════════════════════════════════ */
+function forcePtTitle() {
+  setTimeout(() => {
+    const heroTitle = document.getElementById("heroTitle");
+    const brandSub  = document.querySelector(".brand-sub");
+    if (heroTitle && heroTitle.textContent.trim() !== "Clube de Cinema")
+      heroTitle.textContent = "Semana Portuguesa 🇵🇹";
+    if (brandSub) brandSub.textContent = "Semana Portuguesa 🇵🇹";
+  }, 900);
+}
+
+/* ══════════════════════════════════════
    HINO NACIONAL
    ══════════════════════════════════════ */
 let _anthemMuted = false;
@@ -52,11 +64,11 @@ function startAnthem() {
   const muteBtn = document.createElement("button");
   muteBtn.id = "ptMuteBtn";
   muteBtn.className = "pt-mute-btn";
-  muteBtn.textContent = "🔊";
+  muteBtn.innerHTML = "🔊";
   muteBtn.addEventListener("click", () => {
     _anthemMuted = !_anthemMuted;
     iframe.src = `https://www.youtube.com/embed/_-vct5dNaNY?autoplay=1&loop=1&playlist=_-vct5dNaNY&mute=${_anthemMuted ? 1 : 0}`;
-    muteBtn.textContent = _anthemMuted ? "🔇" : "🔊";
+    muteBtn.innerHTML = _anthemMuted ? "🔇" : "🔊";
   });
   document.body.appendChild(muteBtn);
 }
@@ -86,6 +98,7 @@ function closeIntro() {
   document.getElementById("ptIntroOverlay")?.remove();
   startAnthem();
   addDecorations();
+  forcePtTitle();
 }
 
 /* ══════════════════════════════════════
@@ -123,5 +136,6 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     startAnthem();
     addDecorations();
+    forcePtTitle();
   }
 });
