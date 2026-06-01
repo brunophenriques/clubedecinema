@@ -30,18 +30,52 @@
   z-index: 0;
 }
 
-/* fundo da página — verde e vermelho nos lados, suave mas presente */
+/* ── Parede de azulejos em fundo ── */
 body.pt-active {
+  background-image:
+    url('/static/azulejo.png') !important;
+  background-size: 90px 90px !important;
+  background-repeat: repeat !important;
+  background-attachment: fixed !important;
+}
+
+/* overlay para não matar o conteúdo — gradiente suave */
+body.pt-active::before {
+  content: '';
+  position: fixed;
+  inset: 0;
   background:
     linear-gradient(to right,
-      rgba(0,110,0,0.13) 0%,
-      rgba(0,110,0,0.04) 18%,
-      transparent 28%,
-      transparent 72%,
-      rgba(212,0,14,0.05) 82%,
-      rgba(212,0,14,0.14) 100%
-    ) !important;
+      rgba(0,110,0,0.10) 0%,
+      transparent 25%,
+      transparent 75%,
+      rgba(212,0,14,0.10) 100%
+    ),
+    rgba(245, 240, 235, 0.91);
+  pointer-events: none;
+  z-index: 0;
 }
+
+[data-theme="dark"] body.pt-active::before {
+  background:
+    linear-gradient(to right,
+      rgba(0,110,0,0.10) 0%,
+      transparent 25%,
+      transparent 75%,
+      rgba(212,0,14,0.10) 100%
+    ),
+    rgba(15, 15, 15, 0.92);
+}
+
+body.pt-active .wrap,
+body.pt-active header,
+body.pt-active .chat-panel,
+body.pt-active #chatOverlay {
+  position: relative;
+  z-index: 1;
+}
+
+
 
 /* faixas finas nas bordas do hero */
 .pt-hero-left-strip {
