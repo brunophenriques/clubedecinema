@@ -19,10 +19,11 @@ function addDecorations() {
     document.body.appendChild(r);
   }
 
-  // Bandeira + overlays no hero
+  // Bandeira + faixas no hero
+  document.body.classList.add("pt-active");
   const hero = document.getElementById("heroSection");
   if (hero && !document.querySelector(".pt-hero-flag")) {
-    ["pt-hero-flag","pt-hero-overlay","pt-hero-left-strip","pt-hero-right-strip"].forEach(cls => {
+    ["pt-hero-flag","pt-hero-left-strip","pt-hero-right-strip"].forEach(cls => {
       const d = document.createElement("div"); d.className = cls;
       hero.insertBefore(d, hero.firstChild);
     });

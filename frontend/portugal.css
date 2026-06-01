@@ -20,26 +20,25 @@
   overflow: hidden;
 }
 
-/* bandeira real em fundo */
+/* bandeira real em fundo — limpa, sem overlay */
 .pt-hero-flag {
   position: absolute;
   inset: 0;
   background: url('/static/flag_portugal.png') center/cover no-repeat;
-  opacity: 0.18;
+  opacity: 0.22;
   pointer-events: none;
   z-index: 0;
 }
 
-/* overlay que escurece e mantém legibilidade */
-.pt-hero-overlay {
-  position: absolute;
-  inset: 0;
+/* fundo da página com cor nos lados */
+body.pt-active {
   background:
-    radial-gradient(ellipse at 15% 50%, rgba(0,102,0,0.35) 0%, transparent 55%),
-    radial-gradient(ellipse at 85% 50%, rgba(212,0,14,0.30) 0%, transparent 55%),
-    linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.45) 100%);
-  pointer-events: none;
-  z-index: 1;
+    linear-gradient(to right,
+      rgba(0,102,0,0.07) 0%,
+      transparent 18%,
+      transparent 82%,
+      rgba(212,0,14,0.06) 100%
+    );
 }
 
 /* faixas finas nas bordas do hero */
