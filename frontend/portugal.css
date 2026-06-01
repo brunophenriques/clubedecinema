@@ -30,15 +30,17 @@
   z-index: 0;
 }
 
-/* fundo da página com cor nos lados */
+/* fundo da página — verde e vermelho nos lados, suave mas presente */
 body.pt-active {
   background:
     linear-gradient(to right,
-      rgba(0,102,0,0.07) 0%,
-      transparent 18%,
-      transparent 82%,
-      rgba(212,0,14,0.06) 100%
-    );
+      rgba(0,110,0,0.13) 0%,
+      rgba(0,110,0,0.04) 18%,
+      transparent 28%,
+      transparent 72%,
+      rgba(212,0,14,0.05) 82%,
+      rgba(212,0,14,0.14) 100%
+    ) !important;
 }
 
 /* faixas finas nas bordas do hero */
