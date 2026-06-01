@@ -20,12 +20,20 @@
   overflow: hidden;
 }
 
-/* bandeira real em fundo — limpa, sem overlay */
+/* fundo sólido no hero para tapar azulejos */
+.hero--centered {
+  background: var(--bg-primary, #f5f0eb) !important;
+}
+[data-theme="dark"] .hero--centered {
+  background: var(--bg-primary, #111) !important;
+}
+
+/* bandeira real em fundo */
 .pt-hero-flag {
   position: absolute;
   inset: 0;
   background: url('/static/flag_portugal.png') center/cover no-repeat;
-  opacity: 0.22;
+  opacity: 0.20;
   pointer-events: none;
   z-index: 0;
 }
@@ -96,16 +104,7 @@ body.pt-active .chat-overlay {
 
 .hero-inner { position: relative; z-index: 3; }
 
-/* ── Paulo Moreira ── */
-.pt-paulo {
-  position: fixed;
-  bottom: 0; left: 14px;
-  width: 158px;
-  z-index: 8000;
-  pointer-events: none;
-  opacity: 0.93;
-  filter: drop-shadow(-3px 0 18px rgba(0,80,0,0.45));
-}
+/* paulo removido */
 
 /* estrela da amadora removida */
 

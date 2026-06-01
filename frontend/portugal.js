@@ -29,15 +29,6 @@ function addDecorations() {
     });
   }
 
-  // Paulo Moreira
-  if (!document.querySelector(".pt-paulo")) {
-    const paulo = document.createElement("img");
-    paulo.className = "pt-paulo";
-    paulo.src = "/static/paulomoreira.png";
-    paulo.alt = "Paulo Moreira";
-    document.body.appendChild(paulo);
-  }
-
   // Botão "Porquê?" inline
   const heroSub = document.getElementById("heroSub");
   if (heroSub && !document.getElementById("ptWhyInlineBtn")) {
