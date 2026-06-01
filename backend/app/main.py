@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Body, Header
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import func
 import os
 from dotenv import load_dotenv
@@ -22,10 +22,6 @@ from fastapi.staticfiles import StaticFiles
 from .db import SessionLocal
 from . import models
 
-# IMPORTANT: with Alembic migrations, do NOT auto-create tables at runtime
-# from .db import Base, engine
-# Base.metadata.create_all(bind=engine)
-
 app = FastAPI(title="Cinema Club API")
 
 # -----------------------------
@@ -34,16 +30,15 @@ app = FastAPI(title="Cinema Club API")
 BASE_DIR = Path(__file__).resolve()
 
 CANDIDATES = [
-    BASE_DIR.parents[2] / "frontend",  # .../clubedecinema/frontend
-    BASE_DIR.parents[1] / "frontend",  # .../backend/frontend
-    BASE_DIR.parent / "frontend",      # .../app/frontend
+    BASE_DIR.parents[2] / "frontend",
+    BASE_DIR.parents[1] / "frontend",
+    BASE_DIR.parent / "frontend",
 ]
 FRONTEND_DIR = next((p for p in CANDIDATES if p.exists()), None)
 
 if not FRONTEND_DIR:
     raise RuntimeError("Frontend folder not found. Expected a 'frontend' directory near the project root.")
 
-# assets (css/js/img)
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 
@@ -78,7 +73,7 @@ def serve_archive():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # later: restrict to your frontend domain(s)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -116,7 +111,6 @@ def hash_password(password: str) -> str:
 
     salt = secrets.token_bytes(16)
     dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, PBKDF2_ITERS)
-    # store as: pbkdf2_sha256$iters$base64(salt)$base64(hash)
     return (
         f"pbkdf2_sha256${PBKDF2_ITERS}$"
         f"{base64.b64encode(salt).decode()}$"
@@ -171,7 +165,6 @@ def get_current_user(db: Session, authorization: str | None) -> models.User:
         raise HTTPException(status_code=401, detail="Invalid session")
 
     if sess.expires_at <= now:
-        # cleanup expired session
         db.delete(sess)
         db.commit()
         raise HTTPException(status_code=401, detail="Session expired")
@@ -204,7 +197,6 @@ def tmdb_search_candidates(query: str, year: int | None = None, limit: int = 8):
         return []
 
     params = {"api_key": api_key, "query": query}
-    # passing year can hurt if user is wrong; only use it when provided
     if year:
         params["year"] = year
 
@@ -224,17 +216,6 @@ def tmdb_search_candidates(query: str, year: int | None = None, limit: int = 8):
 
 
 def pick_best_tmdb_match(submitted_title: str, submitted_year: int | None = None):
-    """
-    Returns a dict:
-      {
-        "tmdb_id": int|None,
-        "canonical_title": str,
-        "canonical_year": int|None,
-        "poster_url": str|None,
-        "match_score": float|None,   # 0..1
-        "needs_review": bool
-      }
-    """
     title = (submitted_title or "").strip()
     if not title:
         return {
@@ -248,7 +229,6 @@ def pick_best_tmdb_match(submitted_title: str, submitted_year: int | None = None
 
     candidates = tmdb_search_candidates(title, submitted_year, limit=8)
 
-    # if year might be wrong, try again without year when results are weak
     if len(candidates) < 2:
         candidates = tmdb_search_candidates(title, None, limit=8)
 
@@ -269,7 +249,7 @@ def pick_best_tmdb_match(submitted_title: str, submitted_year: int | None = None
 
         s1 = fuzz.token_set_ratio(title.lower(), cand_title.lower())
         s2 = fuzz.token_set_ratio(title.lower(), cand_orig.lower()) if cand_orig else 0
-        fuzzy_score = max(s1, s2) / 100.0  # 0..1
+        fuzzy_score = max(s1, s2) / 100.0
 
         release = (c.get("release_date") or "").strip()
         cand_year = int(release[:4]) if len(release) >= 4 and release[:4].isdigit() else None
@@ -296,7 +276,6 @@ def pick_best_tmdb_match(submitted_title: str, submitted_year: int | None = None
     best_score = max(0.0, min(1.0, float(best_score)))
     second_score = max(0.0, min(1.0, float(second_score)))
 
-    # accept only if strong and clearly better than #2
     if best_score >= 0.92:
         needs_review = False
     else:
@@ -324,6 +303,7 @@ def pick_best_tmdb_match(submitted_title: str, submitted_year: int | None = None
 # ----------------------
 
 def week_payload(db: Session, week: models.Week, include_submitter: bool = False):
+    # ── FIX: single GROUP BY query instead of loading all votes into memory
     counts = dict(
         db.query(models.Vote.film_id, func.count(models.Vote.id))
           .filter(models.Vote.week_id == week.id)
@@ -418,7 +398,6 @@ def change_username(
     db: Session = Depends(get_db),
     authorization: str | None = Header(None),
 ):
-    """Allow user to change their username (needed to fix invalid ones)."""
     user = get_current_user(db, authorization)
     new_username = (body.get("username") or "").strip()
 
@@ -475,15 +454,12 @@ def set_avatar(
     db: Session = Depends(get_db),
     authorization: str | None = Header(None),
 ):
-    """Set user avatar as a URL or base64 data URI."""
     user = get_current_user(db, authorization)
     avatar = (body.get("avatar_url") or "").strip()
 
-    # Accept either a https URL or a data: URI (base64 image)
     if avatar and not (avatar.startswith("https://") or avatar.startswith("http://") or avatar.startswith("data:image/")):
         raise HTTPException(400, "avatar_url must be a valid URL or base64 data URI")
 
-    # Limit base64 size to ~2MB
     if avatar.startswith("data:image/") and len(avatar) > 2_500_000:
         raise HTTPException(400, "Image too large (max ~2MB)")
 
@@ -511,9 +487,13 @@ def logout(db: Session = Depends(get_db), authorization: str | None = Header(Non
 
 @app.get("/weeks/current")
 def current_week(db: Session = Depends(get_db)):
-    week = db.query(models.Week).filter(
-        models.Week.is_special == False
-    ).order_by(models.Week.id.desc()).first()
+    week = (
+        db.query(models.Week)
+        .filter(models.Week.is_special == False)
+        .options(selectinload(models.Week.films))
+        .order_by(models.Week.id.desc())
+        .first()
+    )
     if not week:
         raise HTTPException(404, "No week created yet")
     return week_payload(db, week, include_submitter=False)
@@ -521,24 +501,36 @@ def current_week(db: Session = Depends(get_db)):
 
 @app.get("/weeks")
 def list_weeks(db: Session = Depends(get_db)):
-    weeks = db.query(models.Week).filter(
-        models.Week.is_special == False
-    ).order_by(models.Week.id.desc()).all()
+    weeks = (
+        db.query(models.Week)
+        .filter(models.Week.is_special == False)
+        .options(selectinload(models.Week.films))
+        .order_by(models.Week.id.desc())
+        .all()
+    )
     return [week_payload(db, w, include_submitter=False) for w in weeks]
 
 
 @app.get("/weeks/cinema")
 def list_cinema_weeks(db: Session = Depends(get_db)):
-    """Return special cinema weeks."""
-    weeks = db.query(models.Week).filter(
-        models.Week.is_special == True
-    ).order_by(models.Week.id.desc()).all()
+    weeks = (
+        db.query(models.Week)
+        .filter(models.Week.is_special == True)
+        .options(selectinload(models.Week.films))
+        .order_by(models.Week.id.desc())
+        .all()
+    )
     return [week_payload(db, w, include_submitter=False) for w in weeks]
 
 
 @app.get("/weeks/{week_id}")
 def get_week(week_id: int, db: Session = Depends(get_db)):
-    week = db.query(models.Week).filter(models.Week.id == week_id).first()
+    week = (
+        db.query(models.Week)
+        .filter(models.Week.id == week_id)
+        .options(selectinload(models.Week.films))
+        .first()
+    )
     if not week:
         raise HTTPException(404, "Week not found")
     return week_payload(db, week, include_submitter=False)
@@ -560,7 +552,6 @@ def submit_film(
     if not week.is_open:
         raise HTTPException(status_code=400, detail="Week is closed")
 
-    # 1 submissão por user por semana (anti-spam / fairness)
     already = (
         db.query(models.Film)
           .filter(models.Film.week_id == week_id, models.Film.submitter_key == submitter_key)
@@ -651,17 +642,11 @@ def vote(
     db: Session = Depends(get_db),
     authorization: str | None = Header(None),
 ):
-    """
-    NEW: Auth-based voting (Authorization: Bearer <token>)
-    TEMP fallback: allows body.voter_key for compatibility with current frontend.
-    """
-    # Prefer auth if present
     voter_key = None
     if authorization:
         user = get_current_user(db, authorization)
         voter_key = str(user.id)
     else:
-        # compatibility fallback (remove later once frontend is updated)
         voter_key = (body.get("voter_key") or "").strip()
 
     film_id = body.get("film_id")
@@ -684,7 +669,6 @@ def vote(
     if not film:
         raise HTTPException(status_code=404, detail="Film not found")
 
-    # RULE 1: only submitters can vote this week
     submitter_keys = {
         k for (k,) in db.query(models.Film.submitter_key)
                         .filter(models.Film.week_id == week_id)
@@ -694,7 +678,6 @@ def vote(
     if voter_key not in submitter_keys:
         raise HTTPException(status_code=403, detail="Only submitters can vote this week")
 
-    # RULE 2: cannot vote on your own film
     if film.submitter_key == voter_key:
         raise HTTPException(status_code=403, detail="You cannot vote on your own film")
 
@@ -712,7 +695,7 @@ def vote(
 
 
 # ----------------------
-# Admin endpoints (ADMIN = user.is_admin + Bearer token)
+# Admin endpoints
 # ----------------------
 
 @app.get("/admin/weeks/current")
@@ -721,9 +704,13 @@ def admin_current_week(
     authorization: str | None = Header(None),
 ):
     require_admin_user(db, authorization)
-    week = db.query(models.Week).filter(
-        models.Week.is_special == False
-    ).order_by(models.Week.id.desc()).first()
+    week = (
+        db.query(models.Week)
+        .filter(models.Week.is_special == False)
+        .options(selectinload(models.Week.films))
+        .order_by(models.Week.id.desc())
+        .first()
+    )
     if not week:
         raise HTTPException(404, "No week created yet")
     return week_payload(db, week, include_submitter=True)
@@ -735,9 +722,13 @@ def admin_list_weeks(
     authorization: str | None = Header(None),
 ):
     require_admin_user(db, authorization)
-    weeks = db.query(models.Week).filter(
-        models.Week.is_special == False
-    ).order_by(models.Week.id.desc()).all()
+    weeks = (
+        db.query(models.Week)
+        .filter(models.Week.is_special == False)
+        .options(selectinload(models.Week.films))
+        .order_by(models.Week.id.desc())
+        .all()
+    )
     return [week_payload(db, w, include_submitter=True) for w in weeks]
 
 
@@ -863,7 +854,6 @@ def admin_update_film(
     if not film:
         raise HTTPException(404, "Film not found")
 
-    # Allow updating canonical fields
     if "title" in body and body["title"] is not None:
         film.title = str(body["title"]).strip() or film.title
 
@@ -879,7 +869,6 @@ def admin_update_film(
     if "tmdb_id" in body:
         film.tmdb_id = body["tmdb_id"]
 
-    # Mark as reviewed if admin says so (default True)
     reviewed = body.get("reviewed", True)
     if reviewed:
         film.needs_review = False
@@ -1127,11 +1116,9 @@ def admin_rematch_film(
 # Letterboxd RSS sync
 # ─────────────────────────────────────────────
 
-# Letterboxd star ratings come as Unicode star strings like ★★★½
 _STAR_MAP = {"★": 1.0, "½": 0.5}
 
 def _parse_lb_rating(text: str) -> float | None:
-    """Convert '★★★½' → 3.5, empty/None → None."""
     if not text:
         return None
     score = sum(_STAR_MAP.get(ch, 0.0) for ch in text)
@@ -1139,10 +1126,8 @@ def _parse_lb_rating(text: str) -> float | None:
 
 
 def _parse_lb_date(date_str: str) -> int | None:
-    """Parse RSS pubDate or letterboxd:watchedDate → unix timestamp."""
     if not date_str:
         return None
-    # letterboxd:watchedDate is YYYY-MM-DD
     m = re.match(r"(\d{4})-(\d{2})-(\d{2})", date_str.strip())
     if m:
         import calendar, datetime
@@ -1152,20 +1137,10 @@ def _parse_lb_date(date_str: str) -> int | None:
 
 
 def _tmdb_id_from_lb_url(url: str) -> int | None:
-    """
-    Letterboxd film pages sometimes embed a TMDB link in the description.
-    We try to extract from the letterboxd film URL by hitting TMDB search
-    but that's expensive; instead we rely on title+year matching done elsewhere.
-    For now just return None — we match by title/year in the upsert logic.
-    """
     return None
 
 
 def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
-    """
-    Fetch the user's Letterboxd RSS diary feed, parse entries, upsert into DB.
-    Returns {"synced": N, "avatar_url": str|None, "error": str|None}
-    """
     lb_username = (user.letterboxd_username or "").strip()
     if not lb_username:
         return {"synced": 0, "avatar_url": None, "error": "no letterboxd username set"}
@@ -1190,7 +1165,6 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
         "tmdb": "https://www.themoviedb.org/",
     }
 
-    # ── Avatar: scrape from profile page instead of RSS (RSS <image> is feed logo, not user avatar)
     avatar_url = None
     try:
         profile_resp = requests.get(
@@ -1199,21 +1173,16 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
             headers={"User-Agent": "Mozilla/5.0 (compatible; ClubeDecinemasBot/1.0)"}
         )
         if profile_resp.status_code == 200:
-            # Letterboxd avatar is in <img class="avatar" src="..."> or og:image meta
             html = profile_resp.text
-            # Try og:image first (highest quality)
             og_match = re.search(r'<meta property="og:image" content="([^"]+)"', html)
             if og_match:
                 candidate = og_match.group(1)
-                # og:image is sometimes the site logo, filter it out
                 if "a.ltrbxd.com" in candidate and "/userpics/" in candidate:
                     avatar_url = candidate
-            # Fallback: look for avatar img tag
             if not avatar_url:
                 av_match = re.search(r'<img[^>]+class="[^"]*avatar[^"]*"[^>]+src="([^"]+)"', html)
                 if av_match:
                     avatar_url = av_match.group(1)
-            # Fallback 2: any ltrbxd userpics URL
             if not avatar_url:
                 up_match = re.search(r'(https://a\.ltrbxd\.com/resized/avatar[^"\']+)', html)
                 if not up_match:
@@ -1221,15 +1190,39 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
                 if up_match:
                     avatar_url = up_match.group(1)
     except Exception:
-        pass  # avatar is optional, don't fail the whole sync
+        pass
 
-    # ── Parse diary items
     items = root.findall(".//item")
     synced = 0
-    seen_keys = set()  # dedupe within this sync run
+    seen_keys = set()
+
+    # ── FIX: pre-load all existing entries for this user in one query instead
+    # of querying per-item inside the loop
+    existing_by_tmdb: dict[int, models.LetterboxdEntry] = {}
+    existing_by_title: dict[tuple, models.LetterboxdEntry] = {}
+    all_existing = (
+        db.query(models.LetterboxdEntry)
+        .filter(models.LetterboxdEntry.user_id == user.id)
+        .all()
+    )
+    for e in all_existing:
+        if e.tmdb_id is not None:
+            existing_by_tmdb[e.tmdb_id] = e
+        else:
+            existing_by_title[(e.film_title.lower(), e.film_year)] = e
+
+    # ── FIX: pre-load TMDB IDs from our films table in one query —
+    # avoids one DB hit per RSS item
+    tmdb_lookup: dict[tuple, int] = {}
+    film_rows = (
+        db.query(models.Film.title, models.Film.year, models.Film.tmdb_id)
+        .filter(models.Film.tmdb_id.isnot(None))
+        .all()
+    )
+    for title_val, year_val, tmdb_id_val in film_rows:
+        tmdb_lookup[(title_val.lower(), year_val)] = tmdb_id_val
 
     for item in items:
-        # Only process diary entries (have letterboxd:watchedDate)
         watched_date_el = item.find("lb:watchedDate", ns)
         if watched_date_el is None:
             continue
@@ -1250,13 +1243,11 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
         watched_date_raw = (watched_date_el.text or "").strip()
         watched_date = _parse_lb_date(watched_date_raw)
 
-        # Dedupe within this sync: same film on same day = duplicate RSS entry
         dedup_key = f"{film_title.lower()}|{film_year}|{watched_date_raw}"
         if dedup_key in seen_keys:
             continue
         seen_keys.add(dedup_key)
 
-        # memberRating is numeric e.g. "3.5" in newer RSS, or star text in older
         rating_raw = (rating_el.text or "").strip() if rating_el is not None else ""
         try:
             rating = float(rating_raw) if rating_raw else None
@@ -1266,43 +1257,16 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
         is_rewatch = (rewatch_el is not None and (rewatch_el.text or "").strip().lower() == "yes")
         lb_url = (link_el.text or "").strip() if link_el is not None else None
 
-        # Try to match to a TMDB id from our films table
-        tmdb_id = None
-        film_match = (
-            db.query(models.Film)
-            .filter(models.Film.title.ilike(film_title))
-            .filter(models.Film.year == film_year if film_year else True)
-            .filter(models.Film.tmdb_id.isnot(None))
-            .first()
-        )
-        if film_match:
-            tmdb_id = film_match.tmdb_id
+        # ── FIX: dict lookup instead of per-item DB query
+        tmdb_id = tmdb_lookup.get((film_title.lower(), film_year))
 
-        # Upsert by tmdb_id if available, else by title+year
         existing = None
         if tmdb_id:
-            existing = (
-                db.query(models.LetterboxdEntry)
-                .filter(
-                    models.LetterboxdEntry.user_id == user.id,
-                    models.LetterboxdEntry.tmdb_id == tmdb_id,
-                )
-                .first()
-            )
+            existing = existing_by_tmdb.get(tmdb_id)
         else:
-            existing = (
-                db.query(models.LetterboxdEntry)
-                .filter(
-                    models.LetterboxdEntry.user_id == user.id,
-                    models.LetterboxdEntry.tmdb_id.is_(None),
-                    func.lower(models.LetterboxdEntry.film_title) == film_title.lower(),
-                    models.LetterboxdEntry.film_year == film_year,
-                )
-                .first()
-            )
+            existing = existing_by_title.get((film_title.lower(), film_year))
 
         if existing:
-            # Update if newer watch date or more info
             if watched_date and (existing.watched_date is None or watched_date > existing.watched_date):
                 existing.watched_date = watched_date
                 existing.rating = rating
@@ -1320,10 +1284,14 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
                 is_rewatch=is_rewatch,
             )
             db.add(entry)
+            # Track newly added entries to avoid re-inserting within same sync
+            if tmdb_id:
+                existing_by_tmdb[tmdb_id] = entry
+            else:
+                existing_by_title[(film_title.lower(), film_year)] = entry
 
         synced += 1
 
-    # Update user avatar + sync timestamp
     if avatar_url:
         user.letterboxd_avatar_url = avatar_url
     user.letterboxd_synced_at = int(time.time())
@@ -1347,10 +1315,8 @@ def set_letterboxd_username(
     db: Session = Depends(get_db),
     authorization: str | None = Header(None),
 ):
-    """Set or update the user's Letterboxd username and/or avatar URL, then trigger a sync."""
     user = get_current_user(db, authorization)
 
-    # Allow directly overriding avatar URL (e.g. user pastes a better image URL)
     if "avatar_url" in body:
         user.letterboxd_avatar_url = (body["avatar_url"] or "").strip() or None
         db.commit()
@@ -1366,7 +1332,6 @@ def set_letterboxd_username(
     lb_username = (body.get("letterboxd_username") or "").strip()
 
     if not lb_username:
-        # Allow clearing
         user.letterboxd_username = None
         user.letterboxd_avatar_url = None
         user.letterboxd_synced_at = None
@@ -1393,12 +1358,10 @@ def sync_letterboxd(
     db: Session = Depends(get_db),
     authorization: str | None = Header(None),
 ):
-    """Manually trigger a Letterboxd RSS sync for the current user."""
     user = get_current_user(db, authorization)
     if not user.letterboxd_username:
         raise HTTPException(400, "No Letterboxd username set")
 
-    # Wipe all existing entries for this user and re-sync fresh — cleanest dedup
     db.query(models.LetterboxdEntry).filter(
         models.LetterboxdEntry.user_id == user.id
     ).delete()
@@ -1421,10 +1384,6 @@ def get_film_letterboxd_data(
     tmdb_id: int,
     db: Session = Depends(get_db),
 ):
-    """
-    Return all club members' Letterboxd data for a given TMDB film ID.
-    Used by the frontend to show who watched it and their ratings.
-    """
     entries = (
         db.query(models.LetterboxdEntry, models.User)
         .join(models.User, models.LetterboxdEntry.user_id == models.User.id)
@@ -1452,7 +1411,6 @@ def get_film_letterboxd_data(
 def get_all_members_letterboxd(
     db: Session = Depends(get_db),
 ):
-    """Return all users with their Letterboxd info (for avatar display everywhere)."""
     users = db.query(models.User).all()
     return [
         {
@@ -1481,7 +1439,6 @@ def get_reactions(film_id: int, db: Session = Depends(get_db)):
         .filter(models.Reaction.film_id == film_id)
         .all()
     )
-    # group counts + who reacted with what
     counts = {}
     mine = None
     for r, u in rows:
@@ -1519,7 +1476,6 @@ def set_reaction(
     user = get_current_user(db, authorization)
     emoji = (body.get("emoji") or "").strip()
 
-    # Verify film exists
     film = db.query(models.Film).filter(models.Film.id == film_id).first()
     if not film:
         raise HTTPException(404, "Film not found")
@@ -1533,7 +1489,6 @@ def set_reaction(
     ).first()
 
     if not emoji:
-        # Remove reaction
         if existing:
             db.delete(existing)
             db.commit()
@@ -1541,7 +1496,6 @@ def set_reaction(
 
     if existing:
         if existing.emoji == emoji:
-            # Toggle off
             db.delete(existing)
             db.commit()
             return {"ok": True, "emoji": None}
@@ -1556,7 +1510,6 @@ def set_reaction(
 
 @app.get("/films/{film_id}/reactions/detail")
 def get_reactions_detail(film_id: int, db: Session = Depends(get_db)):
-    """Returns per-emoji lists of who reacted — for tooltip display."""
     rows = (
         db.query(models.Reaction, models.User)
         .join(models.User, models.Reaction.user_id == models.User.id)
@@ -1653,7 +1606,6 @@ def delete_chat_message(
     msg = db.query(models.ChatMessage).filter(models.ChatMessage.id == message_id).first()
     if not msg:
         raise HTTPException(404, "Message not found")
-    # Only author or admin can delete
     if msg.user_id != user.id and not getattr(user, "is_admin", False):
         raise HTTPException(403, "Not allowed")
     db.delete(msg)
@@ -1667,7 +1619,6 @@ def delete_chat_message(
 
 @app.get("/search/movies")
 def search_movies(q: str, page: int = 1, db: Session = Depends(get_db)):
-    """Proxy TMDB search — keeps API key server-side."""
     api_key = os.getenv("TMDB_API_KEY")
     if not api_key:
         raise HTTPException(500, "TMDB not configured")
@@ -1708,7 +1659,7 @@ def serve_profile(username: str):
 
 @app.get("/users/{username}/profile")
 def get_user_profile(username: str, db: Session = Depends(get_db)):
-    """Public profile data for a user."""
+    """Public profile data for a user — optimised: 5 queries instead of N+1."""
     user = db.query(models.User).filter(
         func.lower(models.User.username) == username.lower()
     ).first()
@@ -1717,33 +1668,36 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
 
     submitter_key = str(user.id)
 
-    # Films submitted
+    # ── FIX: load films with their week eagerly in one JOIN, and pre-load votes
+    # via selectinload (one extra query for all films' votes, not one per film)
     submitted = (
         db.query(models.Film)
         .filter(models.Film.submitter_key == submitter_key)
+        .options(
+            joinedload(models.Film.week),
+            selectinload(models.Film.votes),
+        )
         .all()
     )
 
-    # Votes cast
-    votes = (
-        db.query(models.Vote)
+    # ── FIX: COUNT in DB instead of loading all vote rows into Python
+    votes_cast = (
+        db.query(func.count(models.Vote.id))
         .filter(models.Vote.voter_key == submitter_key)
+        .scalar()
+    ) or 0
+
+    # ── FIX: COUNT reactions in DB — also fetch grouped counts in one query
+    reaction_rows = (
+        db.query(models.Reaction.emoji, func.count(models.Reaction.id))
+        .filter(models.Reaction.user_id == user.id)
+        .group_by(models.Reaction.emoji)
         .all()
     )
+    reaction_counts = {emoji: cnt for emoji, cnt in reaction_rows}
+    reactions_given = sum(reaction_counts.values())
 
-    # Winning submissions
-    won_films = [
-        f for f in submitted
-        if f.week and not f.week.is_open and f.week.winner_film_id == f.id
-    ]
-
-    # Reactions given
-    reactions = db.query(models.Reaction).filter(models.Reaction.user_id == user.id).all()
-    reaction_counts = {}
-    for r in reactions:
-        reaction_counts[r.emoji] = reaction_counts.get(r.emoji, 0) + 1
-
-    # Letterboxd entries
+    # Letterboxd entries — unchanged, already efficient
     lb_entries = (
         db.query(models.LetterboxdEntry)
         .filter(models.LetterboxdEntry.user_id == user.id)
@@ -1752,11 +1706,14 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
         .all()
     )
 
-    # Build submitted films list with week info
+    # Build submitted films list — f.week and f.votes already loaded above
+    films_won = 0
     submitted_list = []
     for f in sorted(submitted, key=lambda x: x.id, reverse=True):
         week = f.week
-        is_winner = week and not week.is_open and week.winner_film_id == f.id
+        is_winner = bool(week and not week.is_open and week.winner_film_id == f.id)
+        if is_winner:
+            films_won += 1
         submitted_list.append({
             "id": f.id,
             "title": f.title,
@@ -1770,6 +1727,8 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
             "votes": len(f.votes) if f.votes else 0,
         })
 
+    films_submitted = len(submitted)
+
     return {
         "user": {
             "id": user.id,
@@ -1778,11 +1737,11 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
             "letterboxd_username": user.letterboxd_username,
         },
         "stats": {
-            "films_submitted": len(submitted),
-            "films_won": len(won_films),
-            "votes_cast": len(votes),
-            "reactions_given": len(reactions),
-            "win_rate": round(len(won_films) / len(submitted) * 100) if submitted else 0,
+            "films_submitted": films_submitted,
+            "films_won": films_won,
+            "votes_cast": votes_cast,
+            "reactions_given": reactions_given,
+            "win_rate": round(films_won / films_submitted * 100) if films_submitted else 0,
         },
         "reaction_counts": reaction_counts,
         "submitted_films": submitted_list,
@@ -1811,28 +1770,60 @@ def serve_leaderboard():
 
 @app.get("/api/leaderboard")
 def get_leaderboard(db: Session = Depends(get_db)):
-    # Single query: all films with week info
-    films = db.query(models.Film).join(models.Week, models.Film.week_id == models.Week.id).all()
+    """
+    Optimised leaderboard — 3 queries total (was N+1 on films).
+
+    Query 1: All users
+    Query 2: films_submitted + films_won per user via GROUP BY + conditional COUNT
+    Query 3: votes_cast per user via GROUP BY
+    """
+    # ── Query 1: all users (small table, fine)
     users = db.query(models.User).all()
+    user_map = {str(u.id): u for u in users}
 
-    # Build stats per user_id
-    stats = {}
-    for f in films:
-        key = f.submitter_key
-        if key not in stats:
-            stats[key] = {"submitted": 0, "won": 0}
-        stats[key]["submitted"] += 1
-        if not f.week.is_open and f.week.winner_film_id == f.id:
-            stats[key]["won"] += 1
+    # ── Query 2: submitted + won counts per submitter_key in one query
+    # films_won = COUNT of films where their week is closed and they are the winner
+    from sqlalchemy import case as sa_case
 
-    # Votes per user
-    votes_q = db.query(models.Vote.voter_key, func.count(models.Vote.id)).group_by(models.Vote.voter_key).all()
+    film_stats = (
+        db.query(
+            models.Film.submitter_key,
+            func.count(models.Film.id).label("films_submitted"),
+            func.count(
+                sa_case(
+                    (
+                        (models.Week.is_open == False) &
+                        (models.Week.winner_film_id == models.Film.id),
+                        models.Film.id,
+                    ),
+                    else_=None,
+                )
+            ).label("films_won"),
+        )
+        .join(models.Week, models.Film.week_id == models.Week.id)
+        .group_by(models.Film.submitter_key)
+        .all()
+    )
+    stats_map = {
+        row.submitter_key: {
+            "submitted": row.films_submitted,
+            "won": row.films_won,
+        }
+        for row in film_stats
+    }
+
+    # ── Query 3: votes cast per voter_key
+    votes_q = (
+        db.query(models.Vote.voter_key, func.count(models.Vote.id))
+        .group_by(models.Vote.voter_key)
+        .all()
+    )
     votes_map = {vk: cnt for vk, cnt in votes_q}
 
     rows = []
     for user in users:
         key = str(user.id)
-        s = stats.get(key)
+        s = stats_map.get(key)
         if not s:
             continue
         submitted = s["submitted"]
