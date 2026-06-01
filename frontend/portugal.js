@@ -97,15 +97,6 @@ function showMobilePopup() {
   document.getElementById("ptMobClose").addEventListener("click", () => popup.remove());
 }
 
-// Parallax na bandeira
-window.addEventListener("scroll", () => {
-  const flag = document.querySelector(".pt-hero-flag");
-  if (flag) {
-    const offset = window.scrollY * 0.35;
-    flag.style.transform = `translateY(${offset}px)`;
-  }
-});
-
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("ptWhyClose")?.addEventListener("click", () => {
     document.getElementById("ptWhyPopup").style.display = "none";

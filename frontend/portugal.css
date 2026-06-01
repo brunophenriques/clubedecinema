@@ -11,8 +11,8 @@
   z-index: 9000;
   pointer-events: none;
 }
-.pt-flag-left  { left: 0  !important; background: linear-gradient(to bottom, #004d00, #006600, #009900, #006600, #004d00) !important; }
-.pt-flag-right { right: 0 !important; background: linear-gradient(to bottom, #8b0000, #d4000e, #ff1a1a, #d4000e, #8b0000) !important; }
+.pt-flag-left  { left: 0  !important; background: linear-gradient(to bottom, #034d28, #046A38, #046A38, #046A38, #034d28) !important; }
+.pt-flag-right { right: 0 !important; background: linear-gradient(to bottom, #7a1510, #DA291C, #DA291C, #DA291C, #7a1510) !important; }
 
 /* ── HERO — bandeira + overlay escuro + glows ── */
 .hero--centered {
@@ -28,16 +28,14 @@
   background: var(--bg-primary, #111) !important;
 }
 
-/* bandeira real em fundo — parallax via JS */
+/* bandeira real em fundo */
 .pt-hero-flag {
   position: absolute;
-  inset: -40px;
+  inset: 0;
   background: url('/static/flag_portugal.png') center/cover no-repeat;
   opacity: 0.20;
   pointer-events: none;
   z-index: 0;
-  will-change: transform;
-  transition: transform 0.1s linear;
 }
 
 /* ── Parede de azulejos em fundo ── */
@@ -94,13 +92,13 @@ body.pt-active .chat-overlay {
 .pt-hero-left-strip {
   position: absolute;
   top: 0; left: 0; bottom: 0; width: 5px;
-  background: linear-gradient(to bottom, transparent, #006600 30%, #006600 70%, transparent);
+  background: linear-gradient(to bottom, transparent, #046A38 30%, #046A38 70%, transparent);
   z-index: 2; pointer-events: none;
 }
 .pt-hero-right-strip {
   position: absolute;
   top: 0; right: 0; bottom: 0; width: 5px;
-  background: linear-gradient(to bottom, transparent, #d4000e 30%, #d4000e 70%, transparent);
+  background: linear-gradient(to bottom, transparent, #DA291C 30%, #DA291C 70%, transparent);
   z-index: 2; pointer-events: none;
 }
 
@@ -134,7 +132,7 @@ body.pt-active .chat-overlay {
   position: absolute;
   inset: -1.5px;
   border-radius: 26px;
-  background: linear-gradient(90deg, #006600, #FFD700, #d4000e);
+  background: linear-gradient(90deg, #046A38, #FFE900, #DA291C);
   z-index: -1;
 }
 .pt-why-inline-btn::after {
@@ -174,9 +172,9 @@ body.pt-active .chat-overlay {
   overflow: hidden;
 }
 .pt-why-stripe { display: flex; height: 5px; }
-.pt-why-stripe div:nth-child(1) { flex: 2; background: #006600; }
-.pt-why-stripe div:nth-child(2) { flex: 1; background: #FFD700; }
-.pt-why-stripe div:nth-child(3) { flex: 2; background: #d4000e; }
+.pt-why-stripe div:nth-child(1) { flex: 2; background: #046A38; }
+.pt-why-stripe div:nth-child(2) { flex: 1; background: #FFE900; }
+.pt-why-stripe div:nth-child(3) { flex: 2; background: #DA291C; }
 
 /* bandeira subtil dentro do popup */
 .pt-why-body {
@@ -195,7 +193,7 @@ body.pt-active .chat-overlay {
   margin: 0 0 4px;
   font-size: 1.5rem;
   position: relative;
-  background: linear-gradient(90deg, #00cc00, #FFD700, #ff2222);
+  background: linear-gradient(90deg, #046A38, #FFE900, #DA291C);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -246,7 +244,7 @@ body.pt-active .chat-overlay {
   cursor: pointer; font-size: .82rem; z-index: 10;
   transition: all .2s;
 }
-.pt-intro__close:hover { background: #d4000e; border-color: #d4000e; }
+.pt-intro__close:hover { background: #DA291C; border-color: #DA291C; }
 
 
 
@@ -262,7 +260,7 @@ body.pt-active .chat-overlay {
   border-radius: 16px; padding: 40px 32px;
   text-align: center; color: var(--text-primary, #fff);
   position: relative; font-size: 1.05rem; max-width: 300px;
-  border-top: 4px solid #006600; border-bottom: 4px solid #d4000e;
+  border-top: 4px solid #046A38; border-bottom: 4px solid #DA291C;
   box-shadow: 0 8px 40px rgba(0,0,0,.7);
 }
 .pt-mobile-close {
@@ -273,7 +271,7 @@ body.pt-active .chat-overlay {
 
 /* ── Cores portuguesas ── */
 body.pt-active .kicker {
-  color: #d4000e !important;
+  color: #DA291C !important;
 }
 body.pt-active .hero--centered {
   color: inherit;
@@ -282,37 +280,37 @@ body.pt-active .hero--centered {
 
 /* Botão primário — vermelho português */
 body.pt-active .btn.primary {
-  background: #d4000e !important;
-  border-color: #d4000e !important;
+  background: #DA291C !important;
+  border-color: #DA291C !important;
 }
 body.pt-active .btn.primary:hover {
-  background: #a80000 !important;
-  border-color: #a80000 !important;
+  background: #b01e15 !important;
+  border-color: #b01e15 !important;
 }
 
 /* Links de nav active */
 body.pt-active .nav-link.active {
-  color: #006600 !important;
-  border-bottom-color: #006600 !important;
+  color: #046A38 !important;
+  border-bottom-color: #046A38 !important;
 }
 
 /* Kicker soft — verde */
 body.pt-active .kicker--soft {
-  color: #006600 !important;
+  color: #046A38 !important;
 }
 
 /* Chat send button */
 body.pt-active .chat-send-btn {
-  background: #d4000e !important;
+  background: #DA291C !important;
 }
 body.pt-active .chat-send-btn:hover {
-  background: #a80000 !important;
+  background: #b01e15 !important;
 }
 
 /* Reaction chips mine */
 body.pt-active .reaction-chip--mine {
-  border-color: #006600 !important;
-  color: #006600 !important;
+  border-color: #046A38 !important;
+  color: #046A38 !important;
 }
 
 /* ── Título — sem gradiente, sombra forte para destacar da bandeira ── */
@@ -333,18 +331,18 @@ body.pt-active header.top {
 /* ── Faixas laterais do hero mais largas ── */
 body.pt-active .pt-hero-left-strip {
   width: 8px !important;
-  background: linear-gradient(to bottom, transparent, #006600 20%, #006600 80%, transparent) !important;
+  background: linear-gradient(to bottom, transparent, #046A38 20%, #046A38 80%, transparent) !important;
 }
 body.pt-active .pt-hero-right-strip {
   width: 8px !important;
-  background: linear-gradient(to bottom, transparent, #d4000e 20%, #d4000e 80%, transparent) !important;
+  background: linear-gradient(to bottom, transparent, #DA291C 20%, #DA291C 80%, transparent) !important;
 }
 
 
 
 /* ── "ESTA SEMANA" kicker vermelho ── */
 body.pt-active #heroKicker {
-  color: #d4000e !important;
+  color: #DA291C !important;
   letter-spacing: .12em;
 }
 
