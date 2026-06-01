@@ -32,39 +32,24 @@
 
 /* ── Parede de azulejos em fundo ── */
 body.pt-active {
-  background-image:
-    url('/static/azulejo.png') !important;
-  background-size: 90px 90px !important;
+  background-image: url('/static/azulejo.png') !important;
+  background-size: 80px 80px !important;
   background-repeat: repeat !important;
   background-attachment: fixed !important;
+  image-rendering: crisp-edges;
 }
 
-/* overlay para não matar o conteúdo — gradiente suave */
+/* overlay leve — azulejos visíveis mas não dominam */
 body.pt-active::before {
   content: '';
   position: fixed;
   inset: 0;
-  background:
-    linear-gradient(to right,
-      rgba(0,110,0,0.10) 0%,
-      transparent 25%,
-      transparent 75%,
-      rgba(212,0,14,0.10) 100%
-    ),
-    rgba(245, 240, 235, 0.91);
+  background: rgba(245, 240, 235, 0.88);
   pointer-events: none;
   z-index: 0;
 }
-
 [data-theme="dark"] body.pt-active::before {
-  background:
-    linear-gradient(to right,
-      rgba(0,110,0,0.10) 0%,
-      transparent 25%,
-      transparent 75%,
-      rgba(212,0,14,0.10) 100%
-    ),
-    rgba(15, 15, 15, 0.92);
+  background: rgba(14, 14, 14, 0.90);
 }
 
 body.pt-active .wrap,
