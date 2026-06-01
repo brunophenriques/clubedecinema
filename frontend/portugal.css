@@ -1,5 +1,5 @@
 /* =====================================================
-   portugal.css — estilos exclusivos do tema Portugal
+   portugal.css — tema Portugal 🇵🇹
    ===================================================== */
 
 /* ── Bandeiras laterais ── */
@@ -7,44 +7,32 @@
 .pt-flag-right {
   position: fixed;
   top: 0; bottom: 0;
-  width: 8px;
+  width: 5px;
   z-index: 9000;
   pointer-events: none;
 }
 .pt-flag-left  { left: 0  !important; background: #006600 !important; }
 .pt-flag-right { right: 0 !important; background: #d4000e !important; }
 
-/* ── Fundo com bandeira subtil ── */
-body.pt-active {
-  background-image: url('/static/portugal.gif');
-  background-size: cover;
-  background-attachment: fixed;
-  background-position: center;
-}
-body.pt-active::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.82);
-  z-index: 0;
-  pointer-events: none;
-}
-body.pt-active .wrap,
-body.pt-active header {
-  position: relative;
-  z-index: 1;
+/* ── Tint subtil no hero ── */
+body.pt-active .hero--centered {
+  background: linear-gradient(135deg,
+    rgba(0, 80, 0, 0.08) 0%,
+    transparent 40%,
+    transparent 60%,
+    rgba(180, 0, 0, 0.08) 100%
+  ) !important;
 }
 
-/* ── Paulo Moreira — deco lateral ── */
+/* ── Paulo Moreira ── */
 .pt-paulo {
   position: fixed;
-  bottom: 0;
-  left: 12px;
-  width: 180px;
+  bottom: 0; left: 14px;
+  width: 160px;
   z-index: 8000;
   pointer-events: none;
-  opacity: 0.92;
-  filter: drop-shadow(0 0 18px rgba(0,102,0,0.5));
+  opacity: 0.9;
+  filter: drop-shadow(-4px 0 12px rgba(0,80,0,0.3));
 }
 
 /* ── Escudo Estrela da Amadora ── */
@@ -52,111 +40,113 @@ body.pt-active header {
   position: fixed;
   top: 64px; right: 18px;
   z-index: 9000;
-  width: 52px; height: 52px;
+  width: 46px; height: 46px;
   animation: ptSpin 8s linear infinite;
   cursor: default;
   user-select: none;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
 }
-.pt-estrela-badge img {
-  width: 100%; height: 100%;
-  object-fit: contain;
-}
+.pt-estrela-badge img { width: 100%; height: 100%; object-fit: contain; }
 @keyframes ptSpin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
 
-/* ── Botão "Porquê esta semana?" inline ── */
+/* ── Botão "Porquê?" inline ── */
 .pt-why-inline-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   background: transparent;
-  color: var(--text-secondary, #888);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 20px;
-  padding: 6px 14px;
-  font-size: .8rem;
+  padding: 5px 14px;
+  font-size: .78rem;
   cursor: pointer;
-  margin-top: 8px;
+  margin-top: 10px;
+  color: var(--text-secondary, #888);
   transition: all .2s;
+  letter-spacing: .02em;
 }
 .pt-why-inline-btn:hover {
-  background: rgba(0,102,0,0.2);
   border-color: #006600;
-  color: #fff;
+  color: #4caf50;
+  background: rgba(0,102,0,0.08);
 }
 
-/* ── Popup "Porquê?" ── */
+/* ── Popup ── */
 .pt-why-popup {
   display: none;
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.7);
+  background: rgba(0,0,0,.65);
   align-items: center; justify-content: center;
   z-index: 99998;
 }
 .pt-why-inner {
-  background: var(--bg-card, #1a1a1a);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--bg-card, #141414);
   border-radius: 16px;
-  padding: 36px;
-  max-width: 420px;
+  padding: 0;
+  max-width: 400px;
   width: 90%;
   position: relative;
   color: var(--text-primary, #fff);
   text-align: center;
-  box-shadow: 0 16px 60px rgba(0,0,0,.7);
+  box-shadow: 0 20px 60px rgba(0,0,0,.7);
+  overflow: hidden;
 }
-.pt-why-inner h2 {
-  margin: 0 0 8px;
-  font-size: 1.5rem;
-}
-.pt-why-inner .pt-why-date {
-  font-size: .8rem;
-  opacity: .5;
-  margin-bottom: 16px;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-}
-.pt-why-inner p {
-  margin: 0 0 10px;
-  line-height: 1.65;
-  opacity: .8;
-  font-size: .95rem;
-}
-.pt-why-close {
-  position: absolute;
-  top: 12px; right: 14px;
-  background: none; border: none;
-  color: inherit; font-size: 1.1rem;
-  cursor: pointer; opacity: .4;
-  transition: opacity .2s;
-}
-.pt-why-close:hover { opacity: 1; }
+/* stripe topo */
 .pt-why-stripe {
   display: flex;
-  height: 4px;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 20px;
+  height: 5px;
 }
 .pt-why-stripe div:nth-child(1) { flex: 2; background: #006600; }
 .pt-why-stripe div:nth-child(2) { flex: 1; background: #fff; }
 .pt-why-stripe div:nth-child(3) { flex: 2; background: #d4000e; }
 
-/* ── Intro overlay (Ronaldo gif + vídeo) ── */
+.pt-why-body {
+  padding: 28px 32px 32px;
+}
+.pt-why-inner h2 {
+  margin: 0 0 6px;
+  font-size: 1.4rem;
+  /* verde para vermelho */
+  background: linear-gradient(90deg, #4caf50, #e53935);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.pt-why-date {
+  font-size: .72rem;
+  opacity: .45;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text-primary, #fff);
+}
+.pt-why-inner p {
+  margin: 0 0 10px;
+  line-height: 1.65;
+  opacity: .75;
+  font-size: .9rem;
+  color: var(--text-primary, #fff);
+}
+.pt-why-close {
+  position: absolute;
+  top: 12px; right: 14px;
+  background: none; border: none;
+  color: var(--text-primary, #fff);
+  font-size: 1rem;
+  cursor: pointer; opacity: .35;
+  transition: opacity .2s;
+}
+.pt-why-close:hover { opacity: 1; }
+
+/* ── Intro overlay ── */
 .pt-intro__overlay {
   position: fixed; inset: 0;
   background: #000;
   display: flex; align-items: center; justify-content: center;
   z-index: 99999;
-}
-.pt-intro__bg-gif {
-  position: absolute; inset: 0;
-  background: url('/static/ronaldo.gif') center/cover no-repeat;
-  opacity: 0.15;
-  pointer-events: none;
 }
 .pt-intro__box {
   position: relative;
@@ -164,64 +154,43 @@ body.pt-active header {
   aspect-ratio: 16/9;
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 0 80px rgba(0,102,0,0.4), 0 0 0 1px rgba(255,255,255,0.06);
-  z-index: 1;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06),
+              -4px 0 30px rgba(0,102,0,0.4),
+               4px 0 30px rgba(212,0,14,0.4);
 }
-.pt-intro__box iframe {
-  width: 100%; height: 100%;
-  border: 0; display: block;
-}
+.pt-intro__box iframe { width: 100%; height: 100%; border: 0; display: block; }
 .pt-intro__close {
   position: absolute;
   top: 12px; right: 14px;
   background: rgba(0,0,0,.8);
   color: #fff;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
-  padding: 7px 16px;
+  padding: 6px 14px;
   cursor: pointer;
-  font-size: .85rem;
+  font-size: .82rem;
   z-index: 10;
-  transition: background .2s, border-color .2s;
-  letter-spacing: .02em;
+  transition: background .2s;
 }
-.pt-intro__close:hover {
-  background: #d4000e;
-  border-color: #d4000e;
-}
-.pt-intro__label {
-  position: absolute;
-  bottom: 14px; left: 14px;
-  background: rgba(0,0,0,.7);
-  color: #fff;
-  border-radius: 6px;
-  padding: 5px 12px;
-  font-size: .75rem;
-  opacity: .7;
-  z-index: 10;
-  letter-spacing: .04em;
-}
+.pt-intro__close:hover { background: #d4000e; border-color: #d4000e; }
 
-/* ── Mute button ── */
+/* ── Mute ── */
 .pt-mute-btn {
   position: fixed;
   bottom: 20px; left: 20px;
   z-index: 9999;
-  background: rgba(10,10,10,.8);
+  background: rgba(10,10,10,.85);
   color: #fff;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 50%;
-  width: 54px; height: 54px;
-  font-size: 1.5rem;
+  width: 52px; height: 52px;
+  font-size: 1.4rem;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: background .2s, transform .1s;
   box-shadow: 0 2px 12px rgba(0,0,0,.5);
+  transition: background .2s, transform .1s;
 }
-.pt-mute-btn:hover {
-  background: #006600;
-  transform: scale(1.08);
-}
+.pt-mute-btn:hover { background: #006600; transform: scale(1.08); }
 
 /* ── Mobile popup ── */
 .pt-mobile-popup {
@@ -231,21 +200,20 @@ body.pt-active header {
   z-index: 99999;
 }
 .pt-mobile-inner {
-  background: var(--bg-card, #1a1a1a);
+  background: var(--bg-card, #141414);
   border-radius: 16px;
   padding: 40px 32px;
   text-align: center;
   color: var(--text-primary, #fff);
   position: relative;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   box-shadow: 0 8px 40px rgba(0,0,0,.6);
   max-width: 300px;
+  border-top: 3px solid #006600;
+  border-bottom: 3px solid #d4000e;
 }
 .pt-mobile-close {
-  position: absolute;
-  top: 12px; right: 16px;
-  cursor: pointer;
-  font-size: 1rem;
-  opacity: .5;
+  position: absolute; top: 12px; right: 16px;
+  cursor: pointer; font-size: 1rem; opacity: .4;
 }
 .pt-mobile-close:hover { opacity: 1; }
