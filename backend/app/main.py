@@ -1811,22 +1811,39 @@ def serve_leaderboard():
 
 @app.get("/api/leaderboard")
 def get_leaderboard(db: Session = Depends(get_db)):
+    # Single query: all films with week info
+    films = db.query(models.Film).join(models.Week, models.Film.week_id == models.Week.id).all()
     users = db.query(models.User).all()
+
+    # Build stats per user_id
+    stats = {}
+    for f in films:
+        key = f.submitter_key
+        if key not in stats:
+            stats[key] = {"submitted": 0, "won": 0}
+        stats[key]["submitted"] += 1
+        if not f.week.is_open and f.week.winner_film_id == f.id:
+            stats[key]["won"] += 1
+
+    # Votes per user
+    votes_q = db.query(models.Vote.voter_key, func.count(models.Vote.id)).group_by(models.Vote.voter_key).all()
+    votes_map = {vk: cnt for vk, cnt in votes_q}
+
     rows = []
     for user in users:
-        submitter_key = str(user.id)
-        submitted = db.query(models.Film).filter(models.Film.submitter_key == submitter_key).all()
-        won = [f for f in submitted if f.week and not f.week.is_open and f.week.winner_film_id == f.id]
-        votes = db.query(models.Vote).filter(models.Vote.voter_key == submitter_key).count()
-        if not submitted:
+        key = str(user.id)
+        s = stats.get(key)
+        if not s:
             continue
+        submitted = s["submitted"]
+        won = s["won"]
         rows.append({
             "username": user.username,
             "avatar_url": user.avatar_url or user.letterboxd_avatar_url,
-            "films_submitted": len(submitted),
-            "films_won": len(won),
-            "win_rate": round(len(won) / len(submitted) * 100) if submitted else 0,
-            "votes_cast": votes,
+            "films_submitted": submitted,
+            "films_won": won,
+            "win_rate": round(won / submitted * 100) if submitted else 0,
+            "votes_cast": votes_map.get(key, 0),
         })
 
     rows.sort(key=lambda r: (-r["films_won"], -r["win_rate"], -r["films_submitted"]))
