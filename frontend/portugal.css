@@ -378,32 +378,66 @@ body.pt-active #heroSub {
   font-weight: 500;
 }
 
-/* ── Ronaldo esquerda (com bola) ── */
-.pt-ronaldo-left {
+/* ── Base para todos os personagens ── */
+.pt-char {
   position: fixed;
-  bottom: 3767px; left: 1300px;
-  width: 225px;
   z-index: 8000;
   pointer-events: none;
-  transform: scaleX(-1);
-  filter:
-    drop-shadow(4px 0 20px rgba(0,0,0,0.5))
-    drop-shadow(0 0 30px rgba(212,0,14,0.4));
-  animation: ptRonaldoFloat 4s ease-in-out infinite;
-  opacity: 0.8;
+  bottom: 0;
+  animation: ptFloat 4s ease-in-out infinite;
 }
- 
-/* ── Ronaldo direita (verde) ── */
-.pt-ronaldo-right {
-  position: fixed;
-  bottom: 3767px; right: 225px;
-  width: 400px;
-  z-index: 8000;
-  pointer-events: none;
-  filter:
-    drop-shadow(-4px 0 20px rgba(0,0,0,0.5))
-    drop-shadow(0 0 30px rgba(0,102,0,0.5));
-  animation: ptRonaldoFloat 4s ease-in-out infinite reverse;
-  opacity: 0.8;
+@keyframes ptFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+@keyframes ptFloatFlip {
+  0%, 100% { transform: scaleX(-1) translateY(0); }
+  50%       { transform: scaleX(-1) translateY(-8px); }
 }
 
+/* CR7 cuecas verdes — extrema esquerda */
+.pt-cr7-green {
+  left: 0; width: 140px;
+  filter: drop-shadow(3px 0 14px rgba(0,102,0,0.5));
+  animation: ptFloatFlip 4s ease-in-out infinite;
+}
+
+/* CR7 seleção — esquerda */
+.pt-cr7-sel {
+  left: 130px; width: 130px;
+  filter: drop-shadow(3px 0 12px rgba(212,0,14,0.35));
+  animation: ptFloat 4.5s ease-in-out infinite;
+  animation-delay: .5s;
+}
+
+/* Kikas — centro esquerda */
+.pt-kikas {
+  left: 50%; margin-left: -180px; width: 125px;
+  filter: drop-shadow(0 0 14px rgba(0,80,0,0.3));
+  animation: ptFloat 5s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+/* Félix — centro direita */
+.pt-felix {
+  left: 50%; margin-left: 60px; width: 120px;
+  filter: drop-shadow(0 0 14px rgba(212,0,14,0.3));
+  animation: ptFloatFlip 5s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+/* CR7 Real Madrid — direita */
+.pt-cr7-real {
+  right: 130px; width: 135px;
+  filter: drop-shadow(-3px 0 12px rgba(0,102,0,0.35));
+  animation: ptFloat 4.5s ease-in-out infinite;
+  animation-delay: .8s;
+}
+
+/* CR7 cuecas pretas — extrema direita */
+.pt-cr7-black {
+  right: 0; width: 145px;
+  filter: drop-shadow(-3px 0 14px rgba(212,0,14,0.5));
+  animation: ptFloat 4s ease-in-out infinite;
+  animation-delay: .3s;
+}

@@ -29,23 +29,24 @@ function addDecorations() {
     });
   }
 
-  // Ronaldo esquerda (com bola)
-  if (!document.querySelector(".pt-ronaldo-left")) {
-    const r1 = document.createElement("img");
-    r1.className = "pt-ronaldo-left";
-    r1.src = "/static/ronaldo1.png";
-    r1.alt = "";
-    document.body.appendChild(r1);
-  }
-
-  // Ronaldo direita (verde)
-  if (!document.querySelector(".pt-ronaldo-right")) {
-    const r2 = document.createElement("img");
-    r2.className = "pt-ronaldo-right";
-    r2.src = "/static/ronaldo2.png";
-    r2.alt = "";
-    document.body.appendChild(r2);
-  }
+  // 6 personagens
+  const chars = [
+    { cls: "pt-cr7-green",  src: "/static/ronaldo2.png"  },
+    { cls: "pt-cr7-sel",    src: "/static/cr7.png"       },
+    { cls: "pt-kikas",      src: "/static/kikas.png"     },
+    { cls: "pt-felix",      src: "/static/felix.png"     },
+    { cls: "pt-cr7-real",   src: "/static/cr77.png"      },
+    { cls: "pt-cr7-black",  src: "/static/ronaldo1.png"  },
+  ];
+  chars.forEach(({ cls, src }) => {
+    if (!document.querySelector("." + cls)) {
+      const img = document.createElement("img");
+      img.className = "pt-char " + cls;
+      img.src = src;
+      img.alt = "";
+      document.body.appendChild(img);
+    }
+  });
 
   // Botão "Porquê?" inline
   const heroSub = document.getElementById("heroSub");
