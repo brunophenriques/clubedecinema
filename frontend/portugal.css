@@ -386,3 +386,26 @@ body.pt-active .hero-actions {
   animation: ptSubIn .8s cubic-bezier(.22,1,.36,1) both;
   animation-delay: .6s;
 }
+
+/* ── CR7s no hero — position absolute, sem problemas ── */
+.pt-cr7-left {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 90%;
+  max-height: 340px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.85;
+  filter: drop-shadow(4px 0 16px rgba(4,106,56,0.4));
+  transform: scaleX(-1);
+}
+.pt-cr7-right {
+  position: absolute;
+  bottom: 0; right: 0;
+  height: 90%;
+  max-height: 340px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.85;
+  filter: drop-shadow(-4px 0 16px rgba(218,41,28,0.4));
+}
