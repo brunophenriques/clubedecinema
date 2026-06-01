@@ -381,8 +381,8 @@ body.pt-active #heroSub {
 /* ── Ronaldo esquerda (com bola) ── */
 .pt-ronaldo-left {
   position: fixed;
-  bottom: 0; left: 10px;
-  width: 170px;
+  bottom: 60px; left: 18px;
+  width: 190px;
   z-index: 8000;
   pointer-events: none;
   filter: drop-shadow(4px 0 16px rgba(0,0,0,0.35));
@@ -392,8 +392,8 @@ body.pt-active #heroSub {
 /* ── Ronaldo direita (verde) ── */
 .pt-ronaldo-right {
   position: fixed;
-  bottom: 0; right: 10px;
-  width: 150px;
+  bottom: 60px; right: 18px;
+  width: 170px;
   z-index: 8000;
   pointer-events: none;
   filter: drop-shadow(-4px 0 16px rgba(0,0,0,0.35));
