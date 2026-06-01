@@ -82,7 +82,7 @@ async function loadProfile() {
 
   try {
     const data = await apiGet(`/users/${encodeURIComponent(username)}/profile`);
-    renderProfile(data);
+    await renderProfile(data);
   } catch (e) {
     showError();
   }
@@ -93,7 +93,7 @@ function showError() {
   el("profileError").style.display = "";
 }
 
-function renderProfile(data) {
+async function renderProfile(data) {
   const { user, stats, reaction_counts, submitted_films, letterboxd_entries } = data;
 
   el("profileLoading").style.display = "none";
