@@ -29,6 +29,24 @@ function addDecorations() {
     });
   }
 
+  // Ronaldo esquerda (com bola)
+  if (!document.querySelector(".pt-ronaldo-left")) {
+    const r1 = document.createElement("img");
+    r1.className = "pt-ronaldo-left";
+    r1.src = "/static/ronaldo1.png";
+    r1.alt = "";
+    document.body.appendChild(r1);
+  }
+
+  // Ronaldo direita (verde)
+  if (!document.querySelector(".pt-ronaldo-right")) {
+    const r2 = document.createElement("img");
+    r2.className = "pt-ronaldo-right";
+    r2.src = "/static/ronaldo2.png";
+    r2.alt = "";
+    document.body.appendChild(r2);
+  }
+
   // Botão "Porquê?" inline
   const heroSub = document.getElementById("heroSub");
   if (heroSub && !document.getElementById("ptWhyInlineBtn")) {
