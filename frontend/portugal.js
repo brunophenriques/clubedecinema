@@ -11,12 +11,8 @@ if (new URLSearchParams(window.location.search).get("reset") === "1") {
 const isMobile = window.innerWidth < 768;
 
 function addDecorations() {
-  // Overlay (substitui ::before para não criar stacking context)
-  if (!document.querySelector(".pt-overlay")) {
-    const overlay = document.createElement("div");
-    overlay.className = "pt-overlay";
-    document.body.insertBefore(overlay, document.body.firstChild);
-  }
+  // Overlay no html — não cria stacking context no body
+  document.documentElement.classList.add("pt-active-html");
 
   // Bandeiras laterais
   if (!document.querySelector(".pt-flag-left")) {
