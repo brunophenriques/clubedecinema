@@ -381,20 +381,29 @@ body.pt-active #heroSub {
 /* ── Ronaldo esquerda (com bola) ── */
 .pt-ronaldo-left {
   position: fixed;
-  bottom: 60px; left: 18px;
-  width: 190px;
+  bottom: 3767px; left: 1300px;
+  width: 225px;
   z-index: 8000;
   pointer-events: none;
-  filter: drop-shadow(4px 0 16px rgba(0,0,0,0.35));
   transform: scaleX(-1);
+  filter:
+    drop-shadow(4px 0 20px rgba(0,0,0,0.5))
+    drop-shadow(0 0 30px rgba(212,0,14,0.4));
+  animation: ptRonaldoFloat 4s ease-in-out infinite;
+  opacity: 0.8;
 }
-
+ 
 /* ── Ronaldo direita (verde) ── */
 .pt-ronaldo-right {
   position: fixed;
-  bottom: 60px; right: 18px;
-  width: 170px;
+  bottom: 3767px; right: 225px;
+  width: 400px;
   z-index: 8000;
   pointer-events: none;
-  filter: drop-shadow(-4px 0 16px rgba(0,0,0,0.35));
+  filter:
+    drop-shadow(-4px 0 20px rgba(0,0,0,0.5))
+    drop-shadow(0 0 30px rgba(0,102,0,0.5));
+  animation: ptRonaldoFloat 4s ease-in-out infinite reverse;
+  opacity: 0.8;
 }
+
