@@ -28,14 +28,16 @@
   background: var(--bg-primary, #111) !important;
 }
 
-/* bandeira real em fundo */
+/* bandeira real em fundo — parallax via JS */
 .pt-hero-flag {
   position: absolute;
-  inset: 0;
+  inset: -40px;
   background: url('/static/flag_portugal.png') center/cover no-repeat;
   opacity: 0.20;
   pointer-events: none;
   z-index: 0;
+  will-change: transform;
+  transition: transform 0.1s linear;
 }
 
 /* ── Parede de azulejos em fundo ── */
@@ -376,4 +378,39 @@ body.pt-active #heroKicker {
 body.pt-active #heroSub {
   opacity: 0.9;
   font-weight: 500;
+}
+
+/* ── Animação de entrada no título ── */
+@keyframes ptTitleIn {
+  0%   { opacity: 0; transform: translateY(32px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ptSubIn {
+  0%   { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 0.9; transform: translateY(0); }
+}
+@keyframes ptKickerIn {
+  0%   { opacity: 0; letter-spacing: .4em; }
+  100% { opacity: 1; letter-spacing: .12em; }
+}
+
+body.pt-active #heroTitle {
+  animation: ptTitleIn .8s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: .1s;
+}
+body.pt-active #heroSub {
+  animation: ptSubIn .8s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: .35s;
+}
+body.pt-active #heroKicker {
+  animation: ptKickerIn .6s ease both;
+  animation-delay: 0s;
+}
+body.pt-active #ptWhyInlineBtn {
+  animation: ptSubIn .8s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: .5s;
+}
+body.pt-active .hero-actions {
+  animation: ptSubIn .8s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: .6s;
 }
