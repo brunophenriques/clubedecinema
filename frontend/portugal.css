@@ -248,23 +248,7 @@ body.pt-active .chat-overlay {
 }
 .pt-intro__close:hover { background: #d4000e; border-color: #d4000e; }
 
-/* ── Mute ── */
-.pt-mute-btn {
-  position: fixed;
-  bottom: 20px; left: 188px;
-  z-index: 9999;
-  background: rgba(0,0,0,.85);
-  color: #fff;
-  border: 1px solid rgba(0,153,0,0.4);
-  border-radius: 50%;
-  width: 50px; height: 50px;
-  font-size: 1.35rem;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 14px rgba(0,0,0,.5), 0 0 12px rgba(0,102,0,0.2);
-  transition: all .2s;
-}
-.pt-mute-btn:hover { background: #006600; border-color: #006600; transform: scale(1.08); }
+
 
 /* ── Mobile popup ── */
 .pt-mobile-popup {
@@ -356,17 +340,7 @@ body.pt-active .pt-hero-right-strip {
   background: linear-gradient(to bottom, transparent, #d4000e 20%, #d4000e 80%, transparent) !important;
 }
 
-/* ── Mute button cores portuguesas ── */
-body.pt-active .pt-mute-btn {
-  background: #006600 !important;
-  border-color: #004d00 !important;
-  box-shadow: 0 2px 14px rgba(0,102,0,0.4) !important;
-}
-body.pt-active .pt-mute-btn:hover {
-  background: #d4000e !important;
-  border-color: #a80000 !important;
-  box-shadow: 0 2px 14px rgba(212,0,14,0.4) !important;
-}
+
 
 /* ── "ESTA SEMANA" kicker vermelho ── */
 body.pt-active #heroKicker {

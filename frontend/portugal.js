@@ -57,27 +57,7 @@ function forcePtTitle() {
   }, 900);
 }
 
-let _anthemMuted = false;
 
-function startAnthem() {
-  const iframe = document.createElement("iframe");
-  iframe.id = "ptAnthem";
-  iframe.style.cssText = "position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;";
-  iframe.src = "https://www.youtube.com/embed/_-vct5dNaNY?autoplay=1&loop=1&playlist=_-vct5dNaNY&mute=0";
-  document.body.appendChild(iframe);
-
-  const muteBtn = document.createElement("button");
-  muteBtn.id = "ptMuteBtn";
-  muteBtn.className = "pt-mute-btn";
-  muteBtn.innerHTML = "🔊";
-  muteBtn.title = "Hino Nacional";
-  muteBtn.addEventListener("click", () => {
-    _anthemMuted = !_anthemMuted;
-    iframe.src = `https://www.youtube.com/embed/_-vct5dNaNY?autoplay=1&loop=1&playlist=_-vct5dNaNY&mute=${_anthemMuted ? 1 : 0}`;
-    muteBtn.innerHTML = _anthemMuted ? "🔇" : "🔊";
-  });
-  document.body.appendChild(muteBtn);
-}
 
 function showIntro() {
   const overlay = document.createElement("div");
@@ -99,7 +79,6 @@ function showIntro() {
 function closeIntro() {
   localStorage.setItem(PT_INTRO_KEY, "1");
   document.getElementById("ptIntroOverlay")?.remove();
-  startAnthem();
   addDecorations();
   forcePtTitle();
 }
@@ -141,8 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!localStorage.getItem(PT_INTRO_KEY)) {
     showIntro();
   } else {
-    startAnthem();
-    addDecorations();
+      addDecorations();
     forcePtTitle();
   }
 });
