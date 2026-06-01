@@ -1,5 +1,5 @@
 /* =====================================================
-   portugal.js — lógica exclusiva do tema Portugal 🇵🇹
+   portugal.js — tema Portugal 🇵🇹
    ===================================================== */
 
 const PT_INTRO_KEY = "pt_intro_seen";
@@ -14,47 +14,51 @@ const isMobile = window.innerWidth < 768;
    DECORAÇÕES
    ══════════════════════════════════════ */
 function addDecorations() {
-  // Fundo com bandeira
-  document.body.classList.add("pt-active");
-
   // Bandeiras laterais
   const l = document.createElement("div"); l.className = "pt-flag-left";
   const r = document.createElement("div"); r.className = "pt-flag-right";
   document.body.appendChild(l);
   document.body.appendChild(r);
 
-  // Bandeira SVG atrás do título
-  const heroSection = document.getElementById("heroSection");
-  if (heroSection && !document.querySelector(".pt-flag-svg-bg")) {
-    heroSection.style.position = "relative";
-    heroSection.style.overflow = "hidden";
-    const svgFlag = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svgFlag.setAttribute("viewBox", "0 0 900 600");
-    svgFlag.setAttribute("class", "pt-flag-svg-bg");
-    svgFlag.innerHTML = `
-      <rect width="300" height="600" fill="#006600"/>
-      <rect x="300" width="600" height="600" fill="#d4000e"/>
-      <ellipse cx="300" cy="300" rx="120" ry="120" fill="#FFD700" stroke="#006600" stroke-width="8"/>
-      <ellipse cx="300" cy="300" rx="96" ry="96" fill="#fff"/>
-      <ellipse cx="300" cy="300" rx="72" ry="72" fill="#d4000e"/>
-    `;
-    heroSection.appendChild(svgFlag);
+  // Bandeira em fundo do hero
+  const hero = document.getElementById("heroSection");
+  if (hero && !document.querySelector(".pt-hero-flag")) {
+    const flagBg = document.createElement("div");
+    flagBg.className = "pt-hero-flag";
+    hero.insertBefore(flagBg, hero.firstChild);
   }
 
+  // Glow no título
+  const heroTitle = document.getElementById("heroTitle");
+  if (heroTitle) heroTitle.classList.add("pt-title-glow");
+
   // Escudo Estrela da Amadora
-  const estrela = document.createElement("div");
-  estrela.className = "pt-estrela-badge";
-  estrela.innerHTML = `<img src="/static/estreladamadora.png" alt="Estrela da Amadora" />`;
-  document.body.appendChild(estrela);
+  if (!document.querySelector(".pt-estrela-badge")) {
+    const estrela = document.createElement("div");
+    estrela.className = "pt-estrela-badge";
+    estrela.innerHTML = `<img src="/static/estreladamadora.png" alt="Estrela da Amadora" />`;
+    document.body.appendChild(estrela);
+  }
 
-  // Paulo Moreira
-  const paulo = document.createElement("img");
-  paulo.className = "pt-paulo";
-  paulo.src = "/static/paulomoreira.png";
-  paulo.alt = "Paulo Moreira";
-  document.body.appendChild(paulo);
+  // Paulo Moreira — esquerda
+  if (!document.querySelector(".pt-paulo")) {
+    const paulo = document.createElement("img");
+    paulo.className = "pt-paulo";
+    paulo.src = "/static/paulomoreira.png";
+    paulo.alt = "Paulo Moreira";
+    document.body.appendChild(paulo);
+  }
 
-  // Botão "Porquê?" inline abaixo do subtítulo
+  // Ronaldo gif — direita
+  if (!document.querySelector(".pt-ronaldo-deco")) {
+    const ronaldo = document.createElement("img");
+    ronaldo.className = "pt-ronaldo-deco";
+    ronaldo.src = "/static/ronaldo.gif";
+    ronaldo.alt = "";
+    document.body.appendChild(ronaldo);
+  }
+
+  // Botão "Porquê?" inline
   const heroSub = document.getElementById("heroSub");
   if (heroSub && !document.getElementById("ptWhyInlineBtn")) {
     const btn = document.createElement("button");
@@ -113,10 +117,8 @@ function showIntro() {
   overlay.id = "ptIntroOverlay";
   overlay.className = "pt-intro__overlay";
   overlay.innerHTML = `
-    <div class="pt-intro__bg-gif"></div>
     <div class="pt-intro__box">
       <button class="pt-intro__close" id="ptIntroClose">✕ Saltar</button>
-      <div class="pt-intro__label">🇵🇹 Semana Portuguesa</div>
       <iframe
         src="https://www.youtube.com/embed/YrZTw6uh4Yk?autoplay=1&controls=1"
         allow="autoplay; encrypted-media"
