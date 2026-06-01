@@ -10,52 +10,39 @@ if (new URLSearchParams(window.location.search).get("reset") === "1") {
 
 const isMobile = window.innerWidth < 768;
 
-/* ══════════════════════════════════════
-   DECORAÇÕES
-   ══════════════════════════════════════ */
 function addDecorations() {
   // Bandeiras laterais
-  const l = document.createElement("div"); l.className = "pt-flag-left";
-  const r = document.createElement("div"); r.className = "pt-flag-right";
-  document.body.appendChild(l);
-  document.body.appendChild(r);
-
-  // Bandeira em fundo do hero
-  const hero = document.getElementById("heroSection");
-  if (hero && !document.querySelector(".pt-hero-flag")) {
-    const flagBg = document.createElement("div");
-    flagBg.className = "pt-hero-flag";
-    hero.insertBefore(flagBg, hero.firstChild);
+  if (!document.querySelector(".pt-flag-left")) {
+    const l = document.createElement("div"); l.className = "pt-flag-left";
+    const r = document.createElement("div"); r.className = "pt-flag-right";
+    document.body.appendChild(l);
+    document.body.appendChild(r);
   }
 
-  // Glow no título
-  const heroTitle = document.getElementById("heroTitle");
-  if (heroTitle) heroTitle.classList.add("pt-title-glow");
+  // Bandeira + overlays no hero
+  const hero = document.getElementById("heroSection");
+  if (hero && !document.querySelector(".pt-hero-flag")) {
+    ["pt-hero-flag","pt-hero-overlay","pt-hero-left-strip","pt-hero-right-strip"].forEach(cls => {
+      const d = document.createElement("div"); d.className = cls;
+      hero.insertBefore(d, hero.firstChild);
+    });
+  }
 
   // Escudo Estrela da Amadora
   if (!document.querySelector(".pt-estrela-badge")) {
     const estrela = document.createElement("div");
     estrela.className = "pt-estrela-badge";
-    estrela.innerHTML = `<img src="/static/estreladamadora.png" alt="Estrela da Amadora" />`;
+    estrela.innerHTML = `<img src="/static/estreladamadora.png" alt="Estrela da Amadora"/>`;
     document.body.appendChild(estrela);
   }
 
-  // Paulo Moreira — esquerda
+  // Paulo Moreira
   if (!document.querySelector(".pt-paulo")) {
     const paulo = document.createElement("img");
     paulo.className = "pt-paulo";
     paulo.src = "/static/paulomoreira.png";
     paulo.alt = "Paulo Moreira";
     document.body.appendChild(paulo);
-  }
-
-  // Ronaldo gif — direita
-  if (!document.querySelector(".pt-ronaldo-deco")) {
-    const ronaldo = document.createElement("img");
-    ronaldo.className = "pt-ronaldo-deco";
-    ronaldo.src = "/static/ronaldo.gif";
-    ronaldo.alt = "";
-    document.body.appendChild(ronaldo);
   }
 
   // Botão "Porquê?" inline
@@ -72,9 +59,6 @@ function addDecorations() {
   }
 }
 
-/* ══════════════════════════════════════
-   TÍTULO
-   ══════════════════════════════════════ */
 function forcePtTitle() {
   setTimeout(() => {
     const heroTitle = document.getElementById("heroTitle");
@@ -84,9 +68,6 @@ function forcePtTitle() {
   }, 900);
 }
 
-/* ══════════════════════════════════════
-   HINO NACIONAL
-   ══════════════════════════════════════ */
 let _anthemMuted = false;
 
 function startAnthem() {
@@ -109,9 +90,6 @@ function startAnthem() {
   document.body.appendChild(muteBtn);
 }
 
-/* ══════════════════════════════════════
-   INTRO RONALDO
-   ══════════════════════════════════════ */
 function showIntro() {
   const overlay = document.createElement("div");
   overlay.id = "ptIntroOverlay";
@@ -137,9 +115,6 @@ function closeIntro() {
   forcePtTitle();
 }
 
-/* ══════════════════════════════════════
-   MOBILE
-   ══════════════════════════════════════ */
 function showMobilePopup() {
   addDecorations();
   forcePtTitle();
@@ -154,9 +129,6 @@ function showMobilePopup() {
   document.getElementById("ptMobClose").addEventListener("click", () => popup.remove());
 }
 
-/* ══════════════════════════════════════
-   INIT
-   ══════════════════════════════════════ */
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("ptWhyClose")?.addEventListener("click", () => {
     document.getElementById("ptWhyPopup").style.display = "none";
