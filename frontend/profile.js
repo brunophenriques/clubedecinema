@@ -104,18 +104,26 @@ async function renderProfile(data) {
 
   // Hero
   el("profileAvatar").innerHTML = avatarEl(user, 80);
-  el("profileName").textContent = `@${user.username}`;
+  // Wrap nome + badge numa linha
+  const nameWrap = document.createElement("div");
+  nameWrap.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;";
+  const nameSpan = document.createElement("h1");
+  nameSpan.className = "profile-hero__name";
+  nameSpan.textContent = `@${user.username}`;
+  nameWrap.appendChild(nameSpan);
 
-  // Rank badge
   const rank = await getMyRank(user.username);
   if (rank !== null) {
     const badge = document.createElement("a");
     badge.href = "/leaderboard";
-    badge.className = "profile-rank-badge";
+    badge.className = `profile-rank-badge profile-rank-badge--${rank <= 3 ? rank : "other"}`;
     badge.title = "Ver leaderboard";
     badge.textContent = `#${rank}`;
-    el("profileName").insertAdjacentElement("afterend", badge);
+    nameWrap.appendChild(badge);
   }
+
+  const nameEl = el("profileName");
+  nameEl.replaceWith(nameWrap);
 
   const metaParts = [];
   if (user.letterboxd_username) {
