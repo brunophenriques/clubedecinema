@@ -22,7 +22,7 @@ function addDecorations() {
     document.body.appendChild(r);
   }
 
-  // Bandeira + faixas + CR7s no hero
+  // Bandeira + faixas no hero
   document.body.classList.add("pt-active");
   const hero = document.getElementById("heroSection");
   if (hero && !document.querySelector(".pt-hero-flag")) {
@@ -30,20 +30,6 @@ function addDecorations() {
       const d = document.createElement("div"); d.className = cls;
       hero.insertBefore(d, hero.firstChild);
     });
-
-    // CR7 esquerda (cuecas verdes)
-    const cr7l = document.createElement("img");
-    cr7l.className = "pt-cr7-left";
-    cr7l.src = "/static/ronaldo2.png";
-    cr7l.alt = "";
-    hero.appendChild(cr7l);
-
-    // CR7 direita (com bola)
-    const cr7r = document.createElement("img");
-    cr7r.className = "pt-cr7-right";
-    cr7r.src = "/static/ronaldo1.png";
-    cr7r.alt = "";
-    hero.appendChild(cr7r);
   }
 
 
