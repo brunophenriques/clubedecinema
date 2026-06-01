@@ -32,7 +32,17 @@ function addDecorations() {
     });
   }
 
-
+  // Ronaldos decorativos
+  if (hero && !document.getElementById("ptRonaldo1")) {
+    ["ptRonaldo1","ptRonaldo2"].forEach((id, i) => {
+      const img = document.createElement("img");
+      img.id = id;
+      img.className = `pt-deco pt-ronaldo${i+1}`;
+      img.src = `/static/ronaldo${i+1}.png`;
+      img.setAttribute("aria-hidden", "true");
+      hero.appendChild(img);
+    });
+  }
 
   // Botão "Porquê?" inline
   const heroSub = document.getElementById("heroSub");

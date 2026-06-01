@@ -386,3 +386,31 @@ body.pt-active .hero-actions {
   animation: ptSubIn .8s cubic-bezier(.22,1,.36,1) both;
   animation-delay: .6s;
 }
+
+/* ── Imagens decorativas Portugal ── */
+.pt-deco {
+  position: absolute;
+  pointer-events: none;
+  object-fit: contain;
+  z-index: 1;
+}
+
+.pt-ronaldo1 {
+  left: -10px;
+  bottom: 0;
+  height: 200px;
+  opacity: 0.10;
+  filter: grayscale(0.3);
+}
+
+.pt-ronaldo2 {
+  right: -10px;
+  bottom: 0;
+  height: 200px;
+  opacity: 0.10;
+  filter: grayscale(0.3) scaleX(-1);
+}
+
+@media (max-width: 640px) {
+  .pt-ronaldo1, .pt-ronaldo2 { display: none !important; }
+}
