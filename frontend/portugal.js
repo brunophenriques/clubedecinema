@@ -23,6 +23,24 @@ function addDecorations() {
   document.body.appendChild(l);
   document.body.appendChild(r);
 
+  // Bandeira SVG atrás do título
+  const heroSection = document.getElementById("heroSection");
+  if (heroSection && !document.querySelector(".pt-flag-svg-bg")) {
+    heroSection.style.position = "relative";
+    heroSection.style.overflow = "hidden";
+    const svgFlag = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svgFlag.setAttribute("viewBox", "0 0 900 600");
+    svgFlag.setAttribute("class", "pt-flag-svg-bg");
+    svgFlag.innerHTML = `
+      <rect width="300" height="600" fill="#006600"/>
+      <rect x="300" width="600" height="600" fill="#d4000e"/>
+      <ellipse cx="300" cy="300" rx="120" ry="120" fill="#FFD700" stroke="#006600" stroke-width="8"/>
+      <ellipse cx="300" cy="300" rx="96" ry="96" fill="#fff"/>
+      <ellipse cx="300" cy="300" rx="72" ry="72" fill="#d4000e"/>
+    `;
+    heroSection.appendChild(svgFlag);
+  }
+
   // Escudo Estrela da Amadora
   const estrela = document.createElement("div");
   estrela.className = "pt-estrela-badge";
