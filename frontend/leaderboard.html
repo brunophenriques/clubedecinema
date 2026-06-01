@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Leaderboard — Clube de Cinema</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/leaderboard.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <div class="brand">
+        <a href="/" style="display:contents">
+          <div class="logo-badge" aria-hidden="true"><span class="logo-six">6</span><span class="logo-seven">7</span></div>
+          <div class="brand-copy">
+            <div class="brand-title"><span>Clube de Cinema</span></div>
+            <div class="brand-sub">Leaderboard</div>
+          </div>
+        </a>
+      </div>
+      <div class="top-right">
+        <nav class="nav">
+          <a class="nav-link" href="/">Semana</a>
+          <a class="nav-link" href="/archive">Arquivo</a>
+          <a class="nav-link" href="/watch">Ver</a>
+          <a class="nav-link active" href="/leaderboard">Ranking</a>
+        </nav>
+        <div class="auth-pill">
+          <div class="auth-pill__avatar" id="authAvatarPill" style="display:none"></div>
+          <span class="auth-pill__user" id="authStatusLine">Não autenticado.</span>
+          <button class="btn" id="btnLogin" type="button" style="display:none">Entrar</button>
+          <button class="btn" id="btnLogout" type="button" style="display:none">Sair</button>
+          <button class="theme-toggle" id="btnTheme" type="button" title="Mudar tema">
+            <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" style="padding-top:48px;padding-bottom:80px">
+    <div class="section-head section-head--center" style="margin-bottom:32px">
+      <div>
+        <div class="kicker kicker--soft">Hall of Fame</div>
+        <h1>Leaderboard</h1>
+        <p class="muted">Os melhores submissores do clube.</p>
+      </div>
+    </div>
+
+    <div id="lbLoading" style="text-align:center;padding:60px 0">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="lbContent" style="display:none">
+      <!-- Podium top 3 -->
+      <div id="lbPodium" class="lb-podium"></div>
+
+      <!-- Full table -->
+      <div class="section section--elevated" style="margin-top:40px">
+        <table class="lb-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Utilizador</th>
+              <th>🏆 Vitórias</th>
+              <th>📊 Taxa</th>
+              <th>🎬 Submetidos</th>
+              <th>🗳️ Votos</th>
+            </tr>
+          </thead>
+          <tbody id="lbTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer footer--centered">
+    <span>Clube de Cinema</span>
+  </footer>
+
+  <style>
+    .lb-podium {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 16px;
+      padding: 0 16px;
+    }
+    .lb-podium__item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      max-width: 200px;
+    }
+    .lb-podium__item--1 { order: 2; }
+    .lb-podium__item--2 { order: 1; }
+    .lb-podium__item--3 { order: 3; }
+    .lb-podium__avatar {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--ink-10);
+    }
+    .lb-podium__avatar--initials {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: var(--ink-10);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; font-weight: 700;
+      color: var(--text-primary);
+    }
+    .lb-podium__item--1 .lb-podium__avatar,
+    .lb-podium__item--1 .lb-podium__avatar--initials {
+      width: 80px; height: 80px;
+      border-color: #FFD700;
+      box-shadow: 0 0 20px rgba(255,215,0,0.3);
+    }
+    .lb-podium__rank { font-size: 1.6rem; }
+    .lb-podium__name {
+      font-weight: 600;
+      font-size: .9rem;
+      text-align: center;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .lb-podium__name:hover { text-decoration: underline; }
+    .lb-podium__wins {
+      font-size: .8rem;
+      color: var(--text-secondary);
+    }
+    .lb-podium__block {
+      width: 100%;
+      border-radius: 12px 12px 0 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 800;
+      color: #fff;
+    }
+    .lb-podium__item--1 .lb-podium__block { height: 90px; background: #FFD700; color: #333; }
+    .lb-podium__item--2 .lb-podium__block { height: 60px; background: var(--ink-20); }
+    .lb-podium__item--3 .lb-podium__block { height: 44px; background: var(--ink-15, #cd7f32); }
+
+    .lb-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+    }
+    .lb-table th {
+      text-align: left;
+      padding: 10px 16px;
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--ink-10);
+    }
+    .lb-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--ink-5, rgba(0,0,0,.04));
+      vertical-align: middle;
+    }
+    .lb-table tr:last-child td { border-bottom: none; }
+    .lb-table tr:hover td { background: var(--ink-3, rgba(0,0,0,.02)); }
+    .lb-table__rank { font-weight: 700; color: var(--text-secondary); width: 40px; }
+    .lb-table__rank--1 { color: #FFD700; }
+    .lb-table__rank--2 { color: #aaa; }
+    .lb-table__rank--3 { color: #cd7f32; }
+    .lb-table__user {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--text-primary);
+      font-weight: 600;
+    }
+    .lb-table__user:hover { text-decoration: underline; }
+    .lb-table__avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%; object-fit: cover;
+      border: 2px solid var(--ink-10);
+      flex-shrink: 0;
+    }
+    .lb-table__avatar--initials {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--ink-10);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 700;
+      color: var(--text-primary);
+      flex-shrink: 0;
+    }
+    .lb-win-rate { font-weight: 600; }
+    .lb-win-rate--high { color: #22c55e; }
+    .lb-win-rate--mid  { color: #f59e0b; }
+    .lb-win-rate--low  { color: var(--text-secondary); }
+  </style>
+</body>
+</html>

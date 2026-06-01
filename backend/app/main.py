@@ -1798,3 +1798,36 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
             for e in lb_entries
         ],
     }
+
+
+# ─────────────────────────────────────────────
+# Leaderboard
+# ─────────────────────────────────────────────
+
+@app.get("/leaderboard", include_in_schema=False)
+def serve_leaderboard():
+    return FileResponse(str(FRONTEND_DIR / "leaderboard.html"))
+
+
+@app.get("/api/leaderboard")
+def get_leaderboard(db: Session = Depends(get_db)):
+    users = db.query(models.User).all()
+    rows = []
+    for user in users:
+        submitter_key = str(user.id)
+        submitted = db.query(models.Film).filter(models.Film.submitter_key == submitter_key).all()
+        won = [f for f in submitted if f.week and not f.week.is_open and f.week.winner_film_id == f.id]
+        votes = db.query(models.Vote).filter(models.Vote.voter_key == submitter_key).count()
+        if not submitted:
+            continue
+        rows.append({
+            "username": user.username,
+            "avatar_url": user.avatar_url or user.letterboxd_avatar_url,
+            "films_submitted": len(submitted),
+            "films_won": len(won),
+            "win_rate": round(len(won) / len(submitted) * 100) if submitted else 0,
+            "votes_cast": votes,
+        })
+
+    rows.sort(key=lambda r: (-r["films_won"], -r["win_rate"], -r["films_submitted"]))
+    return rows
