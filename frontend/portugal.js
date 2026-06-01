@@ -29,14 +29,6 @@ function addDecorations() {
     });
   }
 
-  // Escudo Estrela da Amadora
-  if (!document.querySelector(".pt-estrela-badge")) {
-    const estrela = document.createElement("div");
-    estrela.className = "pt-estrela-badge";
-    estrela.innerHTML = `<img src="/static/estreladamadora.png" alt="Estrela da Amadora"/>`;
-    document.body.appendChild(estrela);
-  }
-
   // Paulo Moreira
   if (!document.querySelector(".pt-paulo")) {
     const paulo = document.createElement("img");

@@ -44,20 +44,38 @@ body.pt-active::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(245, 240, 235, 0.88);
+  background: rgba(245, 240, 235, 0.91);
   pointer-events: none;
   z-index: 0;
 }
 [data-theme="dark"] body.pt-active::before {
-  background: rgba(14, 14, 14, 0.90);
+  background: rgba(14, 14, 14, 0.93);
 }
 
 body.pt-active .wrap,
-body.pt-active header,
-body.pt-active .chat-panel,
-body.pt-active #chatOverlay {
+body.pt-active header {
   position: relative;
   z-index: 1;
+}
+
+/* imagens e posters acima do overlay */
+body.pt-active img,
+body.pt-active .film-card,
+body.pt-active .pt-paulo,
+body.pt-active .watched-grid,
+body.pt-active .hero-backdrop {
+  position: relative;
+  z-index: 1;
+  image-rendering: auto;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+body.pt-active .chat-panel {
+  z-index: 10000 !important;
+}
+body.pt-active .chat-overlay {
+  z-index: 9999 !important;
 }
 
 
@@ -89,22 +107,7 @@ body.pt-active #chatOverlay {
   filter: drop-shadow(-3px 0 18px rgba(0,80,0,0.45));
 }
 
-/* ── Escudo Estrela da Amadora ── */
-.pt-estrela-badge {
-  position: fixed;
-  top: 64px; right: 20px;
-  z-index: 9000;
-  width: 44px; height: 44px;
-  animation: ptSpin 8s linear infinite;
-  cursor: default;
-  user-select: none;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
-}
-.pt-estrela-badge img { width: 100%; height: 100%; object-fit: contain; }
-@keyframes ptSpin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
+/* estrela da amadora removida */
 
 /* ── Botão "Porquê?" — borda gradiente elegante ── */
 .pt-why-inline-btn {
@@ -282,3 +285,47 @@ body.pt-active #chatOverlay {
   cursor: pointer; font-size: 1rem; opacity: .4;
 }
 .pt-mobile-close:hover { opacity: 1; }
+
+/* ── Cores portuguesas ── */
+body.pt-active .kicker {
+  color: #d4000e !important;
+}
+body.pt-active .hero--centered {
+  color: inherit;
+}
+/* "Porquê esta semana" botão já tem gradiente */
+
+/* Botão primário — vermelho português */
+body.pt-active .btn.primary {
+  background: #d4000e !important;
+  border-color: #d4000e !important;
+}
+body.pt-active .btn.primary:hover {
+  background: #a80000 !important;
+  border-color: #a80000 !important;
+}
+
+/* Links de nav active */
+body.pt-active .nav-link.active {
+  color: #006600 !important;
+  border-bottom-color: #006600 !important;
+}
+
+/* Kicker soft — verde */
+body.pt-active .kicker--soft {
+  color: #006600 !important;
+}
+
+/* Chat send button */
+body.pt-active .chat-send-btn {
+  background: #d4000e !important;
+}
+body.pt-active .chat-send-btn:hover {
+  background: #a80000 !important;
+}
+
+/* Reaction chips mine */
+body.pt-active .reaction-chip--mine {
+  border-color: #006600 !important;
+  color: #006600 !important;
+}
