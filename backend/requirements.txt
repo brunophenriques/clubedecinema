@@ -1,9 +1,0 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-pydantic
-python-dotenv
-alembic
-requests
-rapidfuzz
-psycopg2-binary

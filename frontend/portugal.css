@@ -328,3 +328,51 @@ body.pt-active .reaction-chip--mine {
   border-color: #006600 !important;
   color: #006600 !important;
 }
+
+/* ── Título gradiente verde→vermelho ── */
+body.pt-active #heroTitle {
+  background: linear-gradient(90deg, #006600 0%, #cc0000 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Header tint verde subtil ── */
+body.pt-active header.top {
+  border-bottom: 2px solid rgba(0,102,0,0.15);
+  background: linear-gradient(to right, rgba(0,102,0,0.04), transparent 30%, transparent 70%, rgba(212,0,14,0.03)) !important;
+}
+
+/* ── Faixas laterais do hero mais largas ── */
+body.pt-active .pt-hero-left-strip {
+  width: 8px !important;
+  background: linear-gradient(to bottom, transparent, #006600 20%, #006600 80%, transparent) !important;
+}
+body.pt-active .pt-hero-right-strip {
+  width: 8px !important;
+  background: linear-gradient(to bottom, transparent, #d4000e 20%, #d4000e 80%, transparent) !important;
+}
+
+/* ── Mute button cores portuguesas ── */
+body.pt-active .pt-mute-btn {
+  background: #006600 !important;
+  border-color: #004d00 !important;
+  box-shadow: 0 2px 14px rgba(0,102,0,0.4) !important;
+}
+body.pt-active .pt-mute-btn:hover {
+  background: #d4000e !important;
+  border-color: #a80000 !important;
+  box-shadow: 0 2px 14px rgba(212,0,14,0.4) !important;
+}
+
+/* ── "ESTA SEMANA" kicker vermelho ── */
+body.pt-active #heroKicker {
+  color: #d4000e !important;
+  letter-spacing: .12em;
+}
+
+/* ── Subtítulo hero ligeiramente mais visível ── */
+body.pt-active #heroSub {
+  opacity: 0.9;
+  font-weight: 500;
+}
