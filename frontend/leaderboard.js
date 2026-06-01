@@ -141,11 +141,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (token) {
     try {
       const me = await apiGet("/auth/me");
-      el("authStatusLine").textContent = `@${me.username}`;
+      el("authStatusLine").innerHTML = `<a href="/profile/${encodeURIComponent(me.username)}" style="color:inherit;text-decoration:none">@${escapeHtml(me.username)}</a>`;
       const avatar = el("authAvatarPill");
       if (avatar && me.avatar_url) {
         avatar.innerHTML = `<img src="${escapeHtml(me.avatar_url)}" width="28" height="28" style="border-radius:50%;object-fit:cover" />`;
         avatar.style.display = "";
+        avatar.style.cursor = "pointer";
+        avatar.onclick = () => window.location.href = `/profile/${encodeURIComponent(me.username)}`;
       }
       el("btnLogout").style.display = "";
       el("btnLogin").style.display = "none";
