@@ -80,9 +80,9 @@ async function search(q) {
             : `<div class="watch-card__poster-ph">${escapeHtml((m.title||"").slice(0,2).toUpperCase())}</div>`
           }
           <div class="watch-card__overlay">
-            <button class="watch-play-btn" data-id="${m.id}" data-title="${escapeHtml(m.title)}">
+            <button class="watch-play-btn" data-id="${m.id}" data-title="${escapeHtml(m.title)}" data-year="${escapeHtml(m.year || "")}">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Reproduzir
+              Trailer
             </button>
           </div>
         </div>
@@ -99,17 +99,41 @@ async function search(q) {
 }
 
 /* ── Player ── */
-function openPlayer(tmdbId, title) {
-  const url = `https://www.vidking.net/embed/movie/${tmdbId}`;
-  el("watchPlayerTitle").textContent = title;
-  el("watchPlayerIframe").src = url;
+async function getTrailerUrl(tmdbId) {
+  const res = await fetch(`${API}/movies/${encodeURIComponent(tmdbId)}/trailer`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return data.embed_url || data.trailer_url || "";
+}
+
+function youtubeTrailerSearch(title, year) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title || ""} ${year || ""} trailer`)}`;
+}
+
+async function openPlayer(tmdbId, title, year) {
+  el("watchPlayerTitle").textContent = `${title} - trailer`;
+  el("watchPlayerIframe").src = "";
+  el("watchPlayerIframe").srcdoc = "<body style='margin:0;background:#000;color:#fff;display:grid;place-items:center;font-family:sans-serif'>A carregar trailer...</body>";
   el("watchPlayerModal").style.display = "flex";
   document.body.style.overflow = "hidden";
+
+  try {
+    const url = await getTrailerUrl(tmdbId);
+    if (url) {
+      el("watchPlayerIframe").removeAttribute("srcdoc");
+      el("watchPlayerIframe").src = url;
+      return;
+    }
+  } catch {}
+
+  closePlayer();
+  window.open(youtubeTrailerSearch(title, year), "_blank", "noopener,noreferrer");
 }
 
 function closePlayer() {
   el("watchPlayerModal").style.display = "none";
   el("watchPlayerIframe").src = "";
+  el("watchPlayerIframe").removeAttribute("srcdoc");
   document.body.style.overflow = "";
 }
 
@@ -142,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
   el("watchGrid")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".watch-play-btn");
     if (!btn) return;
-    openPlayer(btn.dataset.id, btn.dataset.title);
+    openPlayer(btn.dataset.id, btn.dataset.title, btn.dataset.year);
   });
 
   // Close player

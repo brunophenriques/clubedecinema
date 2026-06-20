@@ -543,11 +543,6 @@ function posterHTML(f) {
     : encodeURIComponent(`${f.title}${f.year ? ` ${f.year}` : ""}`);
   const letterboxdUrl = `https://letterboxd.com/search/${lbQuery}/`;
 
-  const vidkingUrl = f.tmdb_id
-    ? `https://www.vidking.net/embed/movie/${f.tmdb_id}`
-    : `https://www.vidking.net/search/${encodeURIComponent(f.title + (f.year ? ` ${f.year}` : ""))}`;
-  const vidkingIsEmbed = !!f.tmdb_id;
-
   const posterContent = f.poster_url
     ? `<img src="${escapeHtml(f.poster_url)}" alt="${escapeHtml(f.title)}" loading="lazy"/>`
     : `<span>${escapeHtml((f.title || "").split(" ").slice(0,2).map(s => s[0]?.toUpperCase()).join("") || "🎬")}</span>`;
@@ -555,23 +550,37 @@ function posterHTML(f) {
   const posterClass = f.poster_url ? "poster" : "poster placeholder";
 
   return `
-    <div class="${posterClass}" data-letterboxd="${escapeHtml(letterboxdUrl)}" data-vidking="${escapeHtml(vidkingUrl)}" data-title="${escapeHtml(f.title)}">
+    <div class="${posterClass}" data-letterboxd="${escapeHtml(letterboxdUrl)}" data-title="${escapeHtml(f.title)}">
       ${posterContent}
       <div class="poster-overlay">
         <a class="poster-btn poster-btn--know" href="${escapeHtml(letterboxdUrl)}" target="_blank" rel="noopener noreferrer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           Saber mais
         </a>
-        <button class="poster-btn poster-btn--play" data-vidking="${escapeHtml(vidkingUrl)}" data-embed="${vidkingIsEmbed ? '1' : '0'}" data-title="${escapeHtml(f.title)}">
+        <button class="poster-btn poster-btn--play" data-tmdb="${escapeHtml(f.tmdb_id || "")}" data-title="${escapeHtml(f.title)}" data-year="${escapeHtml(f.year || "")}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Reproduzir
+          Trailer
         </button>
       </div>
     </div>`;
 }
 
 /* ── Player Modal ── */
-function openPlayerModal(vidkingUrl, title) {
+function youtubeTrailerSearch(title, year) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title || ""} ${year || ""} trailer`)}`;
+}
+
+async function getTrailerUrl(tmdbId) {
+  const data = await apiGet(`/movies/${encodeURIComponent(tmdbId)}/trailer`, { cacheTtl: 60 * 60 * 1000 });
+  return data.embed_url || data.trailer_url || "";
+}
+
+async function openTrailerModal(tmdbId, title, year) {
+  if (!tmdbId) {
+    window.open(youtubeTrailerSearch(title, year), "_blank", "noopener,noreferrer");
+    return;
+  }
+
   let modal = document.getElementById("playerModal");
   if (!modal) {
     modal = document.createElement("div");
@@ -593,10 +602,23 @@ function openPlayerModal(vidkingUrl, title) {
     document.getElementById("playerClose").addEventListener("click", closePlayerModal);
     window.addEventListener("keydown", (e) => { if (e.key === "Escape") closePlayerModal(); });
   }
-  document.getElementById("playerTitle").textContent = title;
-  document.getElementById("playerIframe").src = vidkingUrl;
+  document.getElementById("playerTitle").textContent = `${title} - trailer`;
+  document.getElementById("playerIframe").src = "";
+  document.getElementById("playerIframe").srcdoc = "<body style='margin:0;background:#000;color:#fff;display:grid;place-items:center;font-family:sans-serif'>A carregar trailer...</body>";
   modal.style.display = "flex";
   document.body.style.overflow = "hidden";
+
+  try {
+    const url = await getTrailerUrl(tmdbId);
+    if (url) {
+      document.getElementById("playerIframe").removeAttribute("srcdoc");
+      document.getElementById("playerIframe").src = url;
+      return;
+    }
+  } catch {}
+
+  closePlayerModal();
+  window.open(youtubeTrailerSearch(title, year), "_blank", "noopener,noreferrer");
 }
 
 function closePlayerModal() {
@@ -604,7 +626,10 @@ function closePlayerModal() {
   if (modal) {
     modal.style.display = "none";
     const iframe = document.getElementById("playerIframe");
-    if (iframe) iframe.src = "";
+    if (iframe) {
+      iframe.src = "";
+      iframe.removeAttribute("srcdoc");
+    }
     document.body.style.overflow = "";
   }
 }
@@ -1232,12 +1257,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!btn) return;
     e.preventDefault();
     e.stopPropagation();
-    const url = btn.dataset.vidking;
+    const tmdbId = btn.dataset.tmdb;
     const title = btn.dataset.title;
-    const isEmbed = btn.dataset.embed === "1";
-    if (!url) return;
-    if (isEmbed) openPlayerModal(url, title);
-    else window.open(url, "_blank", "noopener,noreferrer");
+    const year = btn.dataset.year;
+    openTrailerModal(tmdbId, title, year);
   });
 
   // Reaction picker toggle

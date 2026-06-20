@@ -2015,6 +2015,56 @@ def search_movies(q: str, page: int = 1, db: Session = Depends(get_db)):
         raise HTTPException(500, str(e))
 
 
+@app.get("/movies/{tmdb_id}/trailer")
+def get_movie_trailer(tmdb_id: int):
+    api_key = os.getenv("TMDB_API_KEY")
+    if not api_key:
+        raise HTTPException(500, "TMDB not configured")
+
+    cache_key = f"movie:trailer:{tmdb_id}"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    videos = []
+    try:
+        for language in ("pt-PT", "en-US"):
+            r = requests.get(
+                f"https://api.themoviedb.org/3/movie/{tmdb_id}/videos",
+                params={"api_key": api_key, "language": language},
+                timeout=8,
+            )
+            if r.status_code == 404:
+                raise HTTPException(404, "Movie not found")
+            r.raise_for_status()
+            videos.extend(r.json().get("results", []))
+            if videos:
+                break
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(502, str(e))
+
+    youtube = [v for v in videos if (v.get("site") or "").lower() == "youtube" and v.get("key")]
+    trailers = [v for v in youtube if (v.get("type") or "").lower() == "trailer"]
+    candidates = trailers or youtube
+    candidates.sort(key=lambda v: (not bool(v.get("official")), v.get("published_at") or ""), reverse=False)
+
+    if not candidates:
+        payload = {"trailer_url": None, "embed_url": None, "youtube_key": None, "name": None}
+        return cache_set(cache_key, payload, ttl=60 * 60 * 12)
+
+    chosen = candidates[0]
+    key = chosen["key"]
+    payload = {
+        "trailer_url": f"https://www.youtube.com/watch?v={key}",
+        "embed_url": f"https://www.youtube.com/embed/{key}?autoplay=1&rel=0",
+        "youtube_key": key,
+        "name": chosen.get("name"),
+    }
+    return cache_set(cache_key, payload, ttl=60 * 60 * 12)
+
+
 @app.get("/watch", include_in_schema=False)
 def serve_watch():
     from fastapi.responses import FileResponse
