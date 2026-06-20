@@ -201,7 +201,7 @@ async function loadCinema() {
   const grid = el("cinemaGrid");
   grid.innerHTML = "<p class='muted small'>A carregar...</p>";
   try {
-    const weeks = await apiGet("/weeks/cinema");
+    const weeks = await apiGet("/weeks/cinema?limit=100");
     const films = weeks.flatMap(w => w.films || []);
     if (!films.length) { grid.innerHTML = "<p class='muted'>Nenhum filme de cinema ainda.</p>"; return; }
     grid.innerHTML = "";
@@ -385,7 +385,7 @@ async function load() {
   el("count").textContent = "—";
 
   try {
-    weeksCache = await apiGet("/weeks");
+    weeksCache = await apiGet("/weeks?limit=100");
     el("status").textContent = "";
     apply();
     refreshNavAdmin();

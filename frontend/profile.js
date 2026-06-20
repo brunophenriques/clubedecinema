@@ -49,25 +49,6 @@ function formatDate(ts) {
   return new Date(ts * 1000).toLocaleDateString("pt", { day: "numeric", month: "short", year: "numeric" });
 }
 
-async function getMyRank(username) {
-  try {
-    const rows = await apiGet("/api/leaderboard");
-    let rank = 1;
-    for (let i = 0; i < rows.length; i++) {
-      if (i > 0) {
-        const prev = rows[i - 1];
-        if (rows[i].films_won !== prev.films_won || rows[i].win_rate !== prev.win_rate) {
-          rank = i + 1;
-        }
-      }
-      if (rows[i].username.toLowerCase() === username.toLowerCase()) {
-        return rank;
-      }
-    }
-  } catch {}
-  return null;
-}
-
 async function loadProfile() {
   // Get username from URL: /profile/username or ?u=username
   const path = window.location.pathname;
@@ -112,7 +93,7 @@ async function renderProfile(data) {
   nameSpan.textContent = `@${user.username}`;
   nameWrap.appendChild(nameSpan);
 
-  const rank = await getMyRank(user.username);
+  const rank = stats.leaderboard_rank;
   if (rank !== null) {
     const badge = document.createElement("a");
     badge.href = "/leaderboard";

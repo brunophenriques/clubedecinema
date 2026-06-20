@@ -25,7 +25,7 @@ let _lbMembers = null; // { userId: {avatar_url, username, letterboxd_username} 
 async function getLbMembers() {
   if (_lbMembers) return _lbMembers;
   try {
-    const list = await apiGet("/letterboxd/members");
+    const list = await apiGet("/letterboxd/members", { cacheTtl: 60000 });
     _lbMembers = {};
     for (const m of list) _lbMembers[m.user_id] = m;
   } catch { _lbMembers = {}; }
@@ -124,7 +124,14 @@ async function parseError(res) {
   }
 }
 
-async function apiGet(path, { auth = false } = {}) {
+const _apiCache = new Map();
+
+async function apiGet(path, { auth = false, cacheTtl = 0 } = {}) {
+  const cacheKey = auth ? "" : path;
+  if (cacheTtl && cacheKey) {
+    const hit = _apiCache.get(cacheKey);
+    if (hit && hit.expiresAt > Date.now()) return hit.value;
+  }
   const headers = {};
   if (auth && getToken()) headers["Authorization"] = `Bearer ${getToken()}`;
   const res = await fetch(`${API}${path}`, { headers });
@@ -132,7 +139,9 @@ async function apiGet(path, { auth = false } = {}) {
     const err = await parseError(res);
     throw Object.assign(new Error(err.detail), { status: err.status });
   }
-  return res.json();
+  const value = await res.json();
+  if (cacheTtl && cacheKey) _apiCache.set(cacheKey, { expiresAt: Date.now() + cacheTtl, value });
+  return value;
 }
 
 async function apiPost(path, body, { auth = false } = {}) {
@@ -479,7 +488,7 @@ async function apiPatch(path, body, { auth = false } = {}) {
 async function buildWatcherStrip(tmdbId) {
   if (!tmdbId) return "";
   try {
-    const watchers = await apiGet(`/letterboxd/film/${tmdbId}`);
+    const watchers = await apiGet(`/letterboxd/film/${tmdbId}`, { cacheTtl: 60000 });
     if (!watchers || watchers.length === 0) return "";
 
     const stars = (r) => {
@@ -742,7 +751,7 @@ async function loadClubWatched() {
 
   try {
     // Get last 5 closed weeks with winners
-    const weeks = await apiGet("/weeks");
+    const weeks = await apiGet("/weeks?limit=20", { cacheTtl: 30000 });
     const winners = weeks
       .filter(w => !w.is_open && w.winner_film_id)
       .slice(0, 5);
@@ -756,7 +765,7 @@ async function loadClubWatched() {
 
       let watchers = [];
       if (win.tmdb_id) {
-        try { watchers = await apiGet(`/letterboxd/film/${win.tmdb_id}`); } catch {}
+        try { watchers = await apiGet(`/letterboxd/film/${win.tmdb_id}`, { cacheTtl: 60000 }); } catch {}
       }
       return { week: w, film: win, watchers };
     }));
@@ -1016,6 +1025,8 @@ initTheme();
 let _chatWeekId = null;
 let _chatPollInterval = null;
 let _chatLastCount = 0;
+let _chatMessages = [];
+let _chatLastId = 0;
 
 function openChat(weekId, weekTitle) {
   _chatWeekId = weekId;
@@ -1025,8 +1036,10 @@ function openChat(weekId, weekTitle) {
   document.body.style.overflow = "hidden";
   el("chatBadge").style.display = "none";
   _chatLastCount = 0;
-  fetchChat();
-  _chatPollInterval = setInterval(fetchChat, 6000);
+  _chatMessages = [];
+  _chatLastId = 0;
+  fetchChat(true);
+  _chatPollInterval = setInterval(() => fetchChat(false), 12000);
   setTimeout(() => el("chatInput")?.focus(), 300);
 }
 
@@ -1037,15 +1050,24 @@ function closeChat() {
   if (_chatPollInterval) { clearInterval(_chatPollInterval); _chatPollInterval = null; }
 }
 
-async function fetchChat() {
+async function fetchChat(initial = false) {
   if (!_chatWeekId) return;
   try {
-    const msgs = await apiGet(`/weeks/${_chatWeekId}/chat`);
-    renderChatMessages(msgs);
+    const path = initial || !_chatLastId
+      ? `/weeks/${_chatWeekId}/chat?limit=50`
+      : `/weeks/${_chatWeekId}/chat?since_id=${_chatLastId}&limit=50`;
+    const msgs = await apiGet(path);
+    if (initial) _chatMessages = msgs;
+    else if (msgs.length) {
+      const seen = new Set(_chatMessages.map(m => m.id));
+      _chatMessages = _chatMessages.concat(msgs.filter(m => !seen.has(m.id))).slice(-100);
+    }
+    if (_chatMessages.length) _chatLastId = Math.max(..._chatMessages.map(m => Number(m.id) || 0));
+    renderChatMessages(_chatMessages);
     // Update badge if panel closed
-    if (!el("chatPanel").classList.contains("chat-panel--open") && msgs.length > _chatLastCount) {
+    if (!el("chatPanel").classList.contains("chat-panel--open") && _chatMessages.length > _chatLastCount) {
       el("chatBadge").style.display = "";
-      el("chatBadge").textContent = msgs.length - _chatLastCount;
+      el("chatBadge").textContent = _chatMessages.length - _chatLastCount;
     }
   } catch {}
 }
@@ -1235,7 +1257,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const id = btn.dataset.id;
     try {
       await fetch(`${API}/chat/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` } });
-      await fetchChat();
+      await fetchChat(true);
     } catch {}
   });
 

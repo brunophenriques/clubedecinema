@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Depends, HTTPException, Body, Header
+from fastapi import FastAPI, Depends, HTTPException, Body, Header, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session, joinedload, selectinload
-from sqlalchemy import func
+from sqlalchemy.orm import Session, joinedload, selectinload, load_only
+from sqlalchemy import func, event, String, cast
+import json
+import logging
 import os
 from dotenv import load_dotenv
 import requests
@@ -16,13 +18,101 @@ import hmac
 import base64
 
 from pathlib import Path
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .db import SessionLocal
 from . import models
 
 app = FastAPI(title="Cinema Club API")
+logger = logging.getLogger("cinema_club.egress")
+
+DEFAULT_LIST_LIMIT = 50
+MAX_LIST_LIMIT = 100
+CHAT_LIMIT = 50
+RATE_LIMIT_WINDOW = 60
+RATE_LIMIT_DEFAULT = 180
+RATE_LIMIT_AUTH = 40
+_rate_buckets: dict[tuple[str, str], list[float]] = {}
+_response_cache: dict[str, tuple[float, object]] = {}
+
+
+def clamp_limit(limit: int | None, default: int = DEFAULT_LIST_LIMIT, maximum: int = MAX_LIST_LIMIT) -> int:
+    try:
+        value = int(limit or default)
+    except (TypeError, ValueError):
+        value = default
+    return max(1, min(value, maximum))
+
+
+def cache_get(key: str):
+    hit = _response_cache.get(key)
+    if not hit:
+        return None
+    expires_at, value = hit
+    if expires_at <= time.time():
+        _response_cache.pop(key, None)
+        return None
+    return value
+
+
+def cache_set(key: str, value, ttl: int = 20):
+    _response_cache[key] = (time.time() + ttl, value)
+    return value
+
+
+def clear_response_cache():
+    _response_cache.clear()
+
+
+@event.listens_for(Session, "after_commit")
+def _clear_cache_after_commit(session):
+    clear_response_cache()
+
+
+def approx_payload_size(payload) -> int:
+    try:
+        return len(json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8"))
+    except Exception:
+        return 0
+
+
+def log_db_response(path: str, purpose: str, rows: int, payload) -> None:
+    logger.info(
+        "db_response path=%s purpose=%s rows=%s approx_payload_bytes=%s",
+        path,
+        purpose,
+        rows,
+        approx_payload_size(payload),
+    )
+
+
+@app.middleware("http")
+async def rate_limit_and_log(request: Request, call_next):
+    path = request.url.path
+    if path.startswith("/static/") or path in {"/favicon.ico", "/sw.js"}:
+        return await call_next(request)
+
+    client = request.client.host if request.client else "unknown"
+    now = time.time()
+    bucket_key = (client, path)
+    limit = RATE_LIMIT_AUTH if path.startswith("/auth/") else RATE_LIMIT_DEFAULT
+    bucket = [ts for ts in _rate_buckets.get(bucket_key, []) if now - ts < RATE_LIMIT_WINDOW]
+    if len(bucket) >= limit:
+        return JSONResponse({"detail": "Too many requests"}, status_code=429)
+    bucket.append(now)
+    _rate_buckets[bucket_key] = bucket
+
+    start = time.perf_counter()
+    response = await call_next(request)
+    logger.info(
+        "request path=%s method=%s status=%s elapsed_ms=%s",
+        path,
+        request.method,
+        response.status_code,
+        round((time.perf_counter() - start) * 1000, 2),
+    )
+    return response
 
 # -----------------------------
 # Serve frontend (static files + pages)
@@ -52,8 +142,14 @@ def serve_index():
     from .db import SessionLocal
     db = SessionLocal()
     try:
-        week = db.query(models.Week).filter(models.Week.is_open == True).first()
-        if week and getattr(week, "theme", None) == "portugal":
+        theme = (
+            db.query(models.Week.theme)
+            .filter(models.Week.is_open == True)
+            .order_by(models.Week.id.desc())
+            .limit(1)
+            .scalar()
+        )
+        if theme == "portugal":
             return FileResponse(str(FRONTEND_DIR / "portugal.html"))
     finally:
         db.close()
@@ -490,37 +586,100 @@ def current_week(db: Session = Depends(get_db)):
     week = (
         db.query(models.Week)
         .filter(models.Week.is_special == False)
-        .options(selectinload(models.Week.films))
+        .options(
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            selectinload(models.Week.films).load_only(
+                models.Film.id,
+                models.Film.week_id,
+                models.Film.title,
+                models.Film.year,
+                models.Film.director,
+                models.Film.poster_url,
+                models.Film.tmdb_id,
+            ),
+        )
         .order_by(models.Week.id.desc())
         .first()
     )
     if not week:
         raise HTTPException(404, "No week created yet")
-    return week_payload(db, week, include_submitter=False)
+    payload = week_payload(db, week, include_submitter=False)
+    log_db_response("/weeks/current", "current week with films and vote counts", len(payload.get("films", [])), payload)
+    return payload
 
 
 @app.get("/weeks")
-def list_weeks(db: Session = Depends(get_db)):
+def list_weeks(
+    page: int = Query(1, ge=1),
+    limit: int = Query(DEFAULT_LIST_LIMIT, ge=1, le=MAX_LIST_LIMIT),
+    db: Session = Depends(get_db),
+):
+    limit = clamp_limit(limit)
+    offset = (page - 1) * limit
+    cache_key = f"weeks:{page}:{limit}"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return cached
     weeks = (
         db.query(models.Week)
         .filter(models.Week.is_special == False)
-        .options(selectinload(models.Week.films))
+        .options(
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            selectinload(models.Week.films).load_only(
+                models.Film.id,
+                models.Film.week_id,
+                models.Film.title,
+                models.Film.year,
+                models.Film.director,
+                models.Film.poster_url,
+                models.Film.tmdb_id,
+            ),
+        )
         .order_by(models.Week.id.desc())
+        .offset(offset)
+        .limit(limit)
         .all()
     )
-    return [week_payload(db, w, include_submitter=False) for w in weeks]
+    payload = [week_payload(db, w, include_submitter=False) for w in weeks]
+    log_db_response("/weeks", "paginated archive weeks", len(payload), payload)
+    return cache_set(cache_key, payload, ttl=30)
 
 
 @app.get("/weeks/cinema")
-def list_cinema_weeks(db: Session = Depends(get_db)):
+def list_cinema_weeks(
+    page: int = Query(1, ge=1),
+    limit: int = Query(DEFAULT_LIST_LIMIT, ge=1, le=MAX_LIST_LIMIT),
+    db: Session = Depends(get_db),
+):
+    limit = clamp_limit(limit)
+    offset = (page - 1) * limit
+    cache_key = f"weeks:cinema:{page}:{limit}"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return cached
     weeks = (
         db.query(models.Week)
         .filter(models.Week.is_special == True)
-        .options(selectinload(models.Week.films))
+        .options(
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            selectinload(models.Week.films).load_only(
+                models.Film.id,
+                models.Film.week_id,
+                models.Film.title,
+                models.Film.year,
+                models.Film.director,
+                models.Film.poster_url,
+                models.Film.tmdb_id,
+            ),
+        )
         .order_by(models.Week.id.desc())
+        .offset(offset)
+        .limit(limit)
         .all()
     )
-    return [week_payload(db, w, include_submitter=False) for w in weeks]
+    payload = [week_payload(db, w, include_submitter=False) for w in weeks]
+    log_db_response("/weeks/cinema", "paginated cinema weeks", len(payload), payload)
+    return cache_set(cache_key, payload, ttl=60)
 
 
 @app.get("/weeks/{week_id}")
@@ -528,7 +687,18 @@ def get_week(week_id: int, db: Session = Depends(get_db)):
     week = (
         db.query(models.Week)
         .filter(models.Week.id == week_id)
-        .options(selectinload(models.Week.films))
+        .options(
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            selectinload(models.Week.films).load_only(
+                models.Film.id,
+                models.Film.week_id,
+                models.Film.title,
+                models.Film.year,
+                models.Film.director,
+                models.Film.poster_url,
+                models.Film.tmdb_id,
+            ),
+        )
         .first()
     )
     if not week:
@@ -707,7 +877,23 @@ def admin_current_week(
     week = (
         db.query(models.Week)
         .filter(models.Week.is_special == False)
-        .options(selectinload(models.Week.films))
+        .options(
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            selectinload(models.Week.films).load_only(
+                models.Film.id,
+                models.Film.week_id,
+                models.Film.title,
+                models.Film.year,
+                models.Film.director,
+                models.Film.poster_url,
+                models.Film.submitter_key,
+                models.Film.submitted_title,
+                models.Film.submitted_year,
+                models.Film.tmdb_id,
+                models.Film.match_score,
+                models.Film.needs_review,
+            ),
+        )
         .order_by(models.Week.id.desc())
         .first()
     )
@@ -718,18 +904,42 @@ def admin_current_week(
 
 @app.get("/admin/weeks")
 def admin_list_weeks(
+    page: int = Query(1, ge=1),
+    limit: int = Query(DEFAULT_LIST_LIMIT, ge=1, le=MAX_LIST_LIMIT),
     db: Session = Depends(get_db),
     authorization: str | None = Header(None),
 ):
     require_admin_user(db, authorization)
+    limit = clamp_limit(limit)
+    offset = (page - 1) * limit
     weeks = (
         db.query(models.Week)
         .filter(models.Week.is_special == False)
-        .options(selectinload(models.Week.films))
+        .options(
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            selectinload(models.Week.films).load_only(
+                models.Film.id,
+                models.Film.week_id,
+                models.Film.title,
+                models.Film.year,
+                models.Film.director,
+                models.Film.poster_url,
+                models.Film.submitter_key,
+                models.Film.submitted_title,
+                models.Film.submitted_year,
+                models.Film.tmdb_id,
+                models.Film.match_score,
+                models.Film.needs_review,
+            ),
+        )
         .order_by(models.Week.id.desc())
+        .offset(offset)
+        .limit(limit)
         .all()
     )
-    return [week_payload(db, w, include_submitter=True) for w in weeks]
+    payload = [week_payload(db, w, include_submitter=True) for w in weeks]
+    log_db_response("/admin/weeks", "paginated admin weeks", len(payload), payload)
+    return payload
 
 
 @app.post("/admin/weeks")
@@ -994,15 +1204,18 @@ def set_winner(
 
 @app.get("/admin/films/needs-review")
 def films_needing_review(
+    limit: int = Query(DEFAULT_LIST_LIMIT, ge=1, le=MAX_LIST_LIMIT),
     db: Session = Depends(get_db),
     authorization: str | None = Header(None),
 ):
     require_admin_user(db, authorization)
+    limit = clamp_limit(limit)
 
     films = (
         db.query(models.Film)
           .filter(models.Film.needs_review == True)  # noqa: E712
           .order_by(models.Film.id.desc())
+          .limit(limit)
           .all()
     )
 
@@ -1203,6 +1416,8 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
     all_existing = (
         db.query(models.LetterboxdEntry)
         .filter(models.LetterboxdEntry.user_id == user.id)
+        .order_by(models.LetterboxdEntry.watched_date.desc().nullslast())
+        .limit(500)
         .all()
     )
     for e in all_existing:
@@ -1217,6 +1432,7 @@ def fetch_and_sync_letterboxd(db: Session, user: models.User) -> dict:
     film_rows = (
         db.query(models.Film.title, models.Film.year, models.Film.tmdb_id)
         .filter(models.Film.tmdb_id.isnot(None))
+        .limit(1000)
         .all()
     )
     for title_val, year_val, tmdb_id_val in film_rows:
@@ -1382,37 +1598,74 @@ def sync_letterboxd(
 @app.get("/letterboxd/film/{tmdb_id}")
 def get_film_letterboxd_data(
     tmdb_id: int,
+    limit: int = Query(MAX_LIST_LIMIT, ge=1, le=MAX_LIST_LIMIT),
     db: Session = Depends(get_db),
 ):
-    entries = (
-        db.query(models.LetterboxdEntry, models.User)
+    limit = clamp_limit(limit, default=MAX_LIST_LIMIT)
+    cache_key = f"letterboxd:film:{tmdb_id}:{limit}"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return cached
+    rows = (
+        db.query(
+            models.User.id,
+            models.User.username,
+            models.User.letterboxd_username,
+            models.User.avatar_url,
+            models.User.letterboxd_avatar_url,
+            models.LetterboxdEntry.rating,
+            models.LetterboxdEntry.watched_date,
+            models.LetterboxdEntry.letterboxd_url,
+            models.LetterboxdEntry.is_rewatch,
+        )
         .join(models.User, models.LetterboxdEntry.user_id == models.User.id)
         .filter(models.LetterboxdEntry.tmdb_id == tmdb_id)
+        .order_by(models.LetterboxdEntry.watched_date.desc().nullslast())
+        .limit(limit)
         .all()
     )
 
     result = []
-    for entry, user in entries:
+    for row in rows:
         result.append({
-            "user_id": user.id,
-            "username": user.username,
-            "letterboxd_username": user.letterboxd_username,
-            "avatar_url": user.avatar_url or user.letterboxd_avatar_url,
-            "rating": entry.rating,
-            "watched_date": entry.watched_date,
-            "letterboxd_url": entry.letterboxd_url,
-            "is_rewatch": entry.is_rewatch,
+            "user_id": row.id,
+            "username": row.username,
+            "letterboxd_username": row.letterboxd_username,
+            "avatar_url": row.avatar_url or row.letterboxd_avatar_url,
+            "rating": row.rating,
+            "watched_date": row.watched_date,
+            "letterboxd_url": row.letterboxd_url,
+            "is_rewatch": row.is_rewatch,
         })
 
-    return result
+    log_db_response("/letterboxd/film/{tmdb_id}", "letterboxd watchers for film", len(result), result)
+    return cache_set(cache_key, result, ttl=60)
 
 
 @app.get("/letterboxd/members")
 def get_all_members_letterboxd(
+    limit: int = Query(MAX_LIST_LIMIT, ge=1, le=MAX_LIST_LIMIT),
     db: Session = Depends(get_db),
 ):
-    users = db.query(models.User).all()
-    return [
+    limit = clamp_limit(limit, default=MAX_LIST_LIMIT)
+    cache_key = f"letterboxd:members:{limit}"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return cached
+    users = (
+        db.query(
+            models.User.id,
+            models.User.username,
+            models.User.avatar_url,
+            models.User.letterboxd_avatar_url,
+            models.User.letterboxd_username,
+            models.User.letterboxd_synced_at,
+        )
+        .order_by(models.User.username.asc())
+        .limit(limit)
+        .all()
+    )
+    payload = [
         {
             "user_id": u.id,
             "username": u.username,
@@ -1422,6 +1675,8 @@ def get_all_members_letterboxd(
         }
         for u in users
     ]
+    log_db_response("/letterboxd/members", "letterboxd member directory", len(payload), payload)
+    return cache_set(cache_key, payload, ttl=60)
 
 
 # ─────────────────────────────────────────────
@@ -1434,17 +1689,13 @@ ALLOWED_EMOJIS = {"👍", "😐", "67", "🇮🇱"}
 @app.get("/films/{film_id}/reactions")
 def get_reactions(film_id: int, db: Session = Depends(get_db)):
     rows = (
-        db.query(models.Reaction, models.User)
-        .join(models.User, models.Reaction.user_id == models.User.id)
+        db.query(models.Reaction.emoji, func.count(models.Reaction.id))
         .filter(models.Reaction.film_id == film_id)
+        .group_by(models.Reaction.emoji)
         .all()
     )
-    counts = {}
-    mine = None
-    for r, u in rows:
-        counts[r.emoji] = counts.get(r.emoji, 0) + 1
-
-    return {"counts": counts, "total": len(rows)}
+    counts = {emoji: int(count) for emoji, count in rows}
+    return {"counts": counts, "total": sum(counts.values())}
 
 
 @app.get("/films/{film_id}/reactions/me")
@@ -1511,18 +1762,24 @@ def set_reaction(
 @app.get("/films/{film_id}/reactions/detail")
 def get_reactions_detail(film_id: int, db: Session = Depends(get_db)):
     rows = (
-        db.query(models.Reaction, models.User)
+        db.query(
+            models.Reaction.emoji,
+            models.User.username,
+            models.User.avatar_url,
+            models.User.letterboxd_avatar_url,
+        )
         .join(models.User, models.Reaction.user_id == models.User.id)
         .filter(models.Reaction.film_id == film_id)
+        .limit(MAX_LIST_LIMIT)
         .all()
     )
     detail = {}
-    for r, u in rows:
-        if r.emoji not in detail:
-            detail[r.emoji] = []
-        detail[r.emoji].append({
-            "username": u.username,
-            "avatar_url": u.avatar_url or u.letterboxd_avatar_url,
+    for row in rows:
+        if row.emoji not in detail:
+            detail[row.emoji] = []
+        detail[row.emoji].append({
+            "username": row.username,
+            "avatar_url": row.avatar_url or row.letterboxd_avatar_url,
         })
     return detail
 
@@ -1532,27 +1789,48 @@ def get_reactions_detail(film_id: int, db: Session = Depends(get_db)):
 # ─────────────────────────────────────────────
 
 @app.get("/weeks/{week_id}/chat")
-def get_chat(week_id: int, db: Session = Depends(get_db)):
-    messages = (
-        db.query(models.ChatMessage, models.User)
+def get_chat(
+    week_id: int,
+    since_id: int = Query(0, ge=0),
+    limit: int = Query(CHAT_LIMIT, ge=1, le=MAX_LIST_LIMIT),
+    db: Session = Depends(get_db),
+):
+    limit = clamp_limit(limit, default=CHAT_LIMIT)
+    query = (
+        db.query(
+            models.ChatMessage.id,
+            models.ChatMessage.content,
+            models.ChatMessage.created_at,
+            models.User.id.label("user_id"),
+            models.User.username,
+            models.User.avatar_url,
+            models.User.letterboxd_avatar_url,
+        )
         .join(models.User, models.ChatMessage.user_id == models.User.id)
         .filter(models.ChatMessage.week_id == week_id)
-        .order_by(models.ChatMessage.created_at.asc())
-        .all()
     )
-    return [
+    if since_id:
+        query = query.filter(models.ChatMessage.id > since_id).order_by(models.ChatMessage.id.asc())
+    else:
+        query = query.order_by(models.ChatMessage.id.desc())
+    rows = query.limit(limit).all()
+    if not since_id:
+        rows = list(reversed(rows))
+    payload = [
         {
             "id": m.id,
             "content": m.content,
             "created_at": m.created_at,
             "user": {
-                "id": u.id,
-                "username": u.username,
-                "avatar_url": u.avatar_url or u.letterboxd_avatar_url,
+                "id": m.user_id,
+                "username": m.username,
+                "avatar_url": m.avatar_url or m.letterboxd_avatar_url,
             },
         }
-        for m, u in messages
+        for m in rows
     ]
+    log_db_response("/weeks/{week_id}/chat", "chat messages incremental" if since_id else "latest chat messages", len(payload), payload)
+    return payload
 
 
 @app.post("/weeks/{week_id}/chat")
@@ -1657,12 +1935,66 @@ def serve_profile(username: str):
     return FileResponse(str(FRONTEND_DIR / "profile.html"))
 
 
+def leaderboard_rank_for_user(db: Session, username: str) -> int | None:
+    from sqlalchemy import case as sa_case
+
+    rows = (
+        db.query(
+            models.User.username,
+            func.count(models.Film.id).label("films_submitted"),
+            func.count(
+                sa_case(
+                    (
+                        (models.Week.is_open == False) &
+                        (models.Week.winner_film_id == models.Film.id),
+                        models.Film.id,
+                    ),
+                    else_=None,
+                )
+            ).label("films_won"),
+        )
+        .join(models.Film, models.Film.submitter_key == cast(models.User.id, String))
+        .join(models.Week, models.Film.week_id == models.Week.id)
+        .group_by(models.User.username)
+        .all()
+    )
+    ranked = sorted(
+        (
+            {
+                "username": row.username,
+                "films_submitted": int(row.films_submitted or 0),
+                "films_won": int(row.films_won or 0),
+                "win_rate": round((row.films_won or 0) / (row.films_submitted or 1) * 100),
+            }
+            for row in rows
+        ),
+        key=lambda r: (-r["films_won"], -r["win_rate"], -r["films_submitted"]),
+    )
+    rank = 1
+    for idx, row in enumerate(ranked):
+        if idx > 0:
+            prev = ranked[idx - 1]
+            if row["films_won"] != prev["films_won"] or row["win_rate"] != prev["win_rate"]:
+                rank = idx + 1
+        if row["username"].lower() == username.lower():
+            return rank
+    return None
+
+
 @app.get("/users/{username}/profile")
 def get_user_profile(username: str, db: Session = Depends(get_db)):
     """Public profile data for a user — optimised: 5 queries instead of N+1."""
-    user = db.query(models.User).filter(
-        func.lower(models.User.username) == username.lower()
-    ).first()
+    user = (
+        db.query(
+            models.User.id,
+            models.User.username,
+            models.User.avatar_url,
+            models.User.letterboxd_avatar_url,
+            models.User.letterboxd_username,
+        )
+        .filter(func.lower(models.User.username) == username.lower())
+        .first()
+    )
     if not user:
         raise HTTPException(404, "User not found")
 
@@ -1674,11 +2006,30 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
         db.query(models.Film)
         .filter(models.Film.submitter_key == submitter_key)
         .options(
+            load_only(
+                models.Film.id,
+                models.Film.title,
+                models.Film.year,
+                models.Film.director,
+                models.Film.poster_url,
+                models.Film.tmdb_id,
+                models.Film.week_id,
+            ),
             joinedload(models.Film.week),
-            selectinload(models.Film.votes),
         )
+        .order_by(models.Film.id.desc())
+        .limit(MAX_LIST_LIMIT)
         .all()
     )
+    film_ids = [f.id for f in submitted]
+    vote_counts = {}
+    if film_ids:
+        vote_counts = dict(
+            db.query(models.Vote.film_id, func.count(models.Vote.id))
+            .filter(models.Vote.film_id.in_(film_ids))
+            .group_by(models.Vote.film_id)
+            .all()
+        )
 
     # ── FIX: COUNT in DB instead of loading all vote rows into Python
     votes_cast = (
@@ -1709,7 +2060,7 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
     # Build submitted films list — f.week and f.votes already loaded above
     films_won = 0
     submitted_list = []
-    for f in sorted(submitted, key=lambda x: x.id, reverse=True):
+    for f in submitted:
         week = f.week
         is_winner = bool(week and not week.is_open and week.winner_film_id == f.id)
         if is_winner:
@@ -1724,12 +2075,13 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
             "week_title": week.title if week else None,
             "week_id": week.id if week else None,
             "is_winner": is_winner,
-            "votes": len(f.votes) if f.votes else 0,
+            "votes": int(vote_counts.get(f.id, 0)),
         })
 
     films_submitted = len(submitted)
 
-    return {
+    rank = leaderboard_rank_for_user(db, user.username)
+    payload = {
         "user": {
             "id": user.id,
             "username": user.username,
@@ -1742,6 +2094,7 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
             "votes_cast": votes_cast,
             "reactions_given": reactions_given,
             "win_rate": round(films_won / films_submitted * 100) if films_submitted else 0,
+            "leaderboard_rank": rank,
         },
         "reaction_counts": reaction_counts,
         "submitted_films": submitted_list,
@@ -1757,6 +2110,8 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
             for e in lb_entries
         ],
     }
+    log_db_response("/users/{username}/profile", "public user profile", len(submitted_list), payload)
+    return payload
 
 
 # ─────────────────────────────────────────────
@@ -1778,8 +2133,21 @@ def get_leaderboard(db: Session = Depends(get_db)):
     Query 3: votes_cast per user via GROUP BY
     """
     # ── Query 1: all users (small table, fine)
-    users = db.query(models.User).all()
-    user_map = {str(u.id): u for u in users}
+    cached = cache_get("leaderboard")
+    if cached is not None:
+        return cached
+
+    users = (
+        db.query(
+            models.User.id,
+            models.User.username,
+            models.User.avatar_url,
+            models.User.letterboxd_avatar_url,
+        )
+        .order_by(models.User.username.asc())
+        .limit(MAX_LIST_LIMIT)
+        .all()
+    )
 
     # ── Query 2: submitted + won counts per submitter_key in one query
     # films_won = COUNT of films where their week is closed and they are the winner
@@ -1838,4 +2206,5 @@ def get_leaderboard(db: Session = Depends(get_db)):
         })
 
     rows.sort(key=lambda r: (-r["films_won"], -r["win_rate"], -r["films_submitted"]))
-    return rows
+    log_db_response("/api/leaderboard", "leaderboard aggregates", len(rows), rows)
+    return cache_set("leaderboard", rows, ttl=60)
