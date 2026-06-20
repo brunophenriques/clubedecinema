@@ -1595,6 +1595,77 @@ def sync_letterboxd(
     }
 
 
+@app.post("/admin/letterboxd/sync-all")
+def admin_sync_all_letterboxd(
+    limit: int = Query(50, ge=1, le=MAX_LIST_LIMIT),
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    require_admin_user(db, authorization)
+    limit = clamp_limit(limit, default=50)
+
+    users = (
+        db.query(models.User)
+        .options(
+            load_only(
+                models.User.id,
+                models.User.username,
+                models.User.letterboxd_username,
+                models.User.letterboxd_avatar_url,
+                models.User.letterboxd_synced_at,
+            )
+        )
+        .filter(models.User.letterboxd_username.isnot(None))
+        .order_by(models.User.id.asc())
+        .limit(limit)
+        .all()
+    )
+
+    results = []
+    synced_total = 0
+    errors = 0
+    started_at = int(time.time())
+
+    for user in users:
+        lb_username = (user.letterboxd_username or "").strip()
+        if not lb_username:
+            continue
+
+        logger.info(
+            "admin_letterboxd_sync user_id=%s username=%s letterboxd=%s started=1",
+            user.id,
+            user.username,
+            lb_username,
+        )
+        result = fetch_and_sync_letterboxd(db, user)
+        synced = int(result.get("synced") or 0)
+        error = result.get("error")
+        synced_total += synced
+        if error:
+            errors += 1
+
+        results.append({
+            "user_id": user.id,
+            "username": user.username,
+            "letterboxd_username": lb_username,
+            "synced": synced,
+            "error": error,
+            "letterboxd_synced_at": user.letterboxd_synced_at,
+        })
+
+    payload = {
+        "ok": errors == 0,
+        "attempted": len(results),
+        "synced_total": synced_total,
+        "errors": errors,
+        "started_at": started_at,
+        "finished_at": int(time.time()),
+        "results": results,
+    }
+    log_db_response("/admin/letterboxd/sync-all", "admin sync all letterboxd users", len(results), payload)
+    return payload
+
+
 @app.get("/letterboxd/film/{tmdb_id}")
 def get_film_letterboxd_data(
     tmdb_id: int,

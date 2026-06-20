@@ -578,6 +578,36 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   /* ── Add film ── */
+  $("syncLetterboxdAll")?.addEventListener("click", async () => {
+    const btn = $("syncLetterboxdAll");
+    const status = $("letterboxdSyncStatus");
+    const ok = await showConfirm("Sincronizar agora os Letterboxd de todos os membros ligados? Pode demorar alguns segundos.");
+    if (!ok) return;
+
+    setBusy(btn, true, "A sincronizar...");
+    if (status) status.textContent = "A sincronizar Letterboxd...";
+
+    try {
+      const res = await apiPost("/admin/letterboxd/sync-all", {}, { auth: true });
+      const failed = (res.results || []).filter(r => r.error);
+      const lines = [
+        `${res.attempted || 0} membro(s) processado(s)`,
+        `${res.synced_total || 0} entrada(s) sincronizada(s)`,
+      ];
+      if (failed.length) {
+        lines.push(`${failed.length} erro(s): ${failed.map(r => `@${r.username}: ${r.error}`).join(" | ")}`);
+      }
+      if (status) status.textContent = lines.join(" · ");
+      toast(failed.length ? "Sync concluida com erros." : "Letterboxd sincronizado.", failed.length ? "info" : "success", 5000);
+      await load();
+    } catch (e) {
+      if (status) status.textContent = `Erro: ${e.message}`;
+      toast(`Erro: ${e.message}`, "error", 5000);
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+
   $("addFilm")?.addEventListener("click", async () => {
     const btn = $("addFilm");
     const weekId = Number($("weekId").value);
