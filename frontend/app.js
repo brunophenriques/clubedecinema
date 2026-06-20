@@ -766,7 +766,6 @@ async function load() {
 
   // Load "visto pelo clube" section independently
   loadClubWatched();
-  loadLetterboxdActivity();
 }
 
 /* ── "Visto pelo Clube" section ── */
@@ -892,38 +891,6 @@ function buildWatchedCard(week, film, watchers) {
 }
 
 /* ── Submit film ── */
-async function loadLetterboxdActivity() {
-  const section = el("letterboxdActivitySection");
-  const list = el("letterboxdActivityList");
-  if (!section || !list) return;
-
-  try {
-    const entries = await apiGet("/letterboxd/activity?limit=30", { cacheTtl: 60000 });
-    if (!entries.length) { section.style.display = "none"; return; }
-
-    section.style.display = "";
-    list.innerHTML = entries.map(e => {
-      const lbUser = e.letterboxd_username || e.username;
-      const href = e.letterboxd_url || `https://letterboxd.com/${encodeURIComponent(lbUser)}/`;
-      const avatar = e.avatar_url
-        ? `<img class="lb-activity-item__avatar" src="${escapeHtml(e.avatar_url)}" alt="@${escapeHtml(e.username)}" loading="lazy" />`
-        : `<div class="lb-activity-item__avatar lb-avatar--initials">${escapeHtml((e.username || "?").slice(0,2).toUpperCase())}</div>`;
-      const watched = e.watched_date ? new Date(e.watched_date * 1000).toLocaleDateString("pt", { day: "numeric", month: "short" }) : "";
-      return `
-        <a class="lb-activity-item" href="${escapeHtml(href)}" target="_blank" rel="noopener">
-          ${avatar}
-          <div>
-            <div><strong>@${escapeHtml(e.username)}</strong> viu <strong>${escapeHtml(e.film_title)}</strong>${e.film_year ? ` (${escapeHtml(String(e.film_year))})` : ""}</div>
-            <div class="lb-activity-item__meta">${e.rating != null ? `${escapeHtml(starsHTML(e.rating))} - ` : ""}${escapeHtml(watched)}${e.is_rewatch ? " - rewatch" : ""}</div>
-          </div>
-        </a>
-      `;
-    }).join("");
-  } catch {
-    section.style.display = "none";
-  }
-}
-
 async function submitFilmCurrentWeek() {
   if (!getToken()) { toast("Precisas de login para submeter.", "info"); openAuthModal("login"); return; }
 

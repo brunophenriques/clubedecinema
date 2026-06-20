@@ -4183,9 +4183,7 @@ body.theme-italian .btn.primary {
   margin-top: 10px;
 }
 
-.rules-grid,
-.profile-badges,
-.lb-activity-list {
+.rules-grid {
   display: grid;
   gap: 12px;
 }
@@ -4195,9 +4193,7 @@ body.theme-italian .btn.primary {
 }
 
 .rules-card,
-.profile-badge,
-.profile-best-film,
-.lb-activity-item {
+.profile-best-film {
   border: 1px solid var(--ink-10);
   background: var(--card);
   border-radius: var(--radius-lg);
@@ -4220,22 +4216,11 @@ body.theme-italian .btn.primary {
   padding-left: 18px;
 }
 
-.profile-badges {
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-}
-
-.profile-badge {
-  display: grid;
-  gap: 4px;
-}
-
-.profile-badge__label {
+.profile-best-film__title {
   font-weight: 800;
 }
 
-.profile-badge__desc,
-.profile-best-film__meta,
-.lb-activity-item__meta {
+.profile-best-film__meta {
   color: var(--ink-60);
   font-size: 13px;
   line-height: 1.45;
@@ -4257,26 +4242,6 @@ body.theme-italian .btn.primary {
   display: grid;
   place-items: center;
   font-weight: 800;
-}
-
-.lb-activity-list {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.lb-activity-item {
-  display: flex;
-  gap: 10px;
-  text-decoration: none;
-  color: inherit;
-}
-
-.lb-activity-item__avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex: 0 0 auto;
-  background: var(--ink-10);
 }
 
 .archive-load-more {

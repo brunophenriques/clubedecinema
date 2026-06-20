@@ -391,10 +391,8 @@ function apply() {
   el("count").textContent = `${weeks.length} / ${weeksCache.length} semanas`;
   el("status").textContent = weeks.length ? "" : (weeksCache.length ? "Nada encontrado nas semanas carregadas." : "Nada encontrado.");
 
-  if (reset) {
-    el("weeks").innerHTML = "";
-    el("hof").innerHTML = "";
-  }
+  el("weeks").innerHTML = "";
+  el("hof").innerHTML = "";
 
   if (view === "archive") {
     weeks.forEach(w => el("weeks").appendChild(renderArchiveCard(w)));

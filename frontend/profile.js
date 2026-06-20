@@ -75,7 +75,7 @@ function showError() {
 }
 
 async function renderProfile(data) {
-  const { user, stats, reaction_counts, submitted_films, letterboxd_entries, badges = [], most_successful_submitted_film } = data;
+  const { user, stats, reaction_counts, submitted_films, letterboxd_entries, most_successful_submitted_film } = data;
 
   el("profileLoading").style.display = "none";
   el("profileContent").style.display = "";
@@ -85,7 +85,7 @@ async function renderProfile(data) {
 
   // Hero
   el("profileAvatar").innerHTML = avatarEl(user, 80);
-  // Wrap nome + badge numa linha
+  // Wrap nome + ranking numa linha
   const nameWrap = document.createElement("div");
   nameWrap.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;";
   const nameSpan = document.createElement("h1");
@@ -125,7 +125,6 @@ async function renderProfile(data) {
     { label: "Vencedores", value: stats.films_won, icon: "🏆" },
     { label: "Taxa de vitória", value: `${stats.win_rate}%`, icon: "📊" },
     { label: "Votos dados", value: stats.votes_cast, icon: "🗳️" },
-    { label: "Badges", value: stats.badges_count || badges.length || 0, icon: "*" },
   ];
   statsEl.innerHTML = statItems.map(s => `
     <div class="profile-stat">
@@ -134,16 +133,6 @@ async function renderProfile(data) {
       <div class="profile-stat__label">${escapeHtml(s.label)}</div>
     </div>
   `).join("");
-
-  const badgesEl = el("profileBadges");
-  if (badgesEl) {
-    badgesEl.innerHTML = badges.length ? badges.map(b => `
-      <div class="profile-badge">
-        <div class="profile-badge__label">${escapeHtml(b.label)}</div>
-        <div class="profile-badge__desc">${escapeHtml(b.description || "")}</div>
-      </div>
-    `).join("") : "";
-  }
 
   const bestEl = el("profileBestFilm");
   if (bestEl && most_successful_submitted_film) {
@@ -156,7 +145,7 @@ async function renderProfile(data) {
         }
         <div>
           <div class="kicker kicker--soft">Melhor submissao</div>
-          <div class="profile-badge__label">${escapeHtml(f.title)}${f.year ? ` (${escapeHtml(String(f.year))})` : ""}</div>
+          <div class="profile-best-film__title">${escapeHtml(f.title)}${f.year ? ` (${escapeHtml(String(f.year))})` : ""}</div>
           <div class="profile-best-film__meta">${escapeHtml(f.week_title || "")} - ${f.votes} voto${f.votes !== 1 ? "s" : ""}${f.is_winner ? " - vencedor" : ""}</div>
         </div>
       </div>
