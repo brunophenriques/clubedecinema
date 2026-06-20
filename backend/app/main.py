@@ -33,6 +33,7 @@ CHAT_LIMIT = 50
 RATE_LIMIT_WINDOW = 60
 RATE_LIMIT_DEFAULT = 180
 RATE_LIMIT_AUTH = 40
+RATE_LIMIT_AUTH_WRITE = 10
 _rate_buckets: dict[tuple[str, str], list[float]] = {}
 _response_cache: dict[str, tuple[float, object]] = {}
 
@@ -96,7 +97,11 @@ async def rate_limit_and_log(request: Request, call_next):
     client = request.client.host if request.client else "unknown"
     now = time.time()
     bucket_key = (client, path)
-    limit = RATE_LIMIT_AUTH if path.startswith("/auth/") else RATE_LIMIT_DEFAULT
+    limit = RATE_LIMIT_DEFAULT
+    if path in {"/auth/login", "/auth/register"}:
+        limit = RATE_LIMIT_AUTH_WRITE
+    elif path.startswith("/auth/"):
+        limit = RATE_LIMIT_AUTH
     bucket = [ts for ts in _rate_buckets.get(bucket_key, []) if now - ts < RATE_LIMIT_WINDOW]
     if len(bucket) >= limit:
         return JSONResponse({"detail": "Too many requests"}, status_code=429)
@@ -166,6 +171,10 @@ def serve_admin():
 @app.get("/archive", include_in_schema=False)
 def serve_archive():
     return FileResponse(str(FRONTEND_DIR / "archive.html"))
+
+@app.get("/como-funciona", include_in_schema=False)
+def serve_rules():
+    return FileResponse(str(FRONTEND_DIR / "como-funciona.html"))
 
 app.add_middleware(
     CORSMiddleware,
@@ -577,6 +586,18 @@ def logout(db: Session = Depends(get_db), authorization: str | None = Header(Non
         db.delete(sess)
         db.commit()
     return {"ok": True}
+
+
+@app.post("/auth/logout-all")
+def logout_all_sessions(db: Session = Depends(get_db), authorization: str | None = Header(None)):
+    user = get_current_user(db, authorization)
+    deleted = (
+        db.query(models.Session)
+        .filter(models.Session.user_id == user.id)
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return {"ok": True, "deleted": int(deleted or 0)}
 
 
 # ---- Weeks endpoints ----
@@ -1750,6 +1771,59 @@ def get_all_members_letterboxd(
     return cache_set(cache_key, payload, ttl=60)
 
 
+@app.get("/letterboxd/activity")
+def get_letterboxd_activity(
+    limit: int = Query(30, ge=1, le=MAX_LIST_LIMIT),
+    db: Session = Depends(get_db),
+):
+    limit = clamp_limit(limit, default=30)
+    cache_key = f"letterboxd:activity:{limit}"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    rows = (
+        db.query(
+            models.User.id.label("user_id"),
+            models.User.username,
+            models.User.avatar_url,
+            models.User.letterboxd_avatar_url,
+            models.User.letterboxd_username,
+            models.LetterboxdEntry.film_title,
+            models.LetterboxdEntry.film_year,
+            models.LetterboxdEntry.rating,
+            models.LetterboxdEntry.watched_date,
+            models.LetterboxdEntry.letterboxd_url,
+            models.LetterboxdEntry.is_rewatch,
+            models.LetterboxdEntry.tmdb_id,
+        )
+        .join(models.User, models.LetterboxdEntry.user_id == models.User.id)
+        .filter(models.LetterboxdEntry.watched_date.isnot(None))
+        .order_by(models.LetterboxdEntry.watched_date.desc(), models.LetterboxdEntry.id.desc())
+        .limit(limit)
+        .all()
+    )
+
+    payload = [
+        {
+            "user_id": row.user_id,
+            "username": row.username,
+            "avatar_url": row.avatar_url or row.letterboxd_avatar_url,
+            "letterboxd_username": row.letterboxd_username,
+            "film_title": row.film_title,
+            "film_year": row.film_year,
+            "rating": row.rating,
+            "watched_date": row.watched_date,
+            "letterboxd_url": row.letterboxd_url,
+            "is_rewatch": row.is_rewatch,
+            "tmdb_id": row.tmdb_id,
+        }
+        for row in rows
+    ]
+    log_db_response("/letterboxd/activity", "recent club letterboxd activity", len(payload), payload)
+    return cache_set(cache_key, payload, ttl=60)
+
+
 # ─────────────────────────────────────────────
 # Reactions
 # ─────────────────────────────────────────────
@@ -2062,6 +2136,7 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
             models.User.avatar_url,
             models.User.letterboxd_avatar_url,
             models.User.letterboxd_username,
+            models.User.letterboxd_synced_at,
         )
         .filter(func.lower(models.User.username) == username.lower())
         .first()
@@ -2150,6 +2225,38 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
         })
 
     films_submitted = len(submitted)
+    most_successful = None
+    if submitted_list:
+        most_successful = max(
+            submitted_list,
+            key=lambda f: (int(f.get("votes") or 0), 1 if f.get("is_winner") else 0, int(f.get("id") or 0)),
+        )
+        most_successful = {
+            "id": most_successful["id"],
+            "title": most_successful["title"],
+            "year": most_successful["year"],
+            "poster_url": most_successful["poster_url"],
+            "week_title": most_successful["week_title"],
+            "week_id": most_successful["week_id"],
+            "votes": most_successful["votes"],
+            "is_winner": most_successful["is_winner"],
+        }
+
+    has_zero_vote_submission = any(int(f.get("votes") or 0) == 0 for f in submitted_list)
+    has_classic_submission = any((f.get("year") is not None and int(f["year"]) < 1980) for f in submitted_list)
+    badges = []
+    if films_submitted >= 1:
+        badges.append({"id": "first_submission", "label": "Primeira Submissao", "description": "Ja meteu um filme na roda."})
+    if films_won >= 1:
+        badges.append({"id": "first_win", "label": "Primeira Vitoria", "description": "Ja levou uma semana para casa."})
+    if votes_cast >= 5:
+        badges.append({"id": "loyal_voter", "label": "Votante Leal", "description": "Aparece para votar com regularidade."})
+    if user.letterboxd_username:
+        badges.append({"id": "club_critic", "label": "Critico do Clube", "description": "Tem Letterboxd ligado."})
+    if has_zero_vote_submission:
+        badges.append({"id": "suspicious_taste", "label": "Gosto Suspeito", "description": "Ja submeteu um filme com 0 votos."})
+    if has_classic_submission:
+        badges.append({"id": "human_classic", "label": "Classico Humano", "description": "Ja trouxe um filme pre-1980."})
 
     rank = leaderboard_rank_for_user(db, user.username)
     payload = {
@@ -2158,6 +2265,7 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
             "username": user.username,
             "avatar_url": user.avatar_url or user.letterboxd_avatar_url,
             "letterboxd_username": user.letterboxd_username,
+            "letterboxd_synced_at": user.letterboxd_synced_at,
         },
         "stats": {
             "films_submitted": films_submitted,
@@ -2166,7 +2274,10 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
             "reactions_given": reactions_given,
             "win_rate": round(films_won / films_submitted * 100) if films_submitted else 0,
             "leaderboard_rank": rank,
+            "badges_count": len(badges),
         },
+        "badges": badges,
+        "most_successful_submitted_film": most_successful,
         "reaction_counts": reaction_counts,
         "submitted_films": submitted_list,
         "letterboxd_entries": [

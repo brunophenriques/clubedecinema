@@ -182,6 +182,14 @@ function filterWeeks(weeks, q, onlyClosed) {
 /* ── View state ── */
 let weeksCache = [];
 let view = "archive";
+const PAGE_LIMIT = 20;
+let weeksPage = 1;
+let weeksHasMore = true;
+let weeksLoading = false;
+let cinemaWeeksCache = [];
+let cinemaPage = 1;
+let cinemaHasMore = true;
+let cinemaLoading = false;
 
 function setView(next) {
   view = next;
@@ -191,18 +199,30 @@ function setView(next) {
   el("weeks").style.display = view === "archive" ? "" : "none";
   el("hof").style.display   = view === "hof" ? "" : "none";
   el("cinema").style.display = view === "cinema" ? "" : "none";
+  el("loadMoreWeeks").style.display = view === "cinema" ? "none" : (weeksHasMore ? "" : "none");
   if (view === "cinema") loadCinema();
   else apply();
 }
 
-let cinemaLoaded = false;
-async function loadCinema() {
-  if (cinemaLoaded) return;
+async function loadCinema({ reset = false } = {}) {
+  if (cinemaLoading) return;
+  if (reset) {
+    cinemaWeeksCache = [];
+    cinemaPage = 1;
+    cinemaHasMore = true;
+  }
+  if (!cinemaHasMore && cinemaWeeksCache.length) return;
   const grid = el("cinemaGrid");
-  grid.innerHTML = "<p class='muted small'>A carregar...</p>";
+  cinemaLoading = true;
+  if (!cinemaWeeksCache.length) grid.innerHTML = "<p class='muted small'>A carregar...</p>";
+  el("loadMoreCinema").disabled = true;
   try {
-    const weeks = await apiGet("/weeks/cinema?limit=100");
-    const films = weeks.flatMap(w => w.films || []);
+    const weeks = await apiGet(`/weeks/cinema?page=${cinemaPage}&limit=${PAGE_LIMIT}`);
+    cinemaWeeksCache = cinemaWeeksCache.concat(weeks);
+    cinemaHasMore = weeks.length === PAGE_LIMIT;
+    cinemaPage += 1;
+
+    const films = cinemaWeeksCache.flatMap(w => w.films || []);
     if (!films.length) { grid.innerHTML = "<p class='muted'>Nenhum filme de cinema ainda.</p>"; return; }
     grid.innerHTML = "";
     films.forEach(f => {
@@ -228,9 +248,12 @@ async function loadCinema() {
       `;
       grid.appendChild(card);
     });
-    cinemaLoaded = true;
+    el("loadMoreCinema").style.display = cinemaHasMore ? "" : "none";
   } catch (e) {
     grid.innerHTML = "<p class='muted'>Erro ao carregar.</p>";
+  } finally {
+    cinemaLoading = false;
+    el("loadMoreCinema").disabled = false;
   }
 }
 
@@ -366,32 +389,54 @@ function apply() {
   weeks = sortWeeks(weeks, sortMode);
 
   el("count").textContent = `${weeks.length} / ${weeksCache.length} semanas`;
-  el("status").textContent = weeks.length ? "" : "Nada encontrado.";
+  el("status").textContent = weeks.length ? "" : (weeksCache.length ? "Nada encontrado nas semanas carregadas." : "Nada encontrado.");
 
-  el("weeks").innerHTML = "";
-  el("hof").innerHTML = "";
+  if (reset) {
+    el("weeks").innerHTML = "";
+    el("hof").innerHTML = "";
+  }
 
   if (view === "archive") {
     weeks.forEach(w => el("weeks").appendChild(renderArchiveCard(w)));
   } else {
     weeks.forEach(w => el("hof").appendChild(renderHofCard(w)));
   }
+  el("loadMoreWeeks").style.display = view === "cinema" ? "none" : (weeksHasMore ? "" : "none");
 }
 
-async function load() {
+async function load({ reset = true } = {}) {
+  if (weeksLoading) return;
+  if (reset) {
+    weeksCache = [];
+    weeksPage = 1;
+    weeksHasMore = true;
+  }
+  if (!weeksHasMore && weeksCache.length) return;
+
+  weeksLoading = true;
   el("status").textContent = "A carregar…";
-  el("weeks").innerHTML = "";
-  el("hof").innerHTML = "";
+  if (reset) {
+    el("weeks").innerHTML = "";
+    el("hof").innerHTML = "";
+  }
   el("count").textContent = "—";
 
+  el("loadMoreWeeks").disabled = true;
+
   try {
-    weeksCache = await apiGet("/weeks?limit=100");
+    const weeks = await apiGet(`/weeks?page=${weeksPage}&limit=${PAGE_LIMIT}`);
+    weeksCache = weeksCache.concat(weeks);
+    weeksHasMore = weeks.length === PAGE_LIMIT;
+    weeksPage += 1;
     el("status").textContent = "";
     apply();
     refreshNavAdmin();
   } catch (e) {
     el("status").textContent = "Erro ao carregar.";
     console.error(e);
+  } finally {
+    weeksLoading = false;
+    el("loadMoreWeeks").disabled = false;
   }
 }
 
@@ -403,6 +448,8 @@ el("sort").addEventListener("change", apply);
 el("viewArchive").addEventListener("click", () => setView("archive"));
 el("viewHof").addEventListener("click", () => setView("hof"));
 el("viewCinema").addEventListener("click", () => setView("cinema"));
+el("loadMoreWeeks").addEventListener("click", () => load({ reset: false }));
+el("loadMoreCinema").addEventListener("click", () => loadCinema({ reset: false }));
 
 setView("archive");
 refreshNavAdmin();

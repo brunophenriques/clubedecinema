@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Arquivo — Clube de Cinema</title>
   <link rel="stylesheet" href="/static/styles.css" />
+  <script src="/static/cold-start.js" defer></script>
   <script src="/static/archive.js?v=2" defer></script>
   <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
   <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png" />
@@ -30,6 +31,7 @@
           <a class="nav-link" href="/">Semana</a>
           <a class="nav-link active" href="/archive">Arquivo</a>
           <a class="nav-link" href="/watch">Ver</a>
+          <a class="nav-link" href="/como-funciona">Regras</a>
           <a class="nav-link" id="navAdmin" href="/admin" style="display:none">Admin</a>
         </nav>
 
@@ -102,6 +104,8 @@
       <!-- HALL OF FAME -->
       <div id="hof" class="hof-grid" style="display:none"></div>
 
+      <button id="loadMoreWeeks" class="btn archive-load-more" type="button" style="display:none">Carregar mais</button>
+
       <!-- CINEMA -->
       <div id="cinema" style="display:none">
         <!-- Hero banner -->
@@ -115,6 +119,7 @@
         </div>
         <!-- Films grid -->
         <div id="cinemaGrid" class="cinema-grid"></div>
+        <button id="loadMoreCinema" class="btn archive-load-more" type="button" style="display:none">Carregar mais cinema</button>
       </div>
     </section>
 

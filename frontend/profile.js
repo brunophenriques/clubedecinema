@@ -75,7 +75,7 @@ function showError() {
 }
 
 async function renderProfile(data) {
-  const { user, stats, reaction_counts, submitted_films, letterboxd_entries } = data;
+  const { user, stats, reaction_counts, submitted_films, letterboxd_entries, badges = [], most_successful_submitted_film } = data;
 
   el("profileLoading").style.display = "none";
   el("profileContent").style.display = "";
@@ -112,6 +112,9 @@ async function renderProfile(data) {
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       @${escapeHtml(user.letterboxd_username)}
     </a>`);
+    if (user.letterboxd_synced_at) {
+      metaParts.push(`Letterboxd atualizado ${escapeHtml(formatDate(user.letterboxd_synced_at))}`);
+    }
   }
   el("profileMeta").innerHTML = metaParts.join(" · ");
 
@@ -122,6 +125,7 @@ async function renderProfile(data) {
     { label: "Vencedores", value: stats.films_won, icon: "🏆" },
     { label: "Taxa de vitória", value: `${stats.win_rate}%`, icon: "📊" },
     { label: "Votos dados", value: stats.votes_cast, icon: "🗳️" },
+    { label: "Badges", value: stats.badges_count || badges.length || 0, icon: "*" },
   ];
   statsEl.innerHTML = statItems.map(s => `
     <div class="profile-stat">
@@ -130,6 +134,34 @@ async function renderProfile(data) {
       <div class="profile-stat__label">${escapeHtml(s.label)}</div>
     </div>
   `).join("");
+
+  const badgesEl = el("profileBadges");
+  if (badgesEl) {
+    badgesEl.innerHTML = badges.length ? badges.map(b => `
+      <div class="profile-badge">
+        <div class="profile-badge__label">${escapeHtml(b.label)}</div>
+        <div class="profile-badge__desc">${escapeHtml(b.description || "")}</div>
+      </div>
+    `).join("") : "";
+  }
+
+  const bestEl = el("profileBestFilm");
+  if (bestEl && most_successful_submitted_film) {
+    const f = most_successful_submitted_film;
+    bestEl.innerHTML = `
+      <div class="profile-best-film">
+        ${f.poster_url
+          ? `<img src="${escapeHtml(f.poster_url)}" alt="${escapeHtml(f.title)}" loading="lazy" />`
+          : `<div class="profile-best-film__ph">${escapeHtml((f.title || "?").slice(0,2).toUpperCase())}</div>`
+        }
+        <div>
+          <div class="kicker kicker--soft">Melhor submissao</div>
+          <div class="profile-badge__label">${escapeHtml(f.title)}${f.year ? ` (${escapeHtml(String(f.year))})` : ""}</div>
+          <div class="profile-best-film__meta">${escapeHtml(f.week_title || "")} - ${f.votes} voto${f.votes !== 1 ? "s" : ""}${f.is_winner ? " - vencedor" : ""}</div>
+        </div>
+      </div>
+    `;
+  }
 
   // Reactions given
   const reactionsEl = el("profileReactions");

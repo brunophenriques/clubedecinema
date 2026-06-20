@@ -4142,3 +4142,145 @@ body.theme-italian .btn.primary {
   .it-coliseum { height: 120px; }
   .it-lambreta { height: 100px; }
 }
+
+/* Shared utility surfaces */
+.cold-start {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translate(-50%, 18px);
+  z-index: 9999;
+  width: min(440px, calc(100vw - 28px));
+  background: var(--card);
+  border: 1px solid var(--ink-10);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 14px 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.cold-start--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+.cold-start__title {
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.cold-start__body {
+  color: var(--ink-60);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.cold-start__retry {
+  margin-top: 10px;
+}
+
+.rules-grid,
+.profile-badges,
+.lb-activity-list {
+  display: grid;
+  gap: 12px;
+}
+
+.rules-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.rules-card,
+.profile-badge,
+.profile-best-film,
+.lb-activity-item {
+  border: 1px solid var(--ink-10);
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+}
+
+.rules-card h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.rules-card p,
+.rules-card li {
+  color: var(--ink-60);
+  line-height: 1.55;
+}
+
+.rules-card ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.profile-badges {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.profile-badge {
+  display: grid;
+  gap: 4px;
+}
+
+.profile-badge__label {
+  font-weight: 800;
+}
+
+.profile-badge__desc,
+.profile-best-film__meta,
+.lb-activity-item__meta {
+  color: var(--ink-60);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.profile-best-film {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.profile-best-film img,
+.profile-best-film__ph {
+  width: 56px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--ink-10);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.lb-activity-list {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.lb-activity-item {
+  display: flex;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.lb-activity-item__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+  background: var(--ink-10);
+}
+
+.archive-load-more {
+  margin-top: 16px;
+  width: 100%;
+  justify-content: center;
+}

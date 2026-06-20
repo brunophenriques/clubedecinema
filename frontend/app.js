@@ -321,6 +321,9 @@ function showLetterboxdPopup() {
   const me = _currentUser;
   const isConnected = !!(me?.letterboxd_username);
   const avatarUrl = me?.avatar_url || "";
+  const syncedText = me?.letterboxd_synced_at
+    ? new Date(me.letterboxd_synced_at * 1000).toLocaleString("pt", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+    : null;
 
   const pop = document.createElement("div");
   pop.id = "lbPopup";
@@ -354,7 +357,8 @@ function showLetterboxdPopup() {
         ? `<div class="lb-popup__logo">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Letterboxd · <strong>@${escapeHtml(me.letterboxd_username)}</strong>
-          </div>`
+          </div>
+          <div class="lb-popup__sub">${syncedText ? `Ultima sincronizacao: ${escapeHtml(syncedText)}` : "Ainda sem sincronizacao registada."}</div>`
         : `<div class="lb-popup__logo">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Letterboxd
@@ -372,6 +376,7 @@ function showLetterboxdPopup() {
       <div class="lb-popup__msg" id="lbPopupMsg"></div>
 
       ${isConnected ? `<button class="btn lb-popup__sync" id="lbPopupSync" type="button">↻ Sincronizar Letterboxd</button>` : ""}
+      <button class="btn ghost" id="logoutAllSessions" type="button">Terminar sessoes noutros dispositivos</button>
       <button class="btn ghost lb-popup__skip" id="lbPopupSkip" type="button">Fechar</button>
     </div>
   `;
@@ -433,7 +438,7 @@ function showLetterboxdPopup() {
     try {
       const res = await apiPatch("/auth/letterboxd", { letterboxd_username: username }, { auth: true });
       if (res.error && res.synced === 0) {
-        el("lbPopupMsg").textContent = `Erro: ${res.error}`;
+        el("lbPopupMsg").textContent = `Nao conseguimos sincronizar esse Letterboxd: ${res.error}`;
         btn.disabled = false; btn.textContent = isConnected ? "Atualizar" : "Ligar";
         return;
       }
@@ -443,7 +448,7 @@ function showLetterboxdPopup() {
       await refreshAuthState();
       await load();
     } catch (e) {
-      el("lbPopupMsg").textContent = String(e?.message || "Erro ao ligar.");
+      el("lbPopupMsg").textContent = String(e?.message || "Erro ao ligar Letterboxd. Confirma o username e tenta outra vez.");
       btn.disabled = false; btn.textContent = isConnected ? "Atualizar" : "Ligar";
     }
   });
@@ -463,6 +468,25 @@ function showLetterboxdPopup() {
       const msg = el("lbPopupMsg");
       if (msg) { msg.textContent = String(e?.message || "Erro na sync."); msg.style.color = ""; }
     } finally { btn.disabled = false; btn.textContent = "↻ Sincronizar Letterboxd"; }
+  });
+
+  el("logoutAllSessions")?.addEventListener("click", async () => {
+    const btn = el("logoutAllSessions");
+    btn.disabled = true;
+    btn.textContent = "A terminar...";
+    try {
+      await apiPost("/auth/logout-all", {}, { auth: true });
+      clearToken();
+      pop.remove();
+      toast("Sessoes terminadas.", "success", 2500);
+      await refreshAuthState();
+      await load();
+    } catch (e) {
+      const msg = el("lbPopupMsg");
+      if (msg) msg.textContent = String(e?.message || "Erro ao terminar sessoes.");
+      btn.disabled = false;
+      btn.textContent = "Terminar sessoes noutros dispositivos";
+    }
   });
 
   el("lbPopupInput")?.addEventListener("keydown", (e) => {
@@ -742,6 +766,7 @@ async function load() {
 
   // Load "visto pelo clube" section independently
   loadClubWatched();
+  loadLetterboxdActivity();
 }
 
 /* ── "Visto pelo Clube" section ── */
@@ -867,6 +892,38 @@ function buildWatchedCard(week, film, watchers) {
 }
 
 /* ── Submit film ── */
+async function loadLetterboxdActivity() {
+  const section = el("letterboxdActivitySection");
+  const list = el("letterboxdActivityList");
+  if (!section || !list) return;
+
+  try {
+    const entries = await apiGet("/letterboxd/activity?limit=30", { cacheTtl: 60000 });
+    if (!entries.length) { section.style.display = "none"; return; }
+
+    section.style.display = "";
+    list.innerHTML = entries.map(e => {
+      const lbUser = e.letterboxd_username || e.username;
+      const href = e.letterboxd_url || `https://letterboxd.com/${encodeURIComponent(lbUser)}/`;
+      const avatar = e.avatar_url
+        ? `<img class="lb-activity-item__avatar" src="${escapeHtml(e.avatar_url)}" alt="@${escapeHtml(e.username)}" loading="lazy" />`
+        : `<div class="lb-activity-item__avatar lb-avatar--initials">${escapeHtml((e.username || "?").slice(0,2).toUpperCase())}</div>`;
+      const watched = e.watched_date ? new Date(e.watched_date * 1000).toLocaleDateString("pt", { day: "numeric", month: "short" }) : "";
+      return `
+        <a class="lb-activity-item" href="${escapeHtml(href)}" target="_blank" rel="noopener">
+          ${avatar}
+          <div>
+            <div><strong>@${escapeHtml(e.username)}</strong> viu <strong>${escapeHtml(e.film_title)}</strong>${e.film_year ? ` (${escapeHtml(String(e.film_year))})` : ""}</div>
+            <div class="lb-activity-item__meta">${e.rating != null ? `${escapeHtml(starsHTML(e.rating))} - ` : ""}${escapeHtml(watched)}${e.is_rewatch ? " - rewatch" : ""}</div>
+          </div>
+        </a>
+      `;
+    }).join("");
+  } catch {
+    section.style.display = "none";
+  }
+}
+
 async function submitFilmCurrentWeek() {
   if (!getToken()) { toast("Precisas de login para submeter.", "info"); openAuthModal("login"); return; }
 
