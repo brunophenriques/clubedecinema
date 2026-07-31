@@ -1059,12 +1059,20 @@ function applyTheme(theme) {
   } else if (theme === "netflix") {
     document.body.classList.add("theme-netflix");
 
-    if (!document.querySelector(".netflix-wordmark")) {
-      const wordmark = document.createElement("div");
-      wordmark.className = "netflix-wordmark";
-      wordmark.textContent = "NETFLIX";
-      wordmark.setAttribute("aria-hidden", "true");
-      el("heroSection")?.appendChild(wordmark);
+    if (!document.querySelector(".netflix-brand-mark")) {
+      const brandMark = document.createElement("img");
+      brandMark.className = "netflix-brand-mark";
+      brandMark.src = "/static/netflix-n.png";
+      brandMark.alt = "";
+      brandMark.setAttribute("aria-hidden", "true");
+      el("heroSection")?.appendChild(brandMark);
+    }
+
+    if (!document.querySelector(".netflix-disclaimer")) {
+      const disclaimer = document.createElement("div");
+      disclaimer.className = "netflix-disclaimer";
+      disclaimer.textContent = "Semana informal criada por fãs · Sem associação à Netflix";
+      el("heroSection")?.appendChild(disclaimer);
     }
 
     const kicker = el("heroKicker");
