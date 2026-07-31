@@ -144,8 +144,7 @@ def netflix_index_response() -> HTMLResponse:
     page = page.replace(
         '<div class="hero-backdrop" aria-hidden="true"></div>',
         '<div class="hero-backdrop" aria-hidden="true"></div>'
-        '<img class="netflix-brand-mark" src="/static/netflix-n.png" alt="" aria-hidden="true">'
-        '<div class="netflix-disclaimer">Semana informal criada por fãs · Sem associação à Netflix</div>',
+        '<img class="netflix-brand-mark" src="/static/netflix-n.png" alt="" aria-hidden="true">',
         1,
     )
     page = page.replace(

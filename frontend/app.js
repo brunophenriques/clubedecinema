@@ -1068,13 +1068,6 @@ function applyTheme(theme) {
       el("heroSection")?.appendChild(brandMark);
     }
 
-    if (!document.querySelector(".netflix-disclaimer")) {
-      const disclaimer = document.createElement("div");
-      disclaimer.className = "netflix-disclaimer";
-      disclaimer.textContent = "Semana informal criada por fãs · Sem associação à Netflix";
-      el("heroSection")?.appendChild(disclaimer);
-    }
-
     const kicker = el("heroKicker");
     if (kicker) kicker.textContent = "SÓ NA NETFLIX";
     const heroSub = el("heroSub");

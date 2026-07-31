@@ -1,4 +1,4 @@
-const CACHE = "clubedecinema-v8";
+const CACHE = "clubedecinema-v9";
 const STATIC = [
   "/",
   "/watch",
@@ -12,6 +12,7 @@ const STATIC = [
   "/static/android-chrome-192x192.png",
   "/static/android-chrome-512x512.png",
   "/static/netflix-n.png",
+  "/static/netflix-wordmark.png",
   "/static/apple-touch-icon.png",
 ];
 
