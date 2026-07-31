@@ -4299,6 +4299,32 @@ body.theme-netflix .film-actions { border-top-color: rgba(255,255,255,.12); }
 body.theme-netflix .badge { background: #2f2f2f; border-color: rgba(255,255,255,.15); color: #fff; }
 body.theme-netflix .poster.placeholder { background: #242424; }
 body.theme-netflix .poster.placeholder span { color: #b3b3b3; }
+body.theme-netflix .poster-overlay { background: rgba(0,0,0,.72); }
+body.theme-netflix .poster-btn--know,
+[data-theme="light"] body.theme-netflix .poster-btn--know,
+[data-theme="dark"] body.theme-netflix .poster-btn--know {
+  background: #fff;
+  color: #111;
+  text-shadow: none;
+  box-shadow: 0 5px 18px rgba(0,0,0,.42);
+}
+body.theme-netflix .poster-btn--know:hover { background: #d9d9d9; color: #000; }
+body.theme-netflix .poster-btn--play,
+[data-theme="light"] body.theme-netflix .poster-btn--play,
+[data-theme="dark"] body.theme-netflix .poster-btn--play {
+  background: #e50914;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
+  box-shadow: 0 5px 18px rgba(0,0,0,.48);
+}
+body.theme-netflix .poster-btn--play:hover { background: #f6121d; color: #fff; }
+body.theme-netflix .film-card .film-title { color: #fff; font-weight: 700; }
+body.theme-netflix .film-card .film-meta,
+body.theme-netflix .film-card .year { color: #bdbdbd; }
+body.theme-netflix .reaction-add-btn,
+body.theme-netflix .reaction-chip { background: #2f2f2f; border-color: #555; color: #fff; }
+body.theme-netflix .reaction-picker { background: #242424; border-color: #555; }
+body.theme-netflix .reaction-picker__btn { color: #fff; }
 
 @media (max-width: 900px) {
   body.theme-netflix .film-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
