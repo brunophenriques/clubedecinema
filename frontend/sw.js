@@ -1,4 +1,4 @@
-const CACHE = "clubedecinema-v6";
+const CACHE = "clubedecinema-v7";
 const STATIC = [
   "/",
   "/watch",
@@ -51,6 +51,7 @@ self.addEventListener("fetch", e => {
                   url.pathname === "/watch" ||
                   url.pathname === "/archive" ||
                   url.pathname === "/admin" ||
+                  url.pathname === "/preview" ||
                   url.pathname.startsWith("/profile/");
 
   if (isAsset) {

@@ -1271,7 +1271,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   await load();
 
   // Apply URL theme param for preview (e.g. ?theme=italian)
-  if (_requestedTheme) applyTheme(_requestedTheme);
+  if (_requestedTheme) {
+    applyTheme(_requestedTheme);
+    const previewTitle = new URLSearchParams(window.location.search).get("previewTitle");
+    if (previewTitle) {
+      if (el("weekTitle")) el("weekTitle").textContent = previewTitle;
+      if (el("heroTitle")) el("heroTitle").textContent = previewTitle;
+    }
+  }
   el("films")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".poster-btn--play");
     if (!btn) return;

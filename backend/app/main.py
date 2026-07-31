@@ -160,6 +160,11 @@ def serve_index():
         db.close()
     return FileResponse(str(FRONTEND_DIR / "index.html"))
 
+@app.get("/preview", include_in_schema=False)
+def serve_theme_preview():
+    """Always serve the neutral homepage so an active special theme cannot mask previews."""
+    return FileResponse(str(FRONTEND_DIR / "index.html"))
+
 @app.get("/portugal", include_in_schema=False)
 def serve_portugal():
     return FileResponse(str(FRONTEND_DIR / "portugal.html"))
