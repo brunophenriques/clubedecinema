@@ -1070,8 +1070,6 @@ function applyTheme(theme) {
 
     const kicker = el("heroKicker");
     if (kicker) kicker.textContent = "SÓ NA NETFLIX";
-    const heroSub = el("heroSub");
-    if (heroSub) heroSub.textContent = "Escolhe a próxima história para vermos juntos.";
   }
 }
 

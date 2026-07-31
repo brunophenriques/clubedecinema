@@ -4198,6 +4198,7 @@ body.theme-netflix .hero-backdrop { display: none; }
 body.theme-netflix .hero-inner { position: relative; z-index: 2; max-width: 680px; margin: 0; text-align: left; }
 body.theme-netflix .hero h1 { max-width: 680px; margin: 10px 0 18px; font-size: clamp(48px, 6vw, 88px); font-weight: 800; line-height: .94; letter-spacing: -.055em; text-shadow: 0 3px 18px rgba(0,0,0,.9); }
 body.theme-netflix .hero p.muted { max-width: 590px; margin: 0; color: #dedede; font-size: clamp(17px, 1.5vw, 22px); line-height: 1.35; }
+body.theme-netflix #heroSub { display: none; }
 body.theme-netflix .hero-actions--centered { justify-content: flex-start; }
 
 .netflix-brand-mark {

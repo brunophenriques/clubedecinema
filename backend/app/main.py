@@ -154,7 +154,7 @@ def netflix_index_response() -> HTMLResponse:
     )
     page = page.replace(
         '<p id="heroSub" class="muted">Submete um filme e vota no favorito da semana.</p>',
-        '<p id="heroSub" class="muted">Escolhe a próxima história para vermos juntos.</p>',
+        '<p id="heroSub" class="muted"></p>',
         1,
     )
     return HTMLResponse(page, headers={"Cache-Control": "no-store"})
