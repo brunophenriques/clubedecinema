@@ -18,7 +18,7 @@ import hmac
 import base64
 
 from pathlib import Path
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .db import SessionLocal
@@ -137,6 +137,29 @@ if not FRONTEND_DIR:
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 
+def netflix_index_response() -> HTMLResponse:
+    """Render the Netflix skin in HTML so it does not depend on client-side JS/cache."""
+    page = (FRONTEND_DIR / "index.html").read_text(encoding="utf-8")
+    page = page.replace("<body>", '<body class="theme-netflix">', 1)
+    page = page.replace(
+        '<div class="hero-backdrop" aria-hidden="true"></div>',
+        '<div class="hero-backdrop" aria-hidden="true"></div>'
+        '<div class="netflix-wordmark" aria-hidden="true">NETFLIX</div>',
+        1,
+    )
+    page = page.replace(
+        '<div class="kicker" id="heroKicker">Esta semana</div>',
+        '<div class="kicker" id="heroKicker">SÓ NA NETFLIX</div>',
+        1,
+    )
+    page = page.replace(
+        '<p id="heroSub" class="muted">Submete um filme e vota no favorito da semana.</p>',
+        '<p id="heroSub" class="muted">Escolhe a próxima história para vermos juntos.</p>',
+        1,
+    )
+    return HTMLResponse(page, headers={"Cache-Control": "no-store"})
+
+
 @app.get("/sw.js", include_in_schema=False)
 def serve_sw():
     from fastapi.responses import FileResponse
@@ -156,13 +179,17 @@ def serve_index():
         )
         if theme == "portugal":
             return FileResponse(str(FRONTEND_DIR / "portugal.html"))
+        if theme == "netflix":
+            return netflix_index_response()
     finally:
         db.close()
     return FileResponse(str(FRONTEND_DIR / "index.html"))
 
 @app.get("/preview", include_in_schema=False)
-def serve_theme_preview():
+def serve_theme_preview(theme: str | None = Query(None)):
     """Always serve the neutral homepage so an active special theme cannot mask previews."""
+    if (theme and theme.strip().lower() == "netflix"):
+        return netflix_index_response()
     return FileResponse(str(FRONTEND_DIR / "index.html"))
 
 @app.get("/portugal", include_in_schema=False)
