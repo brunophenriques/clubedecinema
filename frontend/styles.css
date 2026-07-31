@@ -4143,6 +4143,56 @@ body.theme-italian .btn.primary {
   .it-lambreta { height: 100px; }
 }
 
+/* Netflix week theme */
+body.theme-netflix {
+  --rouge: #e50914;
+  --rouge-dim: rgba(229, 9, 20, .14);
+  --rouge-mid: rgba(229, 9, 20, .3);
+  --paper: #090909;
+  --card: #181818;
+  --ink: #f5f5f5;
+  --ink-60: #b3b3b3;
+  --ink-30: #777;
+  --ink-10: rgba(255,255,255,.12);
+  background: #090909 !important;
+  color: #f5f5f5;
+}
+
+body.theme-netflix .top { background: rgba(8,8,8,.94); border-bottom-color: rgba(255,255,255,.08); backdrop-filter: blur(14px); }
+body.theme-netflix .logo-badge { color: #fff; background: #e50914; border-color: #e50914; box-shadow: 0 0 28px rgba(229,9,20,.28); }
+body.theme-netflix .brand-title,
+body.theme-netflix .brand-sub,
+body.theme-netflix .nav-link.active,
+body.theme-netflix .kicker { color: #e50914; }
+
+body.theme-netflix .hero {
+  min-height: 410px;
+  overflow: hidden;
+  border-color: rgba(255,255,255,.08);
+  background: linear-gradient(90deg, rgba(0,0,0,.96) 0%, rgba(0,0,0,.7) 48%, rgba(0,0,0,.25) 100%), radial-gradient(circle at 78% 38%, rgba(229,9,20,.42), transparent 33%), linear-gradient(135deg, #090909 20%, #2b0508 100%);
+  box-shadow: 0 28px 80px rgba(0,0,0,.5);
+}
+body.theme-netflix .hero::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(0deg, #090909 0%, transparent 35%); }
+body.theme-netflix .hero-inner { position: relative; z-index: 2; }
+body.theme-netflix .hero h1 { max-width: 760px; font-size: clamp(42px, 7vw, 86px); line-height: .95; letter-spacing: -.045em; text-shadow: 0 8px 30px rgba(0,0,0,.8); }
+
+.netflix-wordmark { position: absolute; right: 5%; top: 42px; z-index: 1; color: #e50914; font: 900 clamp(42px, 8vw, 104px)/1 Arial, sans-serif; letter-spacing: -.08em; opacity: .18; transform: perspective(500px) rotateY(-9deg); user-select: none; }
+
+body.theme-netflix .section--elevated,
+body.theme-netflix .film-card,
+body.theme-netflix .auth-pill,
+body.theme-netflix .input { background-color: #181818; border-color: rgba(255,255,255,.1); }
+body.theme-netflix .film-card { transition: transform .22s ease, box-shadow .22s ease; }
+body.theme-netflix .film-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 18px 44px rgba(0,0,0,.65); }
+body.theme-netflix .btn.primary { background: #e50914; border-color: #e50914; color: #fff; }
+body.theme-netflix .btn.primary:hover { background: #f6121d; }
+body.theme-netflix .week-status[data-state="open"] { color: #fff; background: rgba(229,9,20,.18); }
+
+@media (max-width: 640px) {
+  body.theme-netflix .hero { min-height: 350px; }
+  .netflix-wordmark { right: 4%; top: 25px; opacity: .11; }
+}
+
 /* Shared utility surfaces */
 .cold-start {
   position: fixed;

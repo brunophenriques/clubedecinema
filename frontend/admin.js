@@ -561,10 +561,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("refresh")?.addEventListener("click", load);
 
   /* ── Create week ── */
+  $("previewWeek")?.addEventListener("click", () => {
+    const title = $("newWeekTitle").value.trim() || "Semana Netflix";
+    const theme = $("newWeekTheme")?.value.trim().toLowerCase() || "netflix";
+    const params = new URLSearchParams({ theme, preview: "1", previewTitle: title });
+    window.open(`/?${params.toString()}`, "_blank", "noopener");
+  });
+
   $("createWeek")?.addEventListener("click", async () => {
     const btn = $("createWeek");
     const title = $("newWeekTitle").value.trim();
-    const theme = $("newWeekTheme")?.value.trim() || null;
+    const theme = $("newWeekTheme")?.value.trim().toLowerCase() || null;
     if (!title) { toast("Insere um título para a semana.", "error"); $("newWeekTitle").focus(); return; }
     try {
       setBusy(btn, true, "A criar…");

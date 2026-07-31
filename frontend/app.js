@@ -719,11 +719,13 @@ function filmCard(week, f, alreadyVoted) {
 /* ── Render week ── */
 function render(week) {
   _chatWeekId = week.id;
-  el("weekTitle").textContent = week.title;
-  el("heroTitle").textContent = week.title;
+  const previewTitle = new URLSearchParams(window.location.search).get("previewTitle");
+  const displayTitle = previewTitle || week.title;
+  el("weekTitle").textContent = displayTitle;
+  el("heroTitle").textContent = displayTitle;
 
   // Apply week theme if set
-  if (week.theme) applyTheme(week.theme);
+  applyTheme(_requestedTheme || week.theme);
 
   // Show chat button
   const btnChat = el("btnChat");
@@ -1019,11 +1021,14 @@ if ("serviceWorker" in navigator) {
 
 /* ── Theme ── */
 /* ── Italian theme ── */
-let _activeTheme = new URLSearchParams(window.location.search).get("theme") || null;
+const _requestedTheme = new URLSearchParams(window.location.search).get("theme")?.trim().toLowerCase() || null;
+let _activeTheme = null;
 
 function applyTheme(theme) {
   if (window.__PT_PAGE) return;
+  theme = String(theme || "").trim().toLowerCase();
   if (!theme || _activeTheme === theme) return;
+  document.body.classList.remove("theme-italian", "theme-netflix");
   _activeTheme = theme;
 
   if (theme === "italian") {
@@ -1051,6 +1056,21 @@ function applyTheme(theme) {
       el("itPopupX")?.addEventListener("click", () => { bd.style.display = "none"; });
       bd.addEventListener("click", (e) => { if (e.target === bd) bd.style.display = "none"; });
     }
+  } else if (theme === "netflix") {
+    document.body.classList.add("theme-netflix");
+
+    if (!document.querySelector(".netflix-wordmark")) {
+      const wordmark = document.createElement("div");
+      wordmark.className = "netflix-wordmark";
+      wordmark.textContent = "NETFLIX";
+      wordmark.setAttribute("aria-hidden", "true");
+      el("heroSection")?.appendChild(wordmark);
+    }
+
+    const kicker = el("heroKicker");
+    if (kicker) kicker.textContent = "SÓ NA NETFLIX";
+    const heroSub = el("heroSub");
+    if (heroSub) heroSub.textContent = "Escolhe a próxima história para vermos juntos.";
   }
 }
 
@@ -1251,7 +1271,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await load();
 
   // Apply URL theme param for preview (e.g. ?theme=italian)
-  if (_activeTheme) applyTheme(_activeTheme);
+  if (_requestedTheme) applyTheme(_requestedTheme);
   el("films")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".poster-btn--play");
     if (!btn) return;
