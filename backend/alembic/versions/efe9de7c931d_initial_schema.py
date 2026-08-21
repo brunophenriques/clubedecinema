@@ -88,19 +88,23 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_votes_id"), "votes", ["id"], unique=False)
 
-    op.create_foreign_key(
-        "fk_weeks_winner_film_id_films",
-        "weeks",
-        "films",
-        ["winner_film_id"],
-        ["id"],
-    )
+    # SQLite cannot add a foreign key after table creation. The ORM still
+    # handles this optional relation locally; Postgres gets the DB constraint.
+    if op.get_bind().dialect.name != "sqlite":
+        op.create_foreign_key(
+            "fk_weeks_winner_film_id_films",
+            "weeks",
+            "films",
+            ["winner_film_id"],
+            ["id"],
+        )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
 
-    op.drop_constraint("fk_weeks_winner_film_id_films", "weeks", type_="foreignkey")
+    if op.get_bind().dialect.name != "sqlite":
+        op.drop_constraint("fk_weeks_winner_film_id_films", "weeks", type_="foreignkey")
 
     op.drop_index(op.f("ix_votes_id"), table_name="votes")
     op.drop_table("votes")

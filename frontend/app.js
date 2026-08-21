@@ -160,6 +160,7 @@ function prettyVoteError(e) {
   const s = e?.status;
   const m = String(e?.message || "");
   if (s === 401) return "Tens de fazer login para votar.";
+  if (m.includes("PARTICIPATION_BANNED")) return "A tua participação está temporariamente restringida.";
   if (m.includes("own film")) return "Deixa de ser paneleiro e não votes no teu próprio filme.";
   if (s === 403) return "Só quem submeteu um filme pode votar.";
   if (m.includes("already voted")) return "Já votaste esta semana.";
@@ -172,6 +173,7 @@ function prettySubmitError(e) {
   const s = e?.status;
   const m = String(e?.message || "");
   if (s === 401) return "Tens de fazer login para submeter.";
+  if (m.includes("PARTICIPATION_BANNED")) return "A tua participação está temporariamente restringida.";
   if (m.includes("already submitted")) return "Já submeteste um filme esta semana.";
   if (m.includes("Week is closed")) return "A semana está fechada.";
   if (m.includes("title required")) return "Título obrigatório.";
@@ -204,6 +206,61 @@ function setAuthMode(mode) {
 /* ── Current user (global) ── */
 let _currentUser = null;
 
+function showBanPopup(force = false) {
+  const ban = _currentUser?.ban;
+  if (!ban?.is_banned) return;
+  if (el("banPopup")) el("banPopup").remove();
+  const pop = document.createElement("div");
+  pop.id = "banPopup";
+  pop.className = "hof-modal is-open";
+  pop.style.cssText = "display:flex;z-index:10020";
+  const films = (ban.requirements || []).map(r => `
+    <div style="display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)">
+      ${r.poster_url ? `<img src="${escapeHtml(r.poster_url)}" alt="" style="width:38px;height:56px;object-fit:cover;border-radius:5px">` : ""}
+      <div style="flex:1"><strong>${escapeHtml(r.title)}</strong>${r.year ? ` <span class="muted">(${r.year})</span>` : ""}</div>
+      <span class="badge ${r.watched ? "badge--open" : "badge--warn"}">${r.watched ? "Registado ✓" : "Por ver"}</span>
+    </div>`).join("");
+  pop.innerHTML = `<div class="hof-modal__backdrop"></div><div class="hof-modal__panel" role="dialog" aria-modal="true" style="max-width:520px">
+    <div class="hof-modal__head"><div><div class="kicker kicker--soft">Participação suspensa</div><div class="hof-modal__title">Foste temporariamente restringido</div></div>
+      <button class="btn ghost" data-ban-close>✕</button></div>
+    <div class="hof-modal__body"><p>Podes continuar a usar o site, mas não podes submeter filmes nem votar por enquanto.</p>
+      ${ban.reason ? `<p style="padding:10px 12px;background:var(--paper-2);border-radius:8px"><strong>Motivo:</strong> ${escapeHtml(ban.reason)}</p>` : ""}
+      ${films ? `<div style="margin-top:14px"><strong>Filmes que tens de ver:</strong>${films}</div>` : `<p class="muted">O desbanimento terá de ser feito por um administrador.</p>`}
+      <div id="banCheckMsg" class="muted small" style="margin-top:12px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">
+        ${!_currentUser.letterboxd_username && ban.requirements?.length ? `<button class="btn" data-ban-letterboxd>Ligar Letterboxd</button>` : ""}
+        ${ban.requirements?.length ? `<button class="btn primary" data-ban-check>Já vi — verificar Letterboxd</button>` : ""}
+        <button class="btn" data-ban-close>Continuar no site</button></div></div></div>`;
+  document.body.appendChild(pop);
+  pop.querySelectorAll("[data-ban-close]").forEach(b => b.addEventListener("click", () => pop.remove()));
+  pop.querySelector(".hof-modal__backdrop")?.addEventListener("click", () => pop.remove());
+  pop.querySelector("[data-ban-letterboxd]")?.addEventListener("click", () => { pop.remove(); showLetterboxdPopup(); });
+  pop.querySelector("[data-ban-check]")?.addEventListener("click", async e => {
+    const btn = e.currentTarget; const msg = pop.querySelector("#banCheckMsg");
+    btn.disabled = true; btn.textContent = "A sincronizar e verificar…"; msg.textContent = "";
+    try {
+      const result = await apiPost("/auth/ban/check", {}, { auth: true });
+      if (result.unbanned) { pop.remove(); toast("Restrição removida — já podes submeter e votar!", "success", 5000); await refreshAuthState(); await load(); }
+      else { _currentUser.ban = result.ban; msg.textContent = `Ainda falta: ${(result.missing || []).map(f => f.title).join(", ")}.`; btn.disabled = false; btn.textContent = "Verificar novamente"; }
+    } catch (e2) { msg.textContent = e2.message; btn.disabled = false; btn.textContent = "Verificar novamente"; }
+  });
+}
+
+function renderBanState() {
+  el("banReminder")?.remove();
+  const ban = _currentUser?.ban;
+  if (!ban?.is_banned) return;
+  const reminder = document.createElement("button");
+  reminder.id = "banReminder"; reminder.type = "button";
+  reminder.className = "btn";
+  reminder.style.cssText = "position:fixed;right:18px;bottom:18px;z-index:9000;border-color:#c94b45;background:#fff;color:#9d302c;box-shadow:0 8px 30px rgba(0,0,0,.18)";
+  reminder.textContent = "⚠ Participação suspensa";
+  reminder.addEventListener("click", () => showBanPopup(true));
+  document.body.appendChild(reminder);
+  const seenKey = `cinema_club_ban_seen_${ban.banned_at || "active"}`;
+  if (!localStorage.getItem(seenKey)) { localStorage.setItem(seenKey, "1"); setTimeout(() => showBanPopup(), 350); }
+}
+
 /* ── Auth state ── */
 async function refreshAuthState() {
   const line = el("authStatusLine");
@@ -216,6 +273,7 @@ async function refreshAuthState() {
   const token = getToken();
   if (!token) {
     _currentUser = null;
+    renderBanState();
     if (line) line.textContent = "Não autenticado.";
     if (btnLogin) btnLogin.style.display = "";
     if (btnLogout) btnLogout.style.display = "none";
@@ -252,6 +310,7 @@ async function refreshAuthState() {
     if (btnLogin) btnLogin.style.display = "none";
     if (btnLogout) btnLogout.style.display = "";
     if (navAdmin && me?.is_admin) navAdmin.style.display = "";
+    renderBanState();
 
     // Show letterboxd connect popup if not yet connected
     if (!me.letterboxd_username) {
@@ -261,6 +320,7 @@ async function refreshAuthState() {
     return me;
   } catch {
     _currentUser = null;
+    renderBanState();
     clearToken();
     if (line) line.textContent = "Sessão expirada.";
     if (btnLogin) btnLogin.style.display = "";

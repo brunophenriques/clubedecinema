@@ -106,6 +106,10 @@ GET /weeks/current
 
 8. Se existir Letterboxd ligado, testar uma sync manual.
 
+9. No painel admin, confirmar que a secção `Contas e restrições` carrega.
+
+10. Confirmar com uma conta de teste que uma restrição bloqueia submissões e votos.
+
 ## Monitorizacao
 
 Depois de deploy, verificar:

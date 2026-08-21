@@ -82,6 +82,78 @@ function showConfirm(message) {
   });
 }
 
+function showBanModal(user) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "hof-modal is-open";
+    overlay.style.cssText = "display:flex";
+    overlay.innerHTML = `
+      <div class="hof-modal__backdrop"></div>
+      <div class="hof-modal__panel" role="dialog" aria-modal="true" style="max-width:520px">
+        <div class="hof-modal__head"><div><div class="hof-modal__title">Restringir @${escapeHtml(user.username)}</div>
+          <div class="muted small">Continuará a poder navegar, conversar e reagir.</div></div>
+          <button id="_banClose" class="btn ghost">✕</button></div>
+        <div class="hof-modal__body" style="display:grid;gap:14px">
+          <div><label class="muted small">Motivo (opcional)</label>
+            <input id="_banReason" class="input" maxlength="500" placeholder="Mensagem que o membro verá" /></div>
+          <div><label class="muted small">Filmes obrigatórios — um por linha (opcional)</label>
+            <textarea id="_banFilms" class="input" rows="7" placeholder="Paris, Texas | 1984&#10;Persona | 1966"></textarea>
+            <div class="muted small" style="margin-top:5px">Com filmes definidos, o membro pode auto-desbanir-se depois de os registar no Letterboxd. Formato: título | ano.</div></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end"><button id="_banCancel" class="btn">Cancelar</button>
+            <button id="_banSave" class="btn primary">Aplicar restrição</button></div>
+        </div></div>`;
+    document.body.appendChild(overlay);
+    const close = value => { overlay.remove(); resolve(value); };
+    overlay.querySelector("#_banClose").addEventListener("click", () => close(null));
+    overlay.querySelector("#_banCancel").addEventListener("click", () => close(null));
+    overlay.querySelector(".hof-modal__backdrop").addEventListener("click", () => close(null));
+    overlay.querySelector("#_banSave").addEventListener("click", () => {
+      const requirements = overlay.querySelector("#_banFilms").value.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
+        const parts = line.split("|");
+        const year = Number((parts[1] || "").trim());
+        return { title: parts[0].trim(), year: year || null };
+      }).filter(item => item.title);
+      close({ reason: overlay.querySelector("#_banReason").value.trim(), requirements });
+    });
+  });
+}
+
+async function loadAccounts() {
+  const box = $("accountsList");
+  if (!box) return;
+  box.innerHTML = `<div class="muted small">A carregar…</div>`;
+  try {
+    const users = await apiGet("/admin/users", { auth: true });
+    box.innerHTML = users.map(user => {
+      const ban = user.ban || {};
+      const films = (ban.requirements || []).map(r => `${escapeHtml(r.title)}${r.year ? ` (${r.year})` : ""}`).join(" · ");
+      return `<div class="admin-film${ban.is_banned ? " is-review" : ""}">
+        <div class="admin-left"><div class="admin-title">@${escapeHtml(user.username)}
+          ${user.is_admin ? `<span class="badge">Admin</span>` : ""}
+          ${ban.is_banned ? `<span class="badge badge--warn">Restringido</span>` : ""}</div>
+          <div class="admin-meta">${user.letterboxd_username ? `Letterboxd: @${escapeHtml(user.letterboxd_username)}` : "Sem Letterboxd ligado"}</div>
+          ${ban.reason ? `<div class="admin-meta">Motivo: ${escapeHtml(ban.reason)}</div>` : ""}
+          ${films ? `<div class="admin-meta">Filmes: ${films}</div>` : ""}</div>
+        <div class="admin-right">${user.is_admin ? "" : ban.is_banned
+          ? `<button class="btn" data-unban-user="${user.id}">Desbanir</button>`
+          : `<button class="btn" data-ban-user="${user.id}">Banir</button>`}</div></div>`;
+    }).join("") || `<div class="muted small">Sem contas.</div>`;
+    box.querySelectorAll("[data-ban-user]").forEach(btn => btn.addEventListener("click", async () => {
+      const user = users.find(u => u.id === Number(btn.dataset.banUser));
+      const payload = await showBanModal(user); if (!payload) return;
+      setBusy(btn, true, "A aplicar…");
+      try { await apiPost(`/admin/users/${user.id}/ban`, payload, { auth: true }); toast("Restrição aplicada.", "success"); await loadAccounts(); }
+      catch (e) { toast(`Erro: ${e.message}`, "error", 5000); setBusy(btn, false); }
+    }));
+    box.querySelectorAll("[data-unban-user]").forEach(btn => btn.addEventListener("click", async () => {
+      if (!await showConfirm("Desbanir este membro e remover os filmes obrigatórios?")) return;
+      setBusy(btn, true, "A desbanir…");
+      try { await apiPost(`/admin/users/${btn.dataset.unbanUser}/unban`, {}, { auth: true }); toast("Membro desbanido.", "success"); await loadAccounts(); }
+      catch (e) { toast(`Erro: ${e.message}`, "error", 5000); setBusy(btn, false); }
+    }));
+  } catch (e) { box.innerHTML = `<div class="muted small">Erro ao carregar contas: ${escapeHtml(e.message)}</div>`; }
+}
+
 /* ── Edit film modal ── */
 function showEditFilmModal(film) {
   return new Promise((resolve) => {
@@ -489,8 +561,9 @@ async function load() {
     const week = await apiGet("/admin/weeks/current", { auth: true });
     renderCurrent(week);
     await loadNeedsReview();
+    await loadAccounts();
   } catch (e) {
-    if (e?.status === 404) { renderCurrent(null); await loadNeedsReview(); return; }
+    if (e?.status === 404) { renderCurrent(null); await loadNeedsReview(); await loadAccounts(); return; }
     if (e?.status === 401) clearToken();
     window.location.replace("/");
   }
@@ -559,6 +632,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   $("refresh")?.addEventListener("click", load);
+  $("refreshAccounts")?.addEventListener("click", loadAccounts);
 
   /* ── Create week ── */
   $("previewWeek")?.addEventListener("click", () => {

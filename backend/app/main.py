@@ -324,6 +324,38 @@ def require_admin_user(db: Session, authorization: str | None) -> models.User:
     return u
 
 
+def ban_requirement_payload(req: models.BanRequirement, watched: bool = False) -> dict:
+    return {"id": req.id, "title": req.title, "year": req.year, "tmdb_id": req.tmdb_id,
+            "poster_url": req.poster_url, "watched": watched}
+
+
+def user_ban_payload(db: Session, user: models.User) -> dict:
+    requirements = (db.query(models.BanRequirement)
+        .filter(models.BanRequirement.user_id == user.id)
+        .order_by(models.BanRequirement.id.asc()).all()) if user.is_banned else []
+    entries = (db.query(models.LetterboxdEntry)
+        .filter(
+            models.LetterboxdEntry.user_id == user.id,
+            models.LetterboxdEntry.watched_date >= (user.banned_at or 0),
+        ).all()) if requirements else []
+    watched_tmdb = {e.tmdb_id for e in entries if e.tmdb_id is not None}
+    watched_titles = {(e.film_title or "").strip().lower() for e in entries}
+    items = []
+    for req in requirements:
+        watched = ((req.tmdb_id is not None and req.tmdb_id in watched_tmdb) or
+                   req.title.strip().lower() in watched_titles)
+        items.append(ban_requirement_payload(req, watched))
+    return {"is_banned": bool(user.is_banned), "reason": user.ban_reason,
+            "banned_at": user.banned_at,
+            "can_self_unban": bool(requirements) and bool(user.letterboxd_username),
+            "requirements": items}
+
+
+def require_participation_allowed(db: Session, user: models.User) -> None:
+    if user.is_banned:
+        raise HTTPException(status_code=403, detail="PARTICIPATION_BANNED")
+
+
 # ----------------------
 # TMDB matching (lightweight)
 # ----------------------
@@ -582,6 +614,7 @@ def me(db: Session = Depends(get_db), authorization: str | None = Header(None)):
         "letterboxd_avatar_url": u.letterboxd_avatar_url,
         "letterboxd_synced_at": u.letterboxd_synced_at,
         "avatar_url": effective_avatar,
+        "ban": user_ban_payload(db, u),
     }
 
 
@@ -767,6 +800,7 @@ def submit_film(
     authorization: str | None = Header(None),
 ):
     user = get_current_user(db, authorization)
+    require_participation_allowed(db, user)
     submitter_key = str(user.id)
 
     week = db.query(models.Week).filter(models.Week.id == week_id).first()
@@ -868,9 +902,14 @@ def vote(
     voter_key = None
     if authorization:
         user = get_current_user(db, authorization)
+        require_participation_allowed(db, user)
         voter_key = str(user.id)
     else:
         voter_key = (body.get("voter_key") or "").strip()
+        if voter_key.isdigit():
+            account = db.query(models.User).filter(models.User.id == int(voter_key)).first()
+            if account:
+                require_participation_allowed(db, account)
 
     film_id = body.get("film_id")
 
@@ -920,6 +959,84 @@ def vote(
 # ----------------------
 # Admin endpoints
 # ----------------------
+
+@app.get("/admin/users")
+def admin_list_users(
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    require_admin_user(db, authorization)
+    users = db.query(models.User).order_by(func.lower(models.User.username)).limit(500).all()
+    return [{
+        "id": u.id, "username": u.username, "is_admin": bool(u.is_admin),
+        "letterboxd_username": u.letterboxd_username,
+        "avatar_url": u.avatar_url or u.letterboxd_avatar_url,
+        "ban": user_ban_payload(db, u),
+    } for u in users]
+
+
+@app.post("/admin/users/{user_id}/ban")
+def admin_ban_user(
+    user_id: int,
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    admin = require_admin_user(db, authorization)
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    if user.id == admin.id or user.is_admin:
+        raise HTTPException(400, "Admin accounts cannot be banned")
+
+    raw_requirements = body.get("requirements") or []
+    if not isinstance(raw_requirements, list) or len(raw_requirements) > 20:
+        raise HTTPException(400, "requirements must be a list with at most 20 films")
+    db.query(models.BanRequirement).filter(models.BanRequirement.user_id == user.id).delete()
+    for raw in raw_requirements:
+        if not isinstance(raw, dict):
+            continue
+        title = (raw.get("title") or "").strip()
+        if not title:
+            continue
+        year = raw.get("year")
+        try:
+            year = int(year) if year else None
+        except (TypeError, ValueError):
+            year = None
+        match = pick_best_tmdb_match(title, year)
+        db.add(models.BanRequirement(
+            user_id=user.id,
+            title=match.get("canonical_title") or title,
+            year=match.get("canonical_year") or year,
+            tmdb_id=match.get("tmdb_id"),
+            poster_url=match.get("poster_url"),
+        ))
+    user.is_banned = True
+    user.ban_reason = (body.get("reason") or "").strip()[:500] or None
+    user.banned_at = int(time.time())
+    db.commit()
+    db.refresh(user)
+    return {"ok": True, "ban": user_ban_payload(db, user)}
+
+
+@app.post("/admin/users/{user_id}/unban")
+def admin_unban_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    require_admin_user(db, authorization)
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    user.is_banned = False
+    user.ban_reason = None
+    user.banned_at = None
+    db.query(models.BanRequirement).filter(models.BanRequirement.user_id == user.id).delete()
+    db.commit()
+    return {"ok": True}
+
 
 @app.get("/admin/weeks/current")
 def admin_current_week(
@@ -1646,6 +1763,38 @@ def sync_letterboxd(
         "error": result["error"],
         "letterboxd_synced_at": user.letterboxd_synced_at,
     }
+
+
+@app.post("/auth/ban/check")
+def check_ban_requirements(
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    user = get_current_user(db, authorization)
+    if not user.is_banned:
+        return {"ok": True, "unbanned": True, "ban": user_ban_payload(db, user)}
+    requirements = db.query(models.BanRequirement).filter(models.BanRequirement.user_id == user.id).all()
+    if not requirements:
+        raise HTTPException(400, "O admin não definiu filmes para o auto-desbanimento.")
+    if not user.letterboxd_username:
+        raise HTTPException(400, "Liga primeiro a tua conta Letterboxd.")
+
+    result = fetch_and_sync_letterboxd(db, user)
+    if result.get("error"):
+        raise HTTPException(502, f"Não foi possível sincronizar o Letterboxd: {result['error']}")
+    status = user_ban_payload(db, user)
+    missing = [item for item in status["requirements"] if not item["watched"]]
+    if missing:
+        return {"ok": True, "unbanned": False, "missing": missing, "ban": status}
+
+    user.is_banned = False
+    user.ban_reason = None
+    user.banned_at = None
+    db.query(models.BanRequirement).filter(models.BanRequirement.user_id == user.id).delete()
+    db.commit()
+    return {"ok": True, "unbanned": True,
+            "ban": {"is_banned": False, "reason": None, "banned_at": None,
+                    "can_self_unban": False, "requirements": []}}
 
 
 @app.post("/admin/letterboxd/sync-all")

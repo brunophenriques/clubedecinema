@@ -23,6 +23,23 @@ Funcionalidades principais:
 - chat por semana;
 - pagina de pesquisa/visualizacao de filmes;
 - temas visuais especiais, incluindo Portugal/Italian.
+- restrições temporárias de participação geridas por admins;
+- auto-desbanimento após validação de filmes obrigatórios no Letterboxd.
+
+## Restrições de participação
+
+O painel admin inclui uma lista de contas. Um admin pode impedir temporariamente um membro de submeter filmes e votar, sem bloquear o acesso às restantes áreas do site.
+
+Ao aplicar a restrição, o admin pode definir um motivo e até 20 filmes obrigatórios. O membro recebe um aviso inicial e mantém um lembrete acessível no site. Se tiver Letterboxd ligado, pode pedir uma sincronização e verificação automática. O auto-desbanimento só acontece quando todos os filmes surgem no diário com data igual ou posterior ao banimento. Sem filmes obrigatórios, apenas um admin pode desbanir.
+
+Endpoints:
+
+```http
+GET  /admin/users
+POST /admin/users/{user_id}/ban
+POST /admin/users/{user_id}/unban
+POST /auth/ban/check
+```
 
 A app e servida por um backend FastAPI que tambem serve os ficheiros estaticos do frontend.
 

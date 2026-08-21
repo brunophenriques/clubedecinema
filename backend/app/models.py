@@ -30,6 +30,11 @@ class User(Base):
     # Profile avatar (user-set, takes priority over letterboxd)
     avatar_url = Column(String, nullable=True)
 
+    # Participation restriction (the user can still browse, chat and react)
+    is_banned = Column(Boolean, default=False, nullable=False)
+    ban_reason = Column(String, nullable=True)
+    banned_at = Column(Integer, nullable=True)
+
     # sessions (login tokens)
     sessions = relationship(
         "Session",
@@ -40,6 +45,13 @@ class User(Base):
 
     letterboxd_entries = relationship(
         "LetterboxdEntry",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    ban_requirements = relationship(
+        "BanRequirement",
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
@@ -197,3 +209,17 @@ class ChatMessage(Base):
 
     user = relationship("User")
     week = relationship("Week")
+
+
+class BanRequirement(Base):
+    """A film a banned user must log on Letterboxd before self-unbanning."""
+    __tablename__ = "ban_requirements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    year = Column(Integer, nullable=True)
+    tmdb_id = Column(Integer, nullable=True, index=True)
+    poster_url = Column(String, nullable=True)
+
+    user = relationship("User", back_populates="ban_requirements")
