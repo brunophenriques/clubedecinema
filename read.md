@@ -28,7 +28,7 @@ Funcionalidades principais:
 
 ## Restrições de participação
 
-O painel admin inclui uma lista de contas. Um admin pode impedir temporariamente um membro de submeter filmes e votar, sem bloquear o acesso às restantes áreas do site.
+O painel admin inclui uma lista de contas. Um admin pode impedir temporariamente qualquer conta, incluindo outra conta admin ou a sua própria, de submeter filmes e votar, sem bloquear o acesso às restantes áreas do site. Um admin restringido mantém acesso ao painel e pode desbanir-se.
 
 Ao aplicar a restrição, o admin pode definir um motivo e até 20 filmes obrigatórios. O membro recebe um aviso inicial e mantém um lembrete acessível no site. Se tiver Letterboxd ligado, pode pedir uma sincronização e verificação automática. O auto-desbanimento só acontece quando todos os filmes surgem no diário com data igual ou posterior ao banimento. Sem filmes obrigatórios, apenas um admin pode desbanir.
 

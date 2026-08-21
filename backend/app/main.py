@@ -982,12 +982,10 @@ def admin_ban_user(
     db: Session = Depends(get_db),
     authorization: str | None = Header(None),
 ):
-    admin = require_admin_user(db, authorization)
+    require_admin_user(db, authorization)
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(404, "User not found")
-    if user.id == admin.id or user.is_admin:
-        raise HTTPException(400, "Admin accounts cannot be banned")
 
     raw_requirements = body.get("requirements") or []
     if not isinstance(raw_requirements, list) or len(raw_requirements) > 20:

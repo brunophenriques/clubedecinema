@@ -134,7 +134,7 @@ async function loadAccounts() {
           <div class="admin-meta">${user.letterboxd_username ? `Letterboxd: @${escapeHtml(user.letterboxd_username)}` : "Sem Letterboxd ligado"}</div>
           ${ban.reason ? `<div class="admin-meta">Motivo: ${escapeHtml(ban.reason)}</div>` : ""}
           ${films ? `<div class="admin-meta">Filmes: ${films}</div>` : ""}</div>
-        <div class="admin-right">${user.is_admin ? "" : ban.is_banned
+        <div class="admin-right">${ban.is_banned
           ? `<button class="btn" data-unban-user="${user.id}">Desbanir</button>`
           : `<button class="btn" data-ban-user="${user.id}">Banir</button>`}</div></div>`;
     }).join("") || `<div class="muted small">Sem contas.</div>`;
