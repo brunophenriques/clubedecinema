@@ -975,6 +975,41 @@ def admin_list_users(
     } for u in users]
 
 
+@app.post("/admin/ban-requirements/preview")
+def admin_preview_ban_requirements(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    require_admin_user(db, authorization)
+    raw_requirements = body.get("requirements") or []
+    if not isinstance(raw_requirements, list) or len(raw_requirements) > 20:
+        raise HTTPException(400, "requirements must be a list with at most 20 films")
+    results = []
+    for raw in raw_requirements:
+        if not isinstance(raw, dict):
+            continue
+        title = (raw.get("title") or "").strip()
+        if not title:
+            continue
+        try:
+            year = int(raw.get("year")) if raw.get("year") else None
+        except (TypeError, ValueError):
+            year = None
+        match = pick_best_tmdb_match(title, year)
+        results.append({
+            "submitted_title": title,
+            "submitted_year": year,
+            "title": match.get("canonical_title") or title,
+            "year": match.get("canonical_year") or year,
+            "tmdb_id": match.get("tmdb_id"),
+            "poster_url": match.get("poster_url"),
+            "match_score": match.get("match_score"),
+            "matched": match.get("tmdb_id") is not None,
+        })
+    return {"requirements": results}
+
+
 @app.post("/admin/users/{user_id}/ban")
 def admin_ban_user(
     user_id: int,
@@ -1002,7 +1037,15 @@ def admin_ban_user(
             year = int(year) if year else None
         except (TypeError, ValueError):
             year = None
-        match = pick_best_tmdb_match(title, year)
+        # Confirmed previews already carry their exact TMDB identity. Older
+        # clients can still send title/year only and get server-side matching.
+        has_confirmed_match = "matched" in raw
+        match = ({
+            "canonical_title": title,
+            "canonical_year": year,
+            "tmdb_id": int(raw["tmdb_id"]) if raw.get("tmdb_id") is not None else None,
+            "poster_url": raw.get("poster_url"),
+        } if has_confirmed_match else pick_best_tmdb_match(title, year))
         db.add(models.BanRequirement(
             user_id=user.id,
             title=match.get("canonical_title") or title,

@@ -118,6 +118,35 @@ function showBanModal(user) {
   });
 }
 
+function confirmFilmMatch(match, index, total) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "hof-modal is-open";
+    overlay.style.cssText = "display:flex";
+    const score = match.match_score == null ? "" : ` · confiança ${Math.round(match.match_score * 100)}%`;
+    overlay.innerHTML = `<div class="hof-modal__backdrop"></div>
+      <div class="hof-modal__panel" role="dialog" aria-modal="true" style="max-width:440px">
+        <div class="hof-modal__head"><div><div class="kicker kicker--soft">Filme ${index + 1} de ${total}</div>
+          <div class="hof-modal__title">${match.matched ? "É este o filme?" : "Filme não encontrado no TMDB"}</div></div></div>
+        <div class="hof-modal__body">
+          <div style="display:flex;gap:18px;align-items:flex-start">
+            ${match.poster_url ? `<img src="${escapeHtml(match.poster_url)}" alt="Poster" style="width:110px;aspect-ratio:2/3;object-fit:cover;border-radius:8px">` : `<div style="width:110px;aspect-ratio:2/3;border-radius:8px;background:var(--paper-2);display:grid;place-items:center" class="muted">Sem poster</div>`}
+            <div><div class="muted small">Introduzido</div><div>${escapeHtml(match.submitted_title)}${match.submitted_year ? ` (${match.submitted_year})` : ""}</div>
+              <div class="muted small" style="margin-top:14px">${match.matched ? "Correspondência TMDB" : "Será guardado como escrito"}</div>
+              <h3 style="margin:4px 0">${escapeHtml(match.title)}${match.year ? ` (${match.year})` : ""}</h3>
+              <div class="muted small">${match.tmdb_id ? `TMDB #${match.tmdb_id}${score}` : "Sem identificação TMDB"}</div></div>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px">
+            <button class="btn" data-match-cancel>Não, voltar</button><button class="btn primary" data-match-confirm>${match.matched ? "Sim, confirmar" : "Usar este texto"}</button>
+          </div></div></div>`;
+    document.body.appendChild(overlay);
+    const close = value => { overlay.remove(); resolve(value); };
+    overlay.querySelector("[data-match-cancel]").addEventListener("click", () => close(false));
+    overlay.querySelector("[data-match-confirm]").addEventListener("click", () => close(true));
+    overlay.querySelector(".hof-modal__backdrop").addEventListener("click", () => close(false));
+  });
+}
+
 async function loadAccounts() {
   const box = $("accountsList");
   if (!box) return;
@@ -142,7 +171,19 @@ async function loadAccounts() {
       const user = users.find(u => u.id === Number(btn.dataset.banUser));
       const payload = await showBanModal(user); if (!payload) return;
       setBusy(btn, true, "A aplicar…");
-      try { await apiPost(`/admin/users/${user.id}/ban`, payload, { auth: true }); toast("Restrição aplicada.", "success"); await loadAccounts(); }
+      try {
+        if (payload.requirements.length) {
+          const preview = await apiPost("/admin/ban-requirements/preview", { requirements: payload.requirements }, { auth: true });
+          for (let i = 0; i < preview.requirements.length; i++) {
+            if (!await confirmFilmMatch(preview.requirements[i], i, preview.requirements.length)) {
+              toast("Banimento cancelado — corrige os filmes e tenta novamente.", "info", 4500);
+              setBusy(btn, false); return;
+            }
+          }
+          payload.requirements = preview.requirements;
+        }
+        await apiPost(`/admin/users/${user.id}/ban`, payload, { auth: true }); toast("Restrição aplicada.", "success"); await loadAccounts();
+      }
       catch (e) { toast(`Erro: ${e.message}`, "error", 5000); setBusy(btn, false); }
     }));
     box.querySelectorAll("[data-unban-user]").forEach(btn => btn.addEventListener("click", async () => {

@@ -30,12 +30,13 @@ Funcionalidades principais:
 
 O painel admin inclui uma lista de contas. Um admin pode impedir temporariamente qualquer conta, incluindo outra conta admin ou a sua própria, de submeter filmes e votar, sem bloquear o acesso às restantes áreas do site. Um admin restringido mantém acesso ao painel e pode desbanir-se.
 
-Ao aplicar a restrição, o admin pode definir um motivo e até 20 filmes obrigatórios. O membro recebe um aviso inicial e mantém um lembrete acessível no site. Se tiver Letterboxd ligado, pode pedir uma sincronização e verificação automática. O auto-desbanimento só acontece quando todos os filmes surgem no diário com data igual ou posterior ao banimento. Sem filmes obrigatórios, apenas um admin pode desbanir.
+Ao aplicar a restrição, o admin pode definir um motivo e até 20 filmes obrigatórios. Antes de gravar, cada filme é correspondido no TMDB e apresentado individualmente para confirmação, com título, ano e poster. Se uma confirmação for recusada, o banimento é cancelado sem gravar dados. O membro recebe um aviso inicial e mantém um lembrete acessível no site. Se tiver Letterboxd ligado, pode pedir uma sincronização e verificação automática. O auto-desbanimento só acontece quando todos os filmes surgem no diário com data igual ou posterior ao banimento. Sem filmes obrigatórios, apenas um admin pode desbanir.
 
 Endpoints:
 
 ```http
 GET  /admin/users
+POST /admin/ban-requirements/preview
 POST /admin/users/{user_id}/ban
 POST /admin/users/{user_id}/unban
 POST /auth/ban/check
