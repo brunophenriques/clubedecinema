@@ -1293,3 +1293,7 @@ Se fores mexer no projeto, lembra:
 - substituir ranking manual por query SQL/window function;
 - adicionar dashboard interno de usage por endpoint;
 - rever encoding/mojibake em alguns ficheiros antigos.
+
+## Leaderboard ranking
+
+Leaderboard and profile positions use total wins only. Equal win counts share a position (for example, 1, 1, 3), with usernames ordered alphabetically within a tie. Win rate is informational: wins divided by submissions in closed weeks. Open-week submissions still count toward total submissions but do not affect win rate. The podium shows wins only because tied members can have different percentages.

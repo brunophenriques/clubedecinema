@@ -59,12 +59,12 @@ function winRateClass(rate) {
 const RANK_EMOJI = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
 function assignRanks(rows) {
-  // Assign rank based on wins + win_rate — tied users get same rank
+  // Assign rank based on wins only — tied users get same rank
   let rank = 1;
   return rows.map((r, i) => {
     if (i > 0) {
       const prev = rows[i - 1];
-      if (r.films_won !== prev.films_won || r.win_rate !== prev.win_rate) {
+      if (r.films_won !== prev.films_won) {
         rank = i + 1;
       }
     }
@@ -95,12 +95,11 @@ async function loadLeaderboard() {
       `).join("");
       const avatars = group.map(r => podiumAvatarHTML(r, size)).join("");
       const wins = group[0].films_won;
-      const rate = group[0].win_rate;
       return `
         <div class="lb-podium__item lb-podium__item--${rankNum}">
           <div class="lb-podium__avatars">${avatars}</div>
           <div class="lb-podium__names">${names}</div>
-          <div class="lb-podium__wins">${wins} vitória${wins !== 1 ? "s" : ""} · ${rate}%</div>
+          <div class="lb-podium__wins">${wins} vitória${wins !== 1 ? "s" : ""}</div>
           <div class="lb-podium__block">${emoji}</div>
         </div>
       `;

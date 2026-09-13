@@ -2328,17 +2328,16 @@ def leaderboard_rank_for_user(db: Session, username: str) -> int | None:
                 "username": row.username,
                 "films_submitted": int(row.films_submitted or 0),
                 "films_won": int(row.films_won or 0),
-                "win_rate": round((row.films_won or 0) / (row.films_submitted or 1) * 100),
             }
             for row in rows
         ),
-        key=lambda r: (-r["films_won"], -r["win_rate"], -r["films_submitted"]),
+        key=lambda r: (-r["films_won"], r["username"].lower()),
     )
     rank = 1
     for idx, row in enumerate(ranked):
         if idx > 0:
             prev = ranked[idx - 1]
-            if row["films_won"] != prev["films_won"] or row["win_rate"] != prev["win_rate"]:
+            if row["films_won"] != prev["films_won"]:
                 rank = idx + 1
         if row["username"].lower() == username.lower():
             return rank
@@ -2424,9 +2423,12 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
 
     # Build submitted films list — f.week and f.votes already loaded above
     films_won = 0
+    completed_submissions = 0
     submitted_list = []
     for f in submitted:
         week = f.week
+        if week and not week.is_open:
+            completed_submissions += 1
         is_winner = bool(week and not week.is_open and week.winner_film_id == f.id)
         if is_winner:
             films_won += 1
@@ -2475,7 +2477,7 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
             "films_won": films_won,
             "votes_cast": votes_cast,
             "reactions_given": reactions_given,
-            "win_rate": round(films_won / films_submitted * 100) if films_submitted else 0,
+            "win_rate": round(films_won / completed_submissions * 100) if completed_submissions else 0,
             "leaderboard_rank": rank,
         },
         "most_successful_submitted_film": most_successful,
@@ -2541,6 +2543,9 @@ def get_leaderboard(db: Session = Depends(get_db)):
             models.Film.submitter_key,
             func.count(models.Film.id).label("films_submitted"),
             func.count(
+                sa_case((models.Week.is_open == False, models.Film.id), else_=None)
+            ).label("completed_submissions"),
+            func.count(
                 sa_case(
                     (
                         (models.Week.is_open == False) &
@@ -2558,6 +2563,7 @@ def get_leaderboard(db: Session = Depends(get_db)):
     stats_map = {
         row.submitter_key: {
             "submitted": row.films_submitted,
+            "completed": row.completed_submissions,
             "won": row.films_won,
         }
         for row in film_stats
@@ -2579,15 +2585,16 @@ def get_leaderboard(db: Session = Depends(get_db)):
             continue
         submitted = s["submitted"]
         won = s["won"]
+        completed = s["completed"]
         rows.append({
             "username": user.username,
             "avatar_url": user.avatar_url or user.letterboxd_avatar_url,
             "films_submitted": submitted,
             "films_won": won,
-            "win_rate": round(won / submitted * 100) if submitted else 0,
+            "win_rate": round(won / completed * 100) if completed else 0,
             "votes_cast": votes_map.get(key, 0),
         })
 
-    rows.sort(key=lambda r: (-r["films_won"], -r["win_rate"], -r["films_submitted"]))
+    rows.sort(key=lambda r: (-r["films_won"], r["username"].lower()))
     log_db_response("/api/leaderboard", "leaderboard aggregates", len(rows), rows)
     return cache_set("leaderboard", rows, ttl=60)
