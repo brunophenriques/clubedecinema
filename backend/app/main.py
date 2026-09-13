@@ -2505,7 +2505,7 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
 
 @app.get("/leaderboard", include_in_schema=False)
 def serve_leaderboard():
-    return FileResponse(str(FRONTEND_DIR / "leaderboard.html"))
+    return FileResponse(str(FRONTEND_DIR / "leaderboard.html"), headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/api/leaderboard")

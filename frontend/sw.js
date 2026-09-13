@@ -1,4 +1,4 @@
-const CACHE = "clubedecinema-v12";
+const CACHE = "clubedecinema-v13";
 const STATIC = [
   "/",
   "/watch",
@@ -34,7 +34,8 @@ self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
 
   // API calls — always network, never cache
-  if (url.pathname.startsWith("/weeks") ||
+  if (url.pathname.startsWith("/api/") ||
+      url.pathname.startsWith("/weeks") ||
       url.pathname.startsWith("/auth") ||
       url.pathname.startsWith("/films") ||
       url.pathname.startsWith("/letterboxd") ||
@@ -52,13 +53,14 @@ self.addEventListener("fetch", e => {
                   url.pathname === "/" ||
                   url.pathname === "/watch" ||
                   url.pathname === "/archive" ||
+                  url.pathname === "/leaderboard" ||
                   url.pathname === "/admin" ||
                   url.pathname === "/preview" ||
                   url.pathname.startsWith("/profile/");
 
   if (isAsset) {
     e.respondWith(
-      fetch(e.request)
+      fetch(e.request, { cache: "no-cache" })
         .then(res => {
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
