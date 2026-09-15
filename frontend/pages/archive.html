@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Arquivo — Clube de Cinema</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&amp;family=Coming+Soon&amp;display=swap" rel="stylesheet" />
+  <script src="/static/js/shared/editorial.js" defer></script>
+  <script src="/static/js/shared/movie-details.js" defer></script>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <script src="/static/js/shared/cold-start.js" defer></script>
+  <script src="/static/js/pages/archive.js?v=2" defer></script>
+  <link rel="icon" type="image/x-icon" href="/static/icons/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="theme-color" content="#B5294E" />
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <div class="brand">
+        <a href="/" class="brand-link" style="display:contents">
+          <div class="logo-badge" aria-hidden="true"><span class="logo-six">6</span><span class="logo-seven">7</span></div>
+          <div class="brand-copy">
+            <div class="brand-title">Clube de Cinema</div>
+            <div class="brand-sub">Arquivo</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="top-right">
+        <nav class="nav">
+          <a class="nav-link" href="/">Esta semana</a>
+          <a class="nav-link active" href="/archive">Arquivo</a>
+          <a class="nav-link" href="/watch">Explorar</a>
+          <a class="nav-link" id="navAdmin" href="/admin" style="display:none">Admin</a>
+        </nav>
+
+        <div class="auth-pill">
+          <div class="auth-pill__avatar" id="authAvatarPill" style="display:none"></div>
+          <span class="auth-pill__user" id="authStatusLine">Não autenticado.</span>
+          <button class="btn lb-connect-btn" id="btnLetterboxd" type="button" title="Letterboxd" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="btn" id="btnLogin" type="button">Entrar</button>
+          <button class="btn" id="btnLogout" type="button" style="display:none">Sair</button>
+          <button class="theme-toggle" id="btnTheme" type="button" title="Mudar tema">
+            <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap page-shell">
+    <section class="hero hero--centered fade-in">
+      <div class="hero-backdrop" aria-hidden="true"></div>
+      <div class="hero-inner">
+      <div class="kicker">Histórico</div>
+      <h1>Arquivo</h1>
+      <p class="muted">As escolhas, os vencedores e as sessões que ficam na história do clube.</p>
+
+      <div class="hero-actions hero-actions--centered archive-toolbar">
+        <button id="refresh" class="btn primary" type="button">Atualizar</button>
+
+        <!-- VIEW TOGGLE -->
+        <div class="seg">
+          <button id="viewArchive" class="seg-btn is-active" type="button">Semanas</button>
+          <button id="viewHof" class="seg-btn" type="button">Hall of Fame</button>
+          <button id="viewCinema" class="seg-btn" type="button">No cinema</button>
+        </div>
+
+        <input id="q" class="input" placeholder="Pesquisar…" style="max-width: 420px;" />
+
+        <select id="sort" class="input" style="max-width: 260px;">
+          <option value="smart" selected>Ordem habitual</option>
+          <option value="new">Mais recentes</option>
+          <option value="old">Mais antigas</option>
+          <option value="votes">Mais votos (total)</option>
+          <option value="winnerVotes">Mais votos no vencedor</option>
+          <option value="az">Título A → Z</option>
+        </select>
+
+        <label class="btn" style="display:flex; gap:10px; align-items:center;">
+          <input id="onlyClosed" type="checkbox" checked />
+          <span>Mostrar só fechadas</span>
+        </label>
+      </div>
+
+      <div class="muted small" style="margin-top:10px">
+        <span id="count">—</span>
+      </div>
+          </div>
+    </section>
+
+    <section class="section section--elevated fade-in">
+      <p id="status" class="muted">A carregar…</p>
+
+      <!-- NORMAL ARCHIVE -->
+      <div id="weeks" class="archive-grid"></div>
+
+      <!-- HALL OF FAME -->
+      <div id="hof" class="hof-grid" style="display:none"></div>
+
+      <button id="loadMoreWeeks" class="btn archive-load-more" type="button" style="display:none">Carregar mais</button>
+
+      <!-- CINEMA -->
+      <div id="cinema" style="display:none">
+        <!-- Hero banner -->
+        <div class="cinema-hero">
+          <img src="/static/images/67.png" alt="67 sigmas" class="cinema-hero__gif" />
+          <div class="cinema-hero__text">
+            <div class="cinema-hero__label">🎬 No Grande Ecrã</div>
+            <h2 class="cinema-hero__title">Filmes que o clube<br>foi ver ao cinema.</h2>
+            <p class="cinema-hero__sub">Ou que devia.<br><span class="cinema-hero__aside">(desculpa cata menos uma vitória)</span></p>
+          </div>
+        </div>
+        <!-- Films grid -->
+        <div id="cinemaGrid" class="cinema-grid"></div>
+        <button id="loadMoreCinema" class="btn archive-load-more" type="button" style="display:none">Carregar mais cinema</button>
+      </div>
+    </section>
+
+    <!-- Modal (só usado no Hall of Fame para ver detalhes) -->
+    <div id="modal" class="hof-modal" aria-hidden="true">
+      <div class="hof-modal__backdrop" id="modalBackdrop"></div>
+      <div class="hof-modal__panel" role="dialog" aria-modal="true">
+        <div class="hof-modal__head">
+          <div>
+            <div id="modalTitle" class="hof-modal__title">—</div>
+            <div id="modalSub" class="muted small">—</div>
+          </div>
+          <button id="modalClose" class="btn" type="button">Fechar</button>
+        </div>
+        <div id="modalBody" class="hof-modal__body"></div>
+      </div>
+    </div>
+
+    <footer class="footer footer--centered"><span>Clube de Cinema</span><span class="footer-dot">•</span><span>Arquivo</span></footer>
+  </main>
+
+
+ 

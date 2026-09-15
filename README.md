@@ -4,6 +4,9 @@ Aplicação web para gerir semanas de submissão e votação de filmes entre mem
 
 Consulta [read.md](read.md) para a documentação técnica completa e [DEPLOY.md](DEPLOY.md) para instruções de publicação.
 
+A estrutura do frontend e o fluxo para experimentar alterações estão em
+[frontend/README.md](frontend/README.md).
+
 ## Desenvolvimento local
 
 ```bash

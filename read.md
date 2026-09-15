@@ -49,7 +49,8 @@ A app e servida por um backend FastAPI que tambem serve os ficheiros estaticos d
 ```text
 backend/
   app/
-    main.py          # FastAPI app, endpoints, auth, integracoes e serving do frontend
+    main.py          # FastAPI app, endpoints, auth e integracoes
+    frontend.py      # rotas HTML, temas e localizacao dos assets
     db.py            # configuracao SQLAlchemy e engine DB
     models.py        # modelos SQLAlchemy
     __init__.py
@@ -60,17 +61,16 @@ backend/
   requirements.txt   # dependencias Python
 
 frontend/
-  index.html         # pagina principal da semana atual
-  app.js             # logica principal: auth, semana, votos, Letterboxd, chat
-  archive.html/js    # arquivo, hall of fame, cinema
-  admin.html/js      # painel admin
-  leaderboard.html/js
-  profile.html/js
-  watch.html/js      # pesquisa de filmes
-  portugal.html/js/css
-  styles.css
-  sw.js              # service worker
-  assets de imagem/icon
+  pages/             # HTML: semana, arquivo, admin, perfis, trailers, etc.
+  static/
+    css/             # entrada styles.css, base, componentes, paginas e temas
+    js/pages/        # logica JavaScript de cada pagina
+    js/shared/       # comportamento transversal
+    images/          # imagens usadas nas paginas e temas
+    icons/           # favicons e icones PWA
+    manifest.json
+    sw.js            # servido em /sw.js
+  README.md          # guia de desenvolvimento do frontend
 
 README.md            # atualmente minimal
 read.md              # este documento
@@ -644,10 +644,31 @@ Body:
 Regras:
 
 - semana tem de estar aberta;
-- `is_ready` tem de ser true;
-- so submitters da semana podem votar;
+- a fase tem de ser `voting` (`voting_open: true`);
+- qualquer membro autenticado pode votar, mesmo sem submeter filme;
 - user nao pode votar no proprio filme;
 - um voto por semana por user.
+
+### Fases e prazos
+
+As submissões e a votação decorrem em fases separadas. A administração pode
+definir `submission_deadline` e `voting_deadline`, em segundos Unix UTC, ao criar
+a semana ou através de `POST /admin/weeks/{week_id}/deadlines`.
+Os dois prazos são opcionais em conjunto; o da votação tem de ser posterior.
+Os campos na interface e as datas apresentadas usam sempre Europe/Lisbon, incluindo
+a mudança de hora. A API também aceita datas locais no formato `YYYY-MM-DDTHH:MM`.
+
+- Antes do primeiro prazo: submissões abertas, votos bloqueados.
+- No primeiro prazo: fecham as submissões e começa a votação.
+- No segundo prazo: fecham os votos; o administrador confirma/fecha a semana.
+- Pausar votos não reabre as submissões. Retomar respeita os prazos.
+- Com votos registados, não é permitido mover a submissão para o futuro.
+- Sem prazos, o administrador inicia a votação manualmente, encerrando as submissões.
+
+O servidor calcula a fase em cada pedido; não depende de um processo agendado.
+O payload inclui `phase`, `submissions_open`, `voting_open`, os prazos e `server_time`.
+`is_ready` na resposta representa a disponibilidade efetiva da votação.
+Um `voter_key` enviado no body não substitui a autenticação.
 
 ## Admin
 

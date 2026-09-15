@@ -80,6 +80,9 @@ class Week(Base):
 
     is_open = Column(Boolean, default=True, nullable=False)
     is_ready = Column(Boolean, default=False, nullable=False)
+    submission_deadline = Column(Integer, nullable=True)  # UTC Unix seconds
+    voting_deadline = Column(Integer, nullable=True)      # UTC Unix seconds
+    voting_paused = Column(Boolean, default=False, nullable=False)
 
     # winner points to a film in films table (creates FK cycle with Film.week_id)
     winner_film_id = Column(Integer, ForeignKey("films.id"), nullable=True)

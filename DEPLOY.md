@@ -2,6 +2,16 @@
 
 Guia pratico para publicar a app FastAPI + frontend estatico.
 
+## Estrutura do frontend
+
+Publicar o diretório `frontend/` completo: `pages/` contém o HTML e `static/`
+contém CSS, JavaScript, imagens, ícones e ficheiros da PWA. O backend serve as
+páginas através de `backend/app/frontend.py`. Não é necessário um build Node.
+
+As experiências visuais devem ser testadas localmente ou numa instância separada
+antes de integrar a branch usada pelo deploy de produção. Ver
+[frontend/README.md](frontend/README.md).
+
 ## Variaveis obrigatorias
 
 ```text
@@ -11,7 +21,10 @@ TMDB_API_KEY
 
 `DATABASE_URL` deve apontar para a base de dados de producao, por exemplo Supabase/Postgres.
 
-`TMDB_API_KEY` e usada para pesquisa, posters e matching de filmes.
+`TMDB_API_KEY` e usada para pesquisa, posters, matching e fichas de filmes.
+Em desenvolvimento local, copiar `backend/.env.example` para `backend/.env`,
+preencher a chave e reiniciar o servidor. Sem chave, as fichas mostram os dados
+locais do clube e a ligacao para o Letterboxd. Nunca incluir a chave no frontend.
 
 ## Instalar dependencias
 
@@ -21,6 +34,13 @@ pip install -r requirements.txt
 ```
 
 ## Migracoes
+
+A migração `g7a8b9c0d1e2` acrescenta os prazos das semanas e o estado de pausa.
+Deve ser aplicada antes de iniciar esta versão do backend. As semanas existentes
+mantêm os prazos vazios e usam o controlo manual até serem configuradas.
+A migração seguinte, `h8b9c0d1e2f3`, cria `theme` e `is_special` apenas se estiverem
+em falta. Corrige a instalação de bases novas; preserva colunas já existentes.
+O rollback conserva essas duas colunas porque o código anterior já depende delas.
 
 Antes de iniciar a app numa base nova, ou depois de deploy com migracoes novas:
 
