@@ -914,7 +914,7 @@ async function loadClubWatched() {
     const weeks = await apiGet("/weeks?limit=20", { cacheTtl: 30000 });
     const winners = weeks
       .filter(w => !w.is_open && w.winner_film_id)
-      .slice(0, 5);
+      .slice(0, 6);
 
     if (!winners.length) { section.style.display = "none"; return; }
 
