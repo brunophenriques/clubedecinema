@@ -1,0 +1,309 @@
+/* ═══════════════════════════════════════════
+   LETTERBOXD INTEGRATION
+   ═══════════════════════════════════════════ */
+
+/* ── Avatar ── */
+.lb-avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
+  flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,.12);
+  vertical-align: middle;
+}
+
+.lb-avatar--initials {
+  background: linear-gradient(135deg, var(--rouge) 0%, #7c2d8a 100%);
+  color: #fff;
+  font-weight: 700;
+  font-family: var(--font-body);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -.01em;
+}
+
+/* ── Header avatar pill ── */
+.auth-pill__avatar {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: opacity .15s;
+}
+
+.auth-pill__avatar:hover {
+  opacity: .8;
+}
+
+.auth-pill__avatar .lb-avatar,
+.auth-pill__avatar .lb-avatar--initials {
+  width: 28px;
+  height: 28px;
+  font-size: 11px;
+}
+
+/* ── Letterboxd connect button ── */
+.lb-connect-btn {
+  padding: 6px 8px;
+  color: rgba(255,255,255,.5);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.1);
+  transition: color .15s, border-color .15s, background .15s;
+}
+
+.lb-connect-btn:hover {
+  color: #00c030;
+  border-color: #00c030;
+  background: rgba(0,192,48,.08);
+}
+
+.lb-connect-btn--connected {
+  color: #00c030;
+  border-color: rgba(0,192,48,.35);
+}
+
+/* ── Watcher strip on film card ── */
+.lb-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.lb-strip__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+  white-space: nowrap;
+}
+
+.lb-strip__avatars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.lb-watcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  position: relative;
+}
+
+.lb-watcher__stars {
+  font-size: 10px;
+  color: #f5c518;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+
+/* ── Letterboxd connect popup ── */
+#lbPopup {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 8000;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .25s var(--ease-soft), transform .25s var(--ease-soft);
+  pointer-events: none;
+}
+
+#lbPopup.lb-popup--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.lb-popup__panel {
+  background: #fdfaf6;
+  border: 1px solid var(--ink-10);
+  border-radius: var(--radius-xl);
+  padding: 20px 22px 18px;
+  width: 320px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+}
+
+.lb-popup__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: var(--ink-30);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: color .15s, background .15s;
+}
+
+.lb-popup__close:hover {
+  color: var(--ink);
+  background: var(--ink-06);
+}
+
+.lb-popup__logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #00c030;
+}
+
+.lb-popup__title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--ink);
+  letter-spacing: -.01em;
+  line-height: 1.2;
+  margin-top: -2px;
+}
+
+.lb-popup__sub {
+  font-size: 12px;
+  color: var(--ink-60);
+  line-height: 1.45;
+  margin-top: -4px;
+}
+
+/* Avatar row */
+.lb-popup__avatar-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  background: var(--parchment);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--ink-10);
+}
+
+.lb-popup__avatar-preview {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--ink-10);
+  background: var(--cream);
+  cursor: pointer;
+  transition: border-color .15s, opacity .15s;
+}
+
+.lb-popup__avatar-preview:hover {
+  border-color: var(--rouge);
+  opacity: .85;
+}
+
+.lb-popup__avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lb-popup__avatar-inputs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lb-popup__upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--card);
+  border: 1px solid var(--ink-10);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .1s;
+  width: fit-content;
+}
+
+.lb-popup__upload-btn:hover {
+  background: var(--parchment);
+  border-color: var(--ink-30);
+  transform: translateY(-1px);
+}
+
+.lb-popup__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-60);
+}
+
+.lb-popup__avatar-hint {
+  font-size: 10px;
+  color: var(--ink-30);
+  line-height: 1.3;
+}
+
+.lb-popup__msg {
+  font-size: 12px;
+  color: #e05070;
+  min-height: 14px;
+}
+
+.lb-popup__sync {
+  font-size: 12px;
+  color: var(--ink-60);
+  border: 1px solid var(--ink-10);
+  background: transparent;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  align-self: flex-start;
+}
+
+.lb-popup__sync:hover {
+  background: var(--ink-06);
+  color: var(--ink);
+}
+
+.lb-popup__skip {
+  align-self: flex-start;
+  font-size: 11px;
+  color: var(--ink-30);
+  padding: 2px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.lb-popup__skip:hover {
+  color: var(--ink-60);
+}
+
+@media (max-width: 480px) {
+  #lbPopup {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+  }
+  .lb-popup__panel {
+    width: 100%;
+  }
+}

@@ -17,12 +17,14 @@ import hashlib
 import hmac
 import base64
 
-from pathlib import Path
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .db import SessionLocal
 from . import models
+from .week_schedule import phase, parse_deadlines, require_submissions, require_voting
+from .movie_details import get_details as get_tmdb_details, letterboxd_url
+from .frontend import STATIC_DIR, router as frontend_router
 
 app = FastAPI(title="Cinema Club API")
 logger = logging.getLogger("cinema_club.egress")
@@ -119,94 +121,10 @@ async def rate_limit_and_log(request: Request, call_next):
     )
     return response
 
-# -----------------------------
-# Serve frontend (static files + pages)
-# -----------------------------
-BASE_DIR = Path(__file__).resolve()
+# Frontend routing and assets are kept separate from the JSON API.
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+app.include_router(frontend_router)
 
-CANDIDATES = [
-    BASE_DIR.parents[2] / "frontend",
-    BASE_DIR.parents[1] / "frontend",
-    BASE_DIR.parent / "frontend",
-]
-FRONTEND_DIR = next((p for p in CANDIDATES if p.exists()), None)
-
-if not FRONTEND_DIR:
-    raise RuntimeError("Frontend folder not found. Expected a 'frontend' directory near the project root.")
-
-app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
-
-
-def netflix_index_response() -> HTMLResponse:
-    """Render the Netflix skin in HTML so it does not depend on client-side JS/cache."""
-    page = (FRONTEND_DIR / "index.html").read_text(encoding="utf-8")
-    page = page.replace("<body>", '<body class="theme-netflix">', 1)
-    page = page.replace(
-        '<div class="hero-backdrop" aria-hidden="true"></div>',
-        '<div class="hero-backdrop" aria-hidden="true"></div>'
-        '<img class="netflix-brand-mark" src="/static/netflix-n.png" alt="" aria-hidden="true">',
-        1,
-    )
-    page = page.replace(
-        '<div class="kicker" id="heroKicker">Esta semana</div>',
-        '<div class="kicker" id="heroKicker">SÓ NA NETFLIX</div>',
-        1,
-    )
-    page = page.replace(
-        '<p id="heroSub" class="muted">Submete um filme e vota no favorito da semana.</p>',
-        '<p id="heroSub" class="muted"></p>',
-        1,
-    )
-    return HTMLResponse(page, headers={"Cache-Control": "no-store"})
-
-
-@app.get("/sw.js", include_in_schema=False)
-def serve_sw():
-    from fastapi.responses import FileResponse
-    return FileResponse(str(FRONTEND_DIR / "sw.js"), media_type="application/javascript")
-
-@app.get("/", include_in_schema=False)
-def serve_index():
-    from .db import SessionLocal
-    db = SessionLocal()
-    try:
-        theme = (
-            db.query(models.Week.theme)
-            .filter(models.Week.is_open == True)
-            .order_by(models.Week.id.desc())
-            .limit(1)
-            .scalar()
-        )
-        if theme == "portugal":
-            return FileResponse(str(FRONTEND_DIR / "portugal.html"))
-        if theme == "netflix":
-            return netflix_index_response()
-    finally:
-        db.close()
-    return FileResponse(str(FRONTEND_DIR / "index.html"))
-
-@app.get("/preview", include_in_schema=False)
-def serve_theme_preview(theme: str | None = Query(None)):
-    """Always serve the neutral homepage so an active special theme cannot mask previews."""
-    if (theme and theme.strip().lower() == "netflix"):
-        return netflix_index_response()
-    return FileResponse(str(FRONTEND_DIR / "index.html"))
-
-@app.get("/portugal", include_in_schema=False)
-def serve_portugal():
-    return FileResponse(str(FRONTEND_DIR / "portugal.html"))
-
-@app.get("/admin", include_in_schema=False)
-def serve_admin():
-    return FileResponse(str(FRONTEND_DIR / "admin.html"))
-
-@app.get("/archive", include_in_schema=False)
-def serve_archive():
-    return FileResponse(str(FRONTEND_DIR / "archive.html"))
-
-@app.get("/como-funciona", include_in_schema=False)
-def serve_rules():
-    return FileResponse(str(FRONTEND_DIR / "como-funciona.html"))
 
 app.add_middleware(
     CORSMiddleware,
@@ -472,6 +390,7 @@ def pick_best_tmdb_match(submitted_title: str, submitted_year: int | None = None
 # ----------------------
 
 def week_payload(db: Session, week: models.Week, include_submitter: bool = False):
+    state = phase(week)
     # ── FIX: single GROUP BY query instead of loading all votes into memory
     counts = dict(
         db.query(models.Vote.film_id, func.count(models.Vote.id))
@@ -508,7 +427,13 @@ def week_payload(db: Session, week: models.Week, include_submitter: bool = False
         "is_open": week.is_open,
         "winner_film_id": week.winner_film_id,
         "films": films,
-        "is_ready": week.is_ready,
+        "is_ready": state == "voting",
+        "phase": state,
+        "submission_deadline": week.submission_deadline,
+        "voting_deadline": week.voting_deadline,
+        "submissions_open": state == "submissions",
+        "voting_open": state == "voting",
+        "server_time": int(time.time()),
         "theme": week.theme,
     }
 
@@ -583,7 +508,6 @@ def change_username(
     db.commit()
     db.refresh(user)
     return {"ok": True, "username": user.username}
-
 
 
 @app.post("/auth/login")
@@ -673,7 +597,7 @@ def current_week(db: Session = Depends(get_db)):
         db.query(models.Week)
         .filter(models.Week.is_special == False)
         .options(
-            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme, models.Week.submission_deadline, models.Week.voting_deadline, models.Week.voting_paused),
             selectinload(models.Week.films).load_only(
                 models.Film.id,
                 models.Film.week_id,
@@ -710,7 +634,7 @@ def list_weeks(
         db.query(models.Week)
         .filter(models.Week.is_special == False)
         .options(
-            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme, models.Week.submission_deadline, models.Week.voting_deadline, models.Week.voting_paused),
             selectinload(models.Week.films).load_only(
                 models.Film.id,
                 models.Film.week_id,
@@ -747,7 +671,7 @@ def list_cinema_weeks(
         db.query(models.Week)
         .filter(models.Week.is_special == True)
         .options(
-            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme, models.Week.submission_deadline, models.Week.voting_deadline, models.Week.voting_paused),
             selectinload(models.Week.films).load_only(
                 models.Film.id,
                 models.Film.week_id,
@@ -774,7 +698,7 @@ def get_week(week_id: int, db: Session = Depends(get_db)):
         db.query(models.Week)
         .filter(models.Week.id == week_id)
         .options(
-            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme, models.Week.submission_deadline, models.Week.voting_deadline, models.Week.voting_paused),
             selectinload(models.Week.films).load_only(
                 models.Film.id,
                 models.Film.week_id,
@@ -808,6 +732,8 @@ def submit_film(
         raise HTTPException(status_code=404, detail="Week not found")
     if not week.is_open:
         raise HTTPException(status_code=400, detail="Week is closed")
+
+    require_submissions(week)
 
     already = (
         db.query(models.Film)
@@ -858,39 +784,12 @@ def submit_film(
         needs_review=needs_review,
     )
 
+    require_submissions(week)
     db.add(film)
     db.commit()
     db.refresh(week)
     return week_payload(db, week, include_submitter=False)
 
-
-from .db import DATABASE_URL
-
-@app.get("/debug/whoami")
-def debug_whoami(db: Session = Depends(get_db), authorization: str | None = Header(default=None)):
-    token = None
-    user = None
-    is_admin = None
-    try:
-        token = authorization[7:].strip() if (authorization and authorization.lower().startswith("bearer ")) else None
-        user = get_current_user(db, authorization)
-        is_admin = bool(getattr(user, "is_admin", False))
-    except Exception as e:
-        return {
-            "database_url": DATABASE_URL,
-            "authorization_present": bool(authorization),
-            "token_prefix": (token[:8] if token else None),
-            "error": str(e),
-        }
-
-    return {
-        "database_url": DATABASE_URL,
-        "authorization_present": bool(authorization),
-        "token_prefix": (token[:8] if token else None),
-        "user_id": user.id,
-        "username": user.username,
-        "is_admin": is_admin,
-    }
 
 @app.post("/weeks/{week_id}/vote")
 def vote(
@@ -899,17 +798,9 @@ def vote(
     db: Session = Depends(get_db),
     authorization: str | None = Header(None),
 ):
-    voter_key = None
-    if authorization:
-        user = get_current_user(db, authorization)
-        require_participation_allowed(db, user)
-        voter_key = str(user.id)
-    else:
-        voter_key = (body.get("voter_key") or "").strip()
-        if voter_key.isdigit():
-            account = db.query(models.User).filter(models.User.id == int(voter_key)).first()
-            if account:
-                require_participation_allowed(db, account)
+    user = get_current_user(db, authorization)
+    require_participation_allowed(db, user)
+    voter_key = str(user.id)
 
     film_id = body.get("film_id")
 
@@ -919,10 +810,7 @@ def vote(
     week = db.query(models.Week).filter(models.Week.id == week_id).first()
     if not week:
         raise HTTPException(status_code=404, detail="Week not found")
-    if not week.is_open:
-        raise HTTPException(status_code=400, detail="Voting is closed")
-    if not week.is_ready:
-        raise HTTPException(status_code=400, detail="Voting not started yet")
+    require_voting(week)
 
     film = db.query(models.Film).filter(
         models.Film.id == int(film_id),
@@ -931,19 +819,11 @@ def vote(
     if not film:
         raise HTTPException(status_code=404, detail="Film not found")
 
-    submitter_keys = {
-        k for (k,) in db.query(models.Film.submitter_key)
-                        .filter(models.Film.week_id == week_id)
-                        .distinct()
-                        .all()
-    }
-    if voter_key not in submitter_keys:
-        raise HTTPException(status_code=403, detail="Only submitters can vote this week")
-
     if film.submitter_key == voter_key:
         raise HTTPException(status_code=403, detail="You cannot vote on your own film")
 
     v = models.Vote(week_id=week_id, film_id=int(film_id), voter_key=voter_key)
+    require_voting(week)
     db.add(v)
 
     try:
@@ -1089,7 +969,7 @@ def admin_current_week(
         db.query(models.Week)
         .filter(models.Week.is_special == False)
         .options(
-            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme, models.Week.submission_deadline, models.Week.voting_deadline, models.Week.voting_paused),
             selectinload(models.Week.films).load_only(
                 models.Film.id,
                 models.Film.week_id,
@@ -1127,7 +1007,7 @@ def admin_list_weeks(
         db.query(models.Week)
         .filter(models.Week.is_special == False)
         .options(
-            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme),
+            load_only(models.Week.id, models.Week.title, models.Week.is_open, models.Week.is_ready, models.Week.winner_film_id, models.Week.theme, models.Week.submission_deadline, models.Week.voting_deadline, models.Week.voting_paused),
             selectinload(models.Week.films).load_only(
                 models.Film.id,
                 models.Film.week_id,
@@ -1166,8 +1046,34 @@ def create_week(
     if not title:
         raise HTTPException(400, "title required")
 
-    week = models.Week(title=title, is_open=True, theme=theme)
+    submission, voting = parse_deadlines(body)
+    week = models.Week(title=title, is_open=True, theme=theme,
+                       submission_deadline=submission, voting_deadline=voting)
     db.add(week)
+    db.commit()
+    db.refresh(week)
+    return week_payload(db, week, include_submitter=True)
+
+
+@app.post("/admin/weeks/{week_id}/deadlines")
+def update_week_deadlines(
+    week_id: int,
+    body: dict,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    require_admin_user(db, authorization)
+    week = db.query(models.Week).filter(models.Week.id == week_id).first()
+    if not week:
+        raise HTTPException(404, "Week not found")
+    submission, voting = parse_deadlines(body)
+    has_votes = db.query(models.Vote.id).filter(models.Vote.week_id == week_id).first() is not None
+    if has_votes and submission is not None and submission > time.time():
+        raise HTTPException(409, "Já existem votos; não podes reabrir a fase de submissões.")
+    if has_votes or phase(week) in {"voting", "paused", "voting_closed"}:
+        week.is_ready = True
+    week.submission_deadline = submission
+    week.voting_deadline = voting
     db.commit()
     db.refresh(week)
     return week_payload(db, week, include_submitter=True)
@@ -1185,6 +1091,8 @@ def add_film(
     week = db.query(models.Week).filter(models.Week.id == week_id).first()
     if not week:
         raise HTTPException(404, "Week not found")
+
+    require_submissions(week)
 
     title = (body.get("title") or "").strip()
     submitter_key = (body.get("submitter_key") or "").strip()
@@ -1231,6 +1139,7 @@ def add_film(
         needs_review=needs_review,
     )
 
+    require_submissions(week)
     db.add(film)
     db.commit()
     db.refresh(week)
@@ -1461,6 +1370,11 @@ def start_voting(
     if not week:
         raise HTTPException(404, "Week not found")
 
+    if not week.is_open or (week.voting_deadline is not None and time.time() >= week.voting_deadline):
+        raise HTTPException(400, "Altera o prazo ou reabre a semana antes de abrir a votação.")
+    if week.submission_deadline is not None and time.time() < week.submission_deadline:
+        raise HTTPException(400, "A fase de submissões ainda não terminou.")
+    week.voting_paused = False
     week.is_ready = True
     db.commit()
     db.refresh(week)
@@ -1479,7 +1393,10 @@ def stop_voting(
     if not week:
         raise HTTPException(404, "Week not found")
 
-    week.is_ready = False
+    if phase(week) != "voting":
+        raise HTTPException(400, "A votação não está aberta.")
+    week.voting_paused = True
+    week.is_ready = True
     db.commit()
     db.refresh(week)
     return week_payload(db, week, include_submitter=True)
@@ -2237,6 +2154,49 @@ def search_movies(q: str, page: int = 1, db: Session = Depends(get_db)):
         raise HTTPException(500, str(e))
 
 
+@app.get("/movies/{tmdb_id}/details")
+def movie_details(tmdb_id: int):
+    return get_tmdb_details(tmdb_id)
+
+
+@app.get("/films/{film_id}/details")
+def club_film_details(film_id: int, db: Session = Depends(get_db)):
+    film = db.query(models.Film).filter(models.Film.id == film_id).first()
+    if not film:
+        raise HTTPException(404, "Film not found")
+    local = {
+        "film_id": film.id, "tmdb_id": film.tmdb_id,
+        "title": film.title, "year": film.year,
+        "directors": [film.director] if film.director else [],
+        "poster_url": film.poster_url, "overview": None, "genres": [], "cast": [],
+        "letterboxd_url": letterboxd_url(film.tmdb_id, film.title, film.year),
+        "source": "club",
+    }
+    if film.tmdb_id:
+        try:
+            return {**local, **get_tmdb_details(film.tmdb_id)}
+        except HTTPException:
+            local["details_status"] = "unavailable"
+    else:
+        local["details_status"] = "unmatched"
+        if os.getenv("TMDB_API_KEY"):
+            try:
+                match_key = f"film:details-match:{film.id}:{film.title}:{film.year}"
+                resolved_id = cache_get(match_key)
+                if resolved_id is None:
+                    match = pick_best_tmdb_match(film.title, film.year)
+                    resolved_id = match.get("tmdb_id") if not match.get("needs_review") and (match.get("match_score") or 0) >= 90 else 0
+                    cache_set(match_key, resolved_id or 0, ttl=3600)
+                if resolved_id:
+                    # A read-only lookup: never silently change a member's submission.
+                    return {**local, **get_tmdb_details(resolved_id), "details_status": "available"}
+            except (HTTPException, requests.RequestException, ValueError, TypeError, KeyError):
+                local["details_status"] = "unavailable"
+        else:
+            local["details_status"] = "unavailable"
+    return local
+
+
 @app.get("/movies/{tmdb_id}/trailer")
 def get_movie_trailer(tmdb_id: int):
     api_key = os.getenv("TMDB_API_KEY")
@@ -2285,18 +2245,6 @@ def get_movie_trailer(tmdb_id: int):
         "name": chosen.get("name"),
     }
     return cache_set(cache_key, payload, ttl=60 * 60 * 12)
-
-
-@app.get("/watch", include_in_schema=False)
-def serve_watch():
-    from fastapi.responses import FileResponse
-    return FileResponse(str(FRONTEND_DIR / "watch.html"))
-
-
-@app.get("/profile/{username}", include_in_schema=False)
-def serve_profile(username: str):
-    from fastapi.responses import FileResponse
-    return FileResponse(str(FRONTEND_DIR / "profile.html"))
 
 
 def leaderboard_rank_for_user(db: Session, username: str) -> int | None:
@@ -2502,10 +2450,6 @@ def get_user_profile(username: str, db: Session = Depends(get_db)):
 # ─────────────────────────────────────────────
 # Leaderboard
 # ─────────────────────────────────────────────
-
-@app.get("/leaderboard", include_in_schema=False)
-def serve_leaderboard():
-    return FileResponse(str(FRONTEND_DIR / "leaderboard.html"), headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/api/leaderboard")

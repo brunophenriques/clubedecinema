@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — Clube de Cinema</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&amp;family=Coming+Soon&amp;display=swap" rel="stylesheet" />
+  <script src="/static/js/shared/editorial.js" defer></script>
+  <script src="/static/js/shared/movie-details.js" defer></script>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <script src="/static/js/shared/cold-start.js" defer></script>
+  <script src="/static/js/pages/admin.js" defer></script>
+  <link rel="icon" type="image/x-icon" href="/static/icons/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="theme-color" content="#B5294E" />
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <div class="brand">
+        <a href="/" class="brand-link" style="display:contents">
+          <div class="logo-badge" aria-hidden="true"><span class="logo-six">6</span><span class="logo-seven">7</span></div>
+          <div class="brand-copy">
+            <div class="brand-title">Clube de Cinema</div>
+            <div class="brand-sub">Admin</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="top-right">
+        <nav class="nav">
+          <a class="nav-link" href="/">Esta semana</a>
+          <a class="nav-link" href="/archive">Arquivo</a>
+          <a class="nav-link" href="/watch">Explorar</a>
+          <a class="nav-link active" href="/admin">Admin</a>
+        </nav>
+
+        <div class="auth-pill">
+          <div class="auth-pill__avatar" id="authAvatarPill" style="display:none"></div>
+          <span class="auth-pill__user" id="authStatusLine">Não autenticado.</span>
+          <button class="btn" id="btnLogin" type="button">Entrar</button>
+          <button class="btn" id="btnLogout" type="button" style="display:none">Sair</button>
+          <button class="theme-toggle" id="btnTheme" type="button" title="Mudar tema">
+            <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="wrap page-shell">
+    <section class="section section--elevated fade-in">
+      <div class="section-head section-head--center">
+        <div>
+          <div class="kicker kicker--soft">Painel</div>
+          <h2>Semana atual</h2>
+          <div class="muted">Gerir estado da votação, filmes e semana ativa.</div>
+        </div>
+        <button id="refresh" type="button" class="btn primary">Atualizar</button>
+      </div>
+
+      <div class="muted" id="currentStatus">A carregar…</div>
+
+      <div class="hero-actions" style="margin-top:12px">
+        <button id="startVoting" type="button" class="btn">Abrir / retomar votação</button>
+        <button id="stopVoting" type="button" class="btn">Pausar votação</button>
+        <button id="closeWeek" type="button" class="btn">Terminar votação e fechar semana</button>
+        <button id="openWeek" type="button" class="btn">Reabrir semana</button>
+        <button id="deleteWeek" type="button" class="btn">Apagar semana</button>
+
+        <select id="sort" class="input" style="max-width: 260px;">
+          <option value="new">Mais recentes</option>
+          <option value="old">Mais antigas</option>
+          <option value="votes">Mais votos (total)</option>
+          <option value="winnerVotes">Mais votos no vencedor</option>
+          <option value="az">Título A → Z</option>
+        </select>
+      </div>
+
+      <div class="deadline-fields">
+        <label>Fim das submissões<input id="editSubmissionDeadline" class="input" type="datetime-local" /></label>
+        <label>Fim da votação<input id="editVotingDeadline" class="input" type="datetime-local" /></label>
+        <button id="saveDeadlines" class="btn" type="button">Guardar prazos</button>
+      </div>
+      <div id="currentWeek" style="margin-top:12px"></div>
+    </section>
+
+    <section class="section section--elevated fade-in">
+      <div class="section-head">
+        <h2>Criar semana</h2>
+        <div class="muted">Ex: “Week 2 — Noir”</div>
+      </div>
+      <div class="hero-actions">
+        <input id="newWeekTitle" class="input" placeholder="Título da semana" />
+        <input id="newWeekTheme" class="input" placeholder="Tema (opcional — ex: italian, netflix...)" style="margin-top:8px" />
+      <div class="deadline-fields">
+        <label>Fim das submissões<input id="newSubmissionDeadline" class="input" type="datetime-local" /></label>
+        <label>Fim da votação<input id="newVotingDeadline" class="input" type="datetime-local" /></label>
+      </div>
+        <button id="previewWeek" type="button" class="btn">Pré-visualizar</button>
+        <button id="createWeek" type="button" class="btn primary">Criar</button>
+      </div>
+    </section>
+
+    <section class="section section--elevated fade-in">
+      <div class="section-head">
+        <h2>Letterboxd</h2>
+        <div class="muted">Sincronizar agora os diarios dos membros ligados.</div>
+      </div>
+      <div class="hero-actions">
+        <button id="syncLetterboxdAll" type="button" class="btn primary">Sincronizar todos</button>
+      </div>
+      <div id="letterboxdSyncStatus" class="muted small" style="margin-top:12px"></div>
+    </section>
+
+    <section class="section section--elevated fade-in">
+      <div class="section-head">
+        <div>
+          <h2>Contas e restrições</h2>
+          <div class="muted">Bloqueia temporariamente a submissão e o voto de um membro.</div>
+        </div>
+        <button id="refreshAccounts" type="button" class="btn">Atualizar</button>
+      </div>
+      <div id="accountsList" class="admin-films"><div class="muted small">A carregar…</div></div>
+    </section>
+
+    <section class="section section--elevated fade-in">
+      <div class="section-head">
+        <h2>Adicionar filme</h2>
+        <div class="muted">O submitter manda-te o voter_key dele.</div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label class="muted">Week ID</label>
+          <input id="weekId" class="input" placeholder="1" />
+        </div>
+        <div>
+          <label class="muted">Título</label>
+          <input id="filmTitle" class="input" placeholder="Strange Days" />
+        </div>
+        <div>
+          <label class="muted">Ano</label>
+          <input id="filmYear" class="input" placeholder="1995" />
+        </div>
+        <div>
+          <label class="muted">Realizador</label>
+          <input id="filmDirector" class="input" placeholder="Kathryn Bigelow" />
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label class="muted">submitter_key</label>
+        <input id="submitterKey" class="input" placeholder="cola aqui o voter_key do submitter" />
+      </div>
+
+      <div class="hero-actions" style="margin-top:12px">
+        <button id="addFilm" type="button" class="btn primary">Adicionar filme</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Needs review</h2>
+        <div class="muted">Filmes que o TMDB não apanhou bem.</div>
+      </div>
+
+      <div id="needsReview"></div>
+    </section>
+
+    <!-- AUTH MODAL -->
+    <div id="authModal" style="display:none">
+      <div class="hof-modal is-open" style="display:block">
+        <div class="hof-modal__backdrop" id="authBackdrop"></div>
+        <div class="hof-modal__panel" role="dialog" aria-modal="true" style="max-width:520px">
+          <div class="hof-modal__head">
+            <div>
+              <div class="hof-modal__title">Entrar / Criar conta</div>
+              <div class="muted small">Sem email. Só username + password.</div>
+            </div>
+            <button class="btn" id="authClose" type="button">Fechar</button>
+          </div>
+          <div class="hof-modal__body">
+            <div class="seg" style="margin-bottom:12px;">
+              <button id="tabLogin" class="seg-btn is-active" type="button">Login</button>
+              <button id="tabRegister" class="seg-btn" type="button">Criar conta</button>
+            </div>
+
+            <form id="authForm" style="display:grid; gap:10px;">
+              <input id="authUser" class="input" placeholder="username (ex: rita)" autocomplete="username" />
+              <input id="authPass" class="input" placeholder="password" type="password" autocomplete="current-password" />
+              <button id="authSubmit" class="btn primary" type="submit" data-mode="login">Entrar</button>
+              <div class="muted small" id="authMsg"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer footer--centered"><span>Clube de Cinema</span><span class="footer-dot">•</span><span>Admin</span><span class="footer-dot">•</span><code id="apiLabel"></code></footer>
+  </main>
+</body>
+</html>
