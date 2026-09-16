@@ -1,10 +1,11 @@
-const CACHE = "clubedecinema-v19";
+const CACHE = "clubedecinema-v20";
 const STATIC = [
   "/",
   "/watch",
   "/static/css/styles.css",
   "/static/css/editorial.css",
   "/static/js/shared/editorial.js",
+  "/static/js/shared/api.js",
   "/static/js/shared/movie-details.js",
   "/static/css/components/movie-details.css",
   "/static/css/base.css",

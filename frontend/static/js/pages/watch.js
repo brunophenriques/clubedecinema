@@ -1,6 +1,5 @@
 const API = "";
-const TOKEN_KEY = "cinema_club_token";
-const getToken = () => localStorage.getItem(TOKEN_KEY);
+const { getToken, clearToken } = window.CinemaApi;
 
 function el(id) { return document.getElementById(id); }
 function escapeHtml(s) {
@@ -145,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   el("btnTheme")?.addEventListener("click", toggleTheme);
   el("btnLogin")?.addEventListener("click", () => window.location.href = "/");
-  el("btnLogout")?.addEventListener("click", () => { localStorage.removeItem(TOKEN_KEY); window.location.href = "/"; });
+  el("btnLogout")?.addEventListener("click", () => { clearToken(); window.location.href = "/"; });
 
   // Search input
   el("watchInput")?.addEventListener("input", (e) => {

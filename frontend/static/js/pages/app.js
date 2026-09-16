@@ -30,6 +30,7 @@ function renderDeadlines(week) {
    ============================================= */
 
 const API = "";
+const { getToken, setToken, clearToken, request } = window.CinemaApi;
 
 function el(id) { return document.getElementById(id); }
 
@@ -40,10 +41,6 @@ function escapeHtml(s) {
 }
 
 /* ── Auth storage ── */
-const TOKEN_KEY = "cinema_club_token";
-function getToken() { return localStorage.getItem(TOKEN_KEY); }
-function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
-function clearToken() { localStorage.removeItem(TOKEN_KEY); }
 function votedKey(weekId) { return `cinema_club_voted_week_${weekId}`; }
 
 /* ── Letterboxd member cache ── */
@@ -137,20 +134,6 @@ function toast(message, type = "info", ms = 3400) {
 }
 
 /* ── HTTP helpers ── */
-async function parseError(res) {
-  const ct = res.headers.get("content-type") || "";
-  try {
-    if (ct.includes("application/json")) {
-      const j = await res.json();
-      return { status: res.status, detail: String(j?.detail ?? j?.message ?? JSON.stringify(j)) };
-    }
-    const t = await res.text();
-    return { status: res.status, detail: t || `HTTP ${res.status}` };
-  } catch {
-    return { status: res.status, detail: `HTTP ${res.status}` };
-  }
-}
-
 const _apiCache = new Map();
 
 async function apiGet(path, { auth = false, cacheTtl = 0 } = {}) {
@@ -159,27 +142,13 @@ async function apiGet(path, { auth = false, cacheTtl = 0 } = {}) {
     const hit = _apiCache.get(cacheKey);
     if (hit && hit.expiresAt > Date.now()) return hit.value;
   }
-  const headers = {};
-  if (auth && getToken()) headers["Authorization"] = `Bearer ${getToken()}`;
-  const res = await fetch(`${API}${path}`, { headers });
-  if (!res.ok) {
-    const err = await parseError(res);
-    throw Object.assign(new Error(err.detail), { status: err.status });
-  }
-  const value = await res.json();
+  const value = await request(`${API}${path}`, { auth });
   if (cacheTtl && cacheKey) _apiCache.set(cacheKey, { expiresAt: Date.now() + cacheTtl, value });
   return value;
 }
 
 async function apiPost(path, body, { auth = false } = {}) {
-  const headers = { "Content-Type": "application/json" };
-  if (auth && getToken()) headers["Authorization"] = `Bearer ${getToken()}`;
-  const res = await fetch(`${API}${path}`, { method: "POST", headers, body: JSON.stringify(body ?? {}) });
-  if (!res.ok) {
-    const err = await parseError(res);
-    throw Object.assign(new Error(err.detail), { status: err.status });
-  }
-  return res.json();
+  return request(`${API}${path}`, { method: "POST", body: body ?? {}, auth });
 }
 
 /* ── Error messages ── */
@@ -586,14 +555,7 @@ function showLetterboxdPopup() {
 
 /* ── HTTP PATCH helper ── */
 async function apiPatch(path, body, { auth = false } = {}) {
-  const headers = { "Content-Type": "application/json" };
-  if (auth && getToken()) headers["Authorization"] = `Bearer ${getToken()}`;
-  const res = await fetch(`${API}${path}`, { method: "PATCH", headers, body: JSON.stringify(body ?? {}) });
-  if (!res.ok) {
-    const err = await parseError(res);
-    throw Object.assign(new Error(err.detail), { status: err.status });
-  }
-  return res.json();
+  return request(`${API}${path}`, { method: "PATCH", body: body ?? {}, auth });
 }
 
 /* ── Letterboxd watcher strip ── */
