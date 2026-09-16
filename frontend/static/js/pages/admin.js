@@ -23,6 +23,7 @@ function localDeadline(timestamp) {
    ============================================= */
 
 const API = "";
+const { getToken, setToken, clearToken, request } = window.CinemaApi;
 
 function $(id) { return document.getElementById(id); }
 
@@ -33,15 +34,6 @@ function escapeHtml(s) {
 }
 
 /* ── Auth storage ── */
-const TOKEN_KEY = "cinema_club_token";
-function getToken() { return localStorage.getItem(TOKEN_KEY); }
-function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
-function clearToken() { localStorage.removeItem(TOKEN_KEY); }
-function authHeaders() {
-  const t = getToken();
-  return t ? { "Authorization": `Bearer ${t}` } : {};
-}
-
 let currentWeekData = null;
 
 /* ── Toast ── */
@@ -267,62 +259,20 @@ function showEditFilmModal(film) {
 }
 
 /* ── HTTP helpers ── */
-async function parseError(res) {
-  const ct = res.headers.get("content-type") || "";
-  try {
-    if (ct.includes("application/json")) {
-      const j = await res.json();
-      return { status: res.status, detail: String(j?.detail ?? j?.message ?? JSON.stringify(j)) };
-    }
-    const t = await res.text();
-    return { status: res.status, detail: t || `HTTP ${res.status}` };
-  } catch {
-    return { status: res.status, detail: `HTTP ${res.status}` };
-  }
-}
-
 async function apiGet(path, { auth = false } = {}) {
-  const headers = {};
-  if (auth) Object.assign(headers, authHeaders());
-  const res = await fetch(`${API}${path}`, { headers });
-  if (!res.ok) {
-    const err = await parseError(res);
-    throw Object.assign(new Error(err.detail), { status: err.status });
-  }
-  return res.json();
+  return request(`${API}${path}`, { auth });
 }
 
 async function apiPost(path, body, { auth = false } = {}) {
-  const headers = { "Content-Type": "application/json" };
-  if (auth) Object.assign(headers, authHeaders());
-  const res = await fetch(`${API}${path}`, { method: "POST", headers, body: JSON.stringify(body ?? {}) });
-  if (!res.ok) {
-    const err = await parseError(res);
-    throw Object.assign(new Error(err.detail), { status: err.status });
-  }
-  return res.json();
+  return request(`${API}${path}`, { method: "POST", body: body ?? {}, auth });
 }
 
 async function apiDelete(path) {
-  const res = await fetch(`${API}${path}`, { method: "DELETE", headers: authHeaders() });
-  if (!res.ok) {
-    const err = await parseError(res);
-    throw Object.assign(new Error(err.detail), { status: err.status });
-  }
-  return res.json();
+  return request(`${API}${path}`, { method: "DELETE", auth: true });
 }
 
 async function apiPatch(path, body) {
-  const res = await fetch(`${API}${path}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify(body || {}),
-  });
-  if (!res.ok) {
-    const err = await parseError(res);
-    throw Object.assign(new Error(err.detail), { status: err.status });
-  }
-  return res.json();
+  return request(`${API}${path}`, { method: "PATCH", body: body || {}, auth: true });
 }
 
 /* ── Busy helper ── */

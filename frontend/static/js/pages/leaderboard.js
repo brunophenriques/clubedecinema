@@ -1,6 +1,5 @@
 const API = "";
-const TOKEN_KEY = "cinema_club_token";
-const getToken = () => localStorage.getItem(TOKEN_KEY);
+const { getToken, clearToken, request } = window.CinemaApi;
 
 function el(id) { return document.getElementById(id); }
 function escapeHtml(s) {
@@ -22,12 +21,7 @@ function toggleTheme() {
 initTheme();
 
 async function apiGet(path) {
-  const headers = {};
-  const token = getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(`${API}${path}`, { headers });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  return request(`${API}${path}`, { auth: !!getToken() });
 }
 
 function avatarHTML(user, size = 32) {
@@ -156,7 +150,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   el("btnLogout")?.addEventListener("click", () => {
-    localStorage.removeItem(TOKEN_KEY);
+    clearToken();
     window.location.href = "/";
   });
   el("btnLogin")?.addEventListener("click", () => { window.location.href = "/"; });

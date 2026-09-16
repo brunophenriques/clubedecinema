@@ -3,6 +3,7 @@
    ============================================= */
 
 const API = "";
+const { getToken, clearToken, request } = window.CinemaApi;
 
 const apiLabel = document.getElementById("apiLabel");
 if (apiLabel) apiLabel.textContent = API || "(mesmo servidor)";
@@ -34,7 +35,6 @@ function toast(message, type = "info", ms = 3400) {
 }
 
 /* ── Auth helpers ── */
-function getToken() { return localStorage.getItem("cinema_club_token"); }
 
 /* ── Theme ── */
 function initTheme() {
@@ -53,7 +53,7 @@ initTheme();
 
 document.getElementById("btnTheme")?.addEventListener("click", toggleTheme);
 document.getElementById("btnLogout")?.addEventListener("click", () => {
-  localStorage.removeItem("cinema_club_token");
+  clearToken();
   window.location.href = "/";
 });
 document.getElementById("btnLogin")?.addEventListener("click", () => {
@@ -79,7 +79,7 @@ async function refreshNavAdmin() {
 
   try {
     const res = await fetch(`${API}/auth/me`, { headers: { "Authorization": `Bearer ${token}` } });
-    if (!res.ok) { localStorage.removeItem("cinema_club_token"); return; }
+    if (!res.ok) { clearToken(); return; }
     const me = await res.json();
 
     if (me?.is_admin && navAdmin) navAdmin.style.display = "";
@@ -87,11 +87,11 @@ async function refreshNavAdmin() {
     if (btnLogout) btnLogout.style.display = "";
 
     if (authLine) {
-      authLine.innerHTML = `<a href="/profile/${encodeURIComponent(me.username)}" style="color:inherit;text-decoration:none">@${me.username}</a>`;
+      authLine.innerHTML = `<a href="/profile/${encodeURIComponent(me.username)}" style="color:inherit;text-decoration:none">@${escapeHtml(me.username)}</a>`;
     }
 
     if (avatarPill && me.avatar_url) {
-      avatarPill.innerHTML = `<img src="${me.avatar_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover" alt="avatar"/>`;
+      avatarPill.innerHTML = `<img src="${escapeHtml(me.avatar_url)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover" alt="avatar"/>`;
       avatarPill.style.display = "";
       avatarPill.style.cursor = "pointer";
       avatarPill.onclick = () => window.location.href = `/profile/${encodeURIComponent(me.username)}`;
@@ -107,9 +107,7 @@ async function refreshNavAdmin() {
 
 /* ── API ── */
 async function apiGet(path) {
-  const res = await fetch(`${API}${path}`);
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return request(`${API}${path}`);
 }
 
 /* ── Data helpers ── */
@@ -228,13 +226,12 @@ async function loadCinema({ reset = false } = {}) {
     films.forEach(f => {
       const card = document.createElement("div");
       card.className = "cinema-card fade-in";
-      const lbUrl = f.tmdb_id ? `https://letterboxd.com/search/tmdb:${f.tmdb_id}/` : `https://letterboxd.com/search/${encodeURIComponent(f.title)}/`;
       card.innerHTML = `
         <button type="button" data-film-details data-film-id="${escapeHtml(f.id)}" data-tmdb-id="${escapeHtml(f.tmdb_id || '')}" data-title="${escapeHtml(f.title)}" data-year="${escapeHtml(f.year || '')}" data-poster="${escapeHtml(f.poster_url || '')}" class="cinema-card__poster-link">
           <div class="cinema-card__poster">
             ${f.poster_url
-              ? `<img src="${f.poster_url}" alt="${f.title}" loading="lazy"/>`
-              : `<div class="cinema-card__poster-ph">${(f.title||"").slice(0,2).toUpperCase()}</div>`
+              ? `<img src="${escapeHtml(f.poster_url)}" alt="${escapeHtml(f.title)}" loading="lazy"/>`
+              : `<div class="cinema-card__poster-ph">${escapeHtml((f.title||"").slice(0,2).toUpperCase())}</div>`
             }
             <div class="cinema-card__overlay">
               <span class="cinema-card__overlay-text">Saber mais</span>
@@ -242,8 +239,8 @@ async function loadCinema({ reset = false } = {}) {
           </div>
         </button>
         <div class="cinema-card__body">
-          <div class="cinema-card__title">${f.title}${f.year ? ` <span class="cinema-card__year">(${f.year})</span>` : ""}</div>
-          ${f.director ? `<div class="cinema-card__dir">Dir. ${f.director}</div>` : ""}
+          <div class="cinema-card__title">${escapeHtml(f.title)}${f.year ? ` <span class="cinema-card__year">(${escapeHtml(f.year)})</span>` : ""}</div>
+          ${f.director ? `<div class="cinema-card__dir">Dir. ${escapeHtml(f.director)}</div>` : ""}
         </div>
       `;
       grid.appendChild(card);

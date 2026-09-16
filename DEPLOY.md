@@ -10,7 +10,7 @@ páginas através de `backend/app/frontend.py`. Não é necessário um build Nod
 
 As experiências visuais devem ser testadas localmente ou numa instância separada
 antes de integrar a branch usada pelo deploy de produção. Ver
-[frontend/README.md](frontend/README.md).
+[README.md](README.md).
 
 ## Variaveis obrigatorias
 
