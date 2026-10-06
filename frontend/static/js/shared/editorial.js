@@ -11,6 +11,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   const themeButton = document.getElementById("btnTheme");
+  const accountAvatar = document.getElementById("authAvatarPill");
+  if (accountAvatar) {
+    accountAvatar.setAttribute("role", "button");
+    accountAvatar.setAttribute("tabindex", "0");
+    accountAvatar.setAttribute("aria-label", "Abrir perfil da conta");
+    accountAvatar.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        accountAvatar.click();
+      }
+    });
+  }
   const labelTheme = () => {
     if (!themeButton) return;
     const label = document.documentElement.dataset.theme === "dark" ? "Ativar tema claro" : "Ativar tema escuro";

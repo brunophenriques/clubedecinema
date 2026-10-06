@@ -1,4 +1,4 @@
-const CACHE = "clubedecinema-v34";
+const CACHE = "clubedecinema-v35";
 const STATIC = [
   "/",
   "/watch",
