@@ -400,7 +400,7 @@ function showLetterboxdPopup() {
         </div>
         <div class="lb-popup__avatar-inputs">
           <div class="lb-popup__label">Foto de perfil</div>
-          <label class="lb-popup__upload-btn" for="lbAvatarFile">
+          <label class="lb-popup__upload-btn" for="lbAvatarFile" role="button" tabindex="0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Escolher imagem
           </label>
@@ -438,6 +438,13 @@ function showLetterboxdPopup() {
     </div>
   `;
   document.body.appendChild(pop);
+
+  pop.querySelector('.lb-popup__upload-btn').addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      el('lbAvatarFile')?.click();
+    }
+  });
 
   // Close
   el("lbPopupClose")?.addEventListener("click", () => pop.remove());

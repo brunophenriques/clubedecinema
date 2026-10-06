@@ -113,6 +113,10 @@
 .header-controls button:hover { background:var(--rouge-dim) !important; color:#211B20 !important; }
 .header-controls button:focus-visible { outline:2px solid var(--hot); outline-offset:-3px; }
 .header-controls .ui-icon { width:22px !important; height:22px !important; flex-shrink:0; stroke-width:2; }
+/* Feedback changes colour, never the control's hit area. */
+button:not(:disabled),.lb-popup__upload-btn { cursor:pointer; }
+.btn:active,.poster-btn:hover,.poster-btn:active,.reaction-add-btn:hover,.reaction-chip:hover { transform:none; }
+button svg,button svg *,button::before,button::after,.lb-popup__upload-btn svg,.chat-header-btn__badge { pointer-events:none; }
 .selection-edition .hero-inner { padding:12px 18px; gap:6px 20px; }
 .selection-edition.cinema-cover .kicker,[data-theme="dark"] .selection-edition.cinema-cover .kicker { font-size:12px; line-height:1.5; }
 .selection-edition.cinema-cover #heroSub { font-size:13px; line-height:1.45; }
