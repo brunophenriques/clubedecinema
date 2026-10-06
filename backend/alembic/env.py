@@ -5,15 +5,14 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+from app.database_url import normalize_database_url
 
 config = context.config
 
-# usar DATABASE_URL da env se existir
-database_url = os.getenv("DATABASE_URL")
-if database_url:
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-    config.set_main_option("sqlalchemy.url", database_url)
+# Application and migrations must select the same installed PostgreSQL driver.
+database_url = normalize_database_url(os.getenv("DATABASE_URL") or config.get_main_option("sqlalchemy.url"))
+# ConfigParser treats percent signs as interpolation, including URL-encoded passwords.
+config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

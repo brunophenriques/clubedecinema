@@ -7,4 +7,5 @@ tzdata
 alembic
 requests
 rapidfuzz
+# Both the application and Alembic explicitly use postgresql+psycopg2.
 psycopg2-binary

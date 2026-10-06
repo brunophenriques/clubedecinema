@@ -2,19 +2,12 @@ import os
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from .database_url import normalize_database_url
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SQLITE_PATH = os.path.abspath(os.path.join(BASE_DIR, "..", "cinema_club.db"))
 
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{SQLITE_PATH}")
-
-# Normalize postgres:// -> postgresql://
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
-# Force psycopg2 driver for Supabase/standard Postgres
-if DATABASE_URL.startswith("postgresql://") and "+psycopg" not in DATABASE_URL:
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+DATABASE_URL = normalize_database_url(os.getenv("DATABASE_URL", f"sqlite:///{SQLITE_PATH}"))
 
 engine_kwargs = {}
 if DATABASE_URL.startswith("sqlite"):
