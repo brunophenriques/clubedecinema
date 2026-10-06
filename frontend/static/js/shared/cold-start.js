@@ -11,6 +11,9 @@
       const raw = typeof input === "string" ? input : input?.url;
       if (!raw) return false;
       const url = new URL(raw, window.location.origin);
+      // Optional film enrichment reports its own fallback. A missing provider
+      // key must not turn a working club page into a server-down notification.
+      if (/^\/films\/[^/]+\/details$|^\/letterboxd\/film\/|^\/search\/movies$/.test(url.pathname)) return false;
       return url.origin === window.location.origin && API_PATH_RE.test(url.pathname);
     } catch {
       return false;

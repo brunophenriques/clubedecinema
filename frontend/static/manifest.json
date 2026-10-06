@@ -4,8 +4,8 @@
   "description": "Vota no filme da semana do clube.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F5F0E8",
-  "theme_color": "#B5294E",
+  "background_color": "#F8E8F0",
+  "theme_color": "#F8E8F0",
   "orientation": "portrait-primary",
   "icons": [
     {

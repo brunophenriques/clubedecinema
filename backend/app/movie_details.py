@@ -29,7 +29,9 @@ def get_details(tmdb_id):
     try:
         response = requests.get(
             f"https://api.themoviedb.org/3/movie/{tmdb_id}",
-            params={"api_key": key, "language": "pt-PT", "append_to_response": "credits,translations"},
+            params={"api_key": key, "language": "pt-PT",
+                    "append_to_response": "credits,translations,images",
+                    "include_image_language": "pt,en,null"},
             timeout=8,
         )
         if response.status_code == 404:
@@ -46,6 +48,15 @@ def get_details(tmdb_id):
                     overview_language = "en"
                     break
         image_url = lambda path, size: f"https://image.tmdb.org/t/p/{size}{path}" if path and path.startswith("/") else None
+        # Untagged landscape backdrops generally contain photography rather than titles.
+        backdrops = [image for image in (data.get("images") or {}).get("backdrops", [])
+                     if image.get("file_path") and image.get("aspect_ratio", 0) > 1.3]
+        backdrop = max(backdrops, key=lambda image: (
+            image.get("iso_639_1") is None,
+            image.get("vote_average") or 0,
+            image.get("width") or 0,
+        ), default=None)
+        backdrop_path = backdrop["file_path"] if backdrop else data.get("backdrop_path")
         credits = data.get("credits") or {}
         payload = {
             "tmdb_id": tmdb_id,
@@ -59,7 +70,8 @@ def get_details(tmdb_id):
             "directors": list(dict.fromkeys(c["name"] for c in credits.get("crew", []) if c.get("job") == "Director" and c.get("name"))),
             "cast": [{"name": c.get("name"), "character": c.get("character")} for c in credits.get("cast", [])[:8] if c.get("name")],
             "poster_url": image_url(data.get("poster_path"), "w500"),
-            "backdrop_url": image_url(data.get("backdrop_path"), "w1280"),
+            "backdrop_url": image_url(backdrop_path, "w1280"),
+            "backdrop_aspect_ratio": backdrop.get("aspect_ratio") if backdrop else None,
             "rating": data.get("vote_average") if data.get("vote_count", 0) else None,
             "rating_count": data.get("vote_count") or 0,
             "letterboxd_url": letterboxd_url(tmdb_id),

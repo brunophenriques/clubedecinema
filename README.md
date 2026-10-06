@@ -26,7 +26,7 @@ frontend/
 ## Onde mexer
 
 O visual claro e rosa está em `static/css/editorial.css`, carregado depois dos
-módulos existentes. Usa Barlow, botões retangulares e uma grelha de seis posters
+módulos existentes. Usa Barlow Condensed e DM Sans, botões retangulares e grelhas equilibradas de posters
 em ecrãs largos. Os módulos base continuam a suportar as funcionalidades e temas.
 O comportamento partilhado da janela de submissão e da acessibilidade do chat está
 em `static/js/shared/editorial.js`.
@@ -93,6 +93,31 @@ python -m unittest discover -s tests -v
 
 Executar a suite num processo novo. Usa SQLite temporário e testa páginas, escolha
 de temas, referências a assets, imports CSS e respostas do service worker.
+
+## Identidade editorial
+
+A identidade é uma revista de cinema Y2K: papel branco `#FAFAF7`, tinta
+`#171717`, rosa `#F38BC0`, apontamentos `#E32985` e cinzento prateado.
+Bowlby One compõe o masthead; Archivo separa títulos expressivos em itálico
+de controlos e texto legível, com legendas em monoespaçada. A capa cruza
+o título com o limite da fotografia, integra o poster e mostra a edição real.
+Sem vencedor, uma nota compacta antecede a seleção numerada, sem destacar
+um candidato arbitrário. Arquivo, explorar e modais partilham a identidade.
+
+Referências visuais estudadas, incluindo as próprias imagens:
+[The Face 2000](https://thefaceandid.com/collections/the-face-magazine-2000),
+[i-D](https://i-d.co/article/35-ways-to-wink/) e
+[Byline](https://www.itsnicethat.com/articles/madeline-montoya-byline-graphic-design-publication-220224).
+O masthead dominante, as pequenas legendas em recortes e a relação entre
+título e fotografia informam a composição; as capas e dados das referências
+não são usados no produto. A homepage foi inspecionada e corrigida em desktop
+antes de estender a identidade às outras páginas.
+
+O vencedor continua a ser `winner_film_id`, atribuído pelo backend. Empates,
+semanas sem votos e resultados pendentes são apresentados explicitamente.
+O panorama vem dos detalhes TMDB, preferindo imagens sem texto; sem imagem
+panorâmica usa-se um único poster na sua proporção original. A instalação local
+precisa de `TMDB_API_KEY` em `backend/.env` para consultar essa integração.
 
 ## Limpeza de imagens
 

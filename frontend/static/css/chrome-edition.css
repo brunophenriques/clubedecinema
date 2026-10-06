@@ -1,0 +1,147 @@
+/* Pink editorial identity; metal is reserved for the wordmark and club emblem. */
+:root,[data-theme="light"] { --cream:#F8E8F0; --cream-80:#F8E8F0; --card:#FFF9FC; --parchment:#F3E0EA; --ink:#211B20; --ink-60:#65515D; --ink-30:#77616F; --ink-10:#CAB1C0; --ink-06:#EAD4E1; --accent:#E64B98; --hot:#C62976; --rouge:#211B20; --rouge-mid:#E64B98; --rouge-dim:#F3ADD0; --ice:#F3ADD0; --silver:#D6D3D8; }
+[data-theme="dark"] { --cream:#211B20; --cream-80:#211B20; --card:#2E252C; --parchment:#382B34; --ink:#FFF9FC; --ink-60:#DEC8D6; --ink-30:#C3A9B9; --ink-10:#624A59; --ink-06:#402F3A; --ice:#523045; --silver:#756B75; --rouge:#F3ADD0; }
+.brand { display:flex; align-items:center; gap:24px; }
+.brand-copy { width:auto; min-width:0; }
+.club-emblem { display:block; flex:none; width:86px; transform:rotate(7deg); }
+.club-emblem svg { width:100%; height:auto; display:block; }
+.brand-title { padding:6px 0 12px; overflow:visible; }
+.brand-title .masthead-club,.brand-title .masthead-cinema { color:#B7B1BA; background:linear-gradient(172deg,#FFF9FC 3%,#E5DFE7 18%,#ABA4B1 33%,#EAE5ED 43%,#FFF 48%,#B9B0BF 54%,#938997 64%,#DAD2DF 76%,#FFF9FC 88%,#B9B0BF 100%); background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; -webkit-text-stroke:1.3px #393039; filter:drop-shadow(1px 2px 0 #211B20); }
+.brand-title em { color:var(--hot); -webkit-text-stroke:1px #171717; text-shadow:2px 2px 0 var(--accent); }
+.top-inner { border-bottom:2px solid var(--ink); }
+.auth-pill { gap:8px; }
+.chat-header-btn,.theme-toggle { background:var(--card); border:1px solid var(--ink); box-shadow:inset 1px 1px 0 #FFF9FC; }
+.nav-link.active { text-decoration:none !important; background:linear-gradient(transparent 62%,var(--accent) 62%,var(--accent) 87%,transparent 87%) !important; }
+.selection-edition.cinema-cover { background:var(--ice); border-left:8px solid var(--accent); }
+.selection-edition .hero-inner { padding:16px 20px; }
+.selection-edition.cinema-cover .kicker,.selection-edition.cinema-cover #heroSub { color:var(--ink); }
+[data-theme="dark"] .selection-edition.cinema-cover .kicker { color:var(--ink); }
+.selection-edition.cinema-cover .kicker { font-weight:700; }
+.section:has(> #films) > .section-head { margin-bottom:22px; padding-bottom:18px; border-bottom:1px solid var(--ink); }
+.section:has(> #films) h2::before,#clubWatchedSection h2::before { display:inline-block; padding:7px 9px; background:var(--ice); border:1px solid var(--ink); transform:rotate(-4deg); }
+.film-grid { gap:38px 22px; }
+.film-card::before { content:counter(frames,decimal-leading-zero); font:italic 900 30px/.9 var(--font-display); letter-spacing:-.06em; color:var(--ink); padding-bottom:10px; border-top:3px solid var(--ink); padding-top:10px; }
+.film-body { border-bottom:1px solid var(--ink-10); padding-bottom:12px; }
+.film-title { font-size:15px; letter-spacing:-.035em; }
+.film-meta { font-size:12px; }
+.film-card .poster { box-shadow:3px 3px 0 var(--ink-10); }
+.feature-visual.cover-art { left:9%; height:480px; }
+.cinema-cover:not(.selection-edition) .hero-inner { padding-top:380px; }
+.cinema-cover:not(.selection-edition) h1 { box-shadow:12px 0 0 var(--cream),0 7px 0 var(--accent); }
+.edition-stamp { background:var(--ice); border:0; border-left:3px solid var(--ink); font-weight:700; }
+.cover-art-caption { background:var(--ice); color:var(--ink); border:1px solid var(--ink); }
+.cover-result { border-bottom:3px solid var(--ink); }
+.cover-result strong { font:italic 900 22px var(--font-display); }
+.wc-rating strong { padding:2px 8px 4px 4px; background:var(--accent); color:#171717; transform:skewX(-5deg); }
+.watched-card { border-bottom:1px solid var(--ink-10); padding-bottom:24px; }
+.wc-poster-wrap { box-shadow:3px 3px 0 var(--ice); }
+.archive-week { grid-template-columns:210px minmax(0,1fr); grid-template-rows:min-content 1fr; column-gap:30px; }
+.archive-winner { align-self:start; }
+.archive-week > .details { background:var(--ice); padding:12px 18px 20px; }
+.archive-week .details .archive-films { grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px 18px; counter-reset:archive-frames; }
+.archive-week .archive-films .archive-film { display:flex; flex-direction:column; align-items:stretch; min-width:0; position:relative; counter-increment:archive-frames; gap:8px; }
+.archive-films .archive-film::before { content:counter(archive-frames,decimal-leading-zero) ' /'; font:700 13px var(--font-mono); }
+.archive-week .archive-films .poster { width:100%; height:auto; aspect-ratio:2/3; }
+.archive-films .archive-film-title { font-size:13px; }
+.archive-films .archive-film-votes { width:auto; height:auto; align-self:flex-start; padding:4px 7px; background:var(--cream); }
+.watch-search { background:var(--ice); }
+.watch-card::before { font-size:20px; font-weight:700; }
+.movie-sheet,.submission-dialog,.modal-card { border:2px solid var(--ink); box-shadow:6px 6px 0 var(--silver),10px 10px 0 var(--accent); }
+.movie-sheet__header { background:var(--ice); border-bottom:1px solid var(--ink); }
+.hof-modal__panel { background:var(--card); backdrop-filter:none; border:2px solid var(--ink); box-shadow:6px 6px 0 var(--silver),10px 10px 0 var(--accent); }
+.hof-modal__head { background:var(--ice); }
+#authClose,#chatClose { min-height:44px; min-width:44px; opacity:1; }
+#chatClose { color:#171717; background:#F9FAFC; border:2px outset #CDD3DC; }
+.chat-panel { width:390px; border:3px ridge #C4CBD6; background:var(--card); box-shadow:-8px 0 0 var(--ice); }
+.chat-panel__head { background:#F3ADD0; color:#211B20; border-bottom:2px solid #211B20; padding:10px 14px; }
+.chat-panel__title { font:700 16px var(--font-body); letter-spacing:-.035em; }
+.chat-panel__close { min-width:44px; min-height:44px; background:#F9FAFC; color:#171717; border:2px outset #CDD3DC; }
+.chat-panel__week { background:var(--parchment); color:var(--ink); font:11px var(--font-mono); padding:12px 14px; }
+.chat-panel__messages { background:var(--card); padding:20px 14px; gap:18px; }
+.chat-msg__text { border-radius:0; background:var(--ice); border:0; border-left:3px solid var(--silver); padding:12px; }
+.chat-msg--me .chat-msg__text { border-radius:0; background:var(--accent); color:#171717; border:0; border-right:3px solid #171717; }
+.chat-msg__name { font:700 11px var(--font-mono); }
+.chat-msg__del { min-width:32px; min-height:32px; }
+.chat-panel__input-wrap { background:var(--parchment); border-top:2px solid var(--ink); }
+.chat-send-btn { width:44px; height:44px; border:2px outset var(--silver); }
+.chat-input { border:2px inset var(--silver); }
+@media(max-width:1000px) {
+ .brand { gap:16px; }
+ .brand-title { font-size:8vw; }
+ .club-emblem { width:64px; }
+ .archive-week { grid-template-columns:180px minmax(0,1fr); gap:22px; }
+ .archive-week .details .archive-films { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:560px) {
+ .brand { gap:10px; justify-content:space-between; }
+ .brand-title { font-size:8.5vw; }
+ .club-emblem { width:42px; }
+ .brand-title { padding:4px 0 8px; }
+ .brand-title .masthead-club,.brand-title .masthead-cinema { -webkit-text-stroke:.7px #272C38; filter:drop-shadow(1px 2px 0 #171717); }
+ .brand-title em { -webkit-text-stroke:.5px #171717; }
+ .nav { gap:12px; }
+ .auth-pill { gap:4px; }
+ .feature-visual.cover-art { left:0; height:250px; }
+ .cinema-cover:not(.selection-edition) .hero-inner { padding-top:226px; }
+ .edition-stamp { border-left:0; }
+ .film-grid { gap:26px 18px; }
+ .film-card::before { font-size:24px; }
+ .film-title { font-size:14px; }
+ .film-meta { font-size:11px; }
+ .section:has(> #films) h2::before,#clubWatchedSection h2::before { margin-right:4px; padding:5px; }
+ .archive-week { display:block; }
+ .archive-week > .details { padding:10px 12px 18px; }
+ .archive-week .details .archive-films { grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px 14px; }
+ .chat-panel { width:100%; box-shadow:none; }
+ .chat-msg__del { min-height:44px; min-width:44px; }
+}
+@media(max-width:360px) {
+ .nav { gap:8px; }
+ .auth-pill { gap:0; }
+ .chat-header-btn,.theme-toggle { width:32px; min-width:32px; padding:8px; }
+ .brand-title { font-size:8.2vw; }
+ .club-emblem { width:38px; }
+}
+/* Focused polish: one control rail, compact edition line and aligned captions. */
+.top-inner { padding-top:14px; }
+.brand { padding-bottom:2px; }
+.brand-title { padding-bottom:2px; line-height:1; }
+.header-controls { display:flex; align-items:center; background:var(--card); border-bottom:2px solid var(--ink); box-shadow:inset 0 2px 0 var(--rouge-dim); padding:2px; }
+.header-controls #btnLogin,.header-controls #btnLogout,.header-controls #btnChat,.header-controls #btnTheme { display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:0; box-shadow:none; background:transparent; color:var(--ink); min-height:44px; margin:0; }
+.header-controls #btnChat,.header-controls #btnTheme { width:44px; min-width:44px; padding:10px; }
+.header-controls #btnLogin,.header-controls #btnLogout { padding:10px 14px; }
+.header-controls button:hover { background:var(--rouge-dim) !important; color:#211B20 !important; }
+.header-controls button:focus-visible { outline:2px solid var(--hot); outline-offset:-3px; }
+.header-controls .ui-icon { width:22px !important; height:22px !important; flex-shrink:0; stroke-width:2; }
+.selection-edition .hero-inner { padding:12px 18px; gap:6px 20px; }
+.selection-edition.cinema-cover .kicker,[data-theme="dark"] .selection-edition.cinema-cover .kicker { font-size:12px; line-height:1.5; }
+.selection-edition.cinema-cover #heroSub { font-size:13px; line-height:1.45; }
+.selection-refresh { display:inline-flex; gap:8px; align-items:center; justify-content:center; padding:10px 12px; font:600 13px var(--font-body); min-height:44px; flex-shrink:0; }
+.selection-refresh .ui-icon { width:20px; height:20px; }
+.section:has(> #films) > .section-head { align-items:center; }
+.film-card .poster { border:1px solid var(--ink-10); aspect-ratio:2/3; overflow:hidden; transition:border-color .18s ease,box-shadow .18s ease; }
+.film-card:hover .poster,.film-card:focus-within .poster { border-color:var(--accent); box-shadow:3px 3px 0 var(--rouge-dim); }
+.film-body { padding-top:12px; gap:8px; }
+.film-title { display:block; }
+.film-name { display:block; min-height:2.7em; }
+.film-title .year { margin-top:0; padding-top:5px; }
+.film-top { min-height:90px; }
+@media(max-width:560px) {
+ .top-inner { padding-top:12px; }
+ .brand { padding-bottom:2px; }
+ .brand-title { padding-bottom:0; }
+ .nav { gap:10px; }
+ .auth-pill { gap:0; }
+ .header-controls #btnLogin,.header-controls #btnLogout { padding:10px 8px; font-size:11px; }
+ .selection-edition .hero-inner { padding:10px 14px; }
+ .selection-edition.cinema-cover .kicker,[data-theme="dark"] .selection-edition.cinema-cover .kicker { font-size:11px; }
+ .selection-edition.cinema-cover #heroSub { font-size:12px; }
+ .selection-refresh { font-size:12px; padding:10px 4px; gap:5px; }
+ .section:has(> #films) .section-head { gap:10px; }
+ .film-top { min-height:100px; }
+}
+@media(max-width:380px) {
+ .nav { grid-column:1/-1; min-height:44px; }
+ .auth-pill { grid-column:1/-1; justify-content:flex-end; padding-bottom:6px; }
+}
+@media(prefers-reduced-motion:reduce) { .film-card .poster { transition:none; } }

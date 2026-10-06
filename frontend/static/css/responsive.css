@@ -106,7 +106,7 @@
 
   /* ── Film grid ── */
   .film-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 
@@ -155,7 +155,7 @@
 
   /* ── Watched grid ── */
   .watched-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 

@@ -37,6 +37,22 @@ class MovieDetailsTests(unittest.TestCase):
         self.assertEqual(get.call_count, 1)
 
     @patch("app.movie_details.requests.get")
+    def test_backdrop_prefers_untagged_landscape_over_titled_artwork(self, get):
+        get.return_value = Mock(status_code=200)
+        get.return_value.json.return_value = {
+            "title": "Film", "backdrop_path": "/default.jpg",
+            "images": {"backdrops": [
+                {"file_path": "/portrait.jpg", "iso_639_1": None, "aspect_ratio": .67, "vote_average": 10},
+                {"file_path": "/titled.jpg", "iso_639_1": "en", "aspect_ratio": 1.78, "vote_average": 9},
+                {"file_path": "/photography.jpg", "iso_639_1": None, "aspect_ratio": 1.78, "vote_average": 7},
+            ]},
+        }
+        result = movie_details.get_details(129)
+        self.assertTrue(result["backdrop_url"].endswith("/photography.jpg"))
+        self.assertEqual(result["backdrop_aspect_ratio"], 1.78)
+        self.assertIn("images", get.call_args.kwargs["params"]["append_to_response"])
+
+    @patch("app.movie_details.requests.get")
     def test_missing_optional_metadata_is_not_fabricated(self, get):
         get.return_value = Mock(status_code=200)
         get.return_value.json.return_value = {"title": "Film", "runtime": 0, "vote_average": 0, "vote_count": 0}

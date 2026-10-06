@@ -264,7 +264,7 @@ function renderArchiveCard(w) {
   const badgeClass = w.is_open ? "badge--open" : "badge--closed";
   const stateText = w.is_open ? "Aberta" : "Fechada";
   const weekDisplayId = Math.max(1, Number(w.id) - 6);
-  const meta = [`#${weekDisplayId}`, w.is_ready ? "voting ON" : "voting OFF", `${totalVotes(w)} voto(s)`].join(" · ");
+  const meta = [`#${weekDisplayId}`, `${films.length} filmes`, `${totalVotes(w)} voto(s)`].join(" · ");
 
   const filmRows = films.map(f => `
     <div class="archive-film">
@@ -299,7 +299,7 @@ function renderArchiveCard(w) {
       </div>
     ` : ""}
 
-    <details class="details" style="margin-top:12px">
+    <details class="details" ${matchMedia("(min-width: 900px)").matches ? "open" : ""} style="margin-top:12px">
       <summary>Ver todos os filmes (${films.length})</summary>
       <div class="archive-films">${filmRows || `<div class="muted small" style="padding:8px 0">—</div>`}</div>
     </details>

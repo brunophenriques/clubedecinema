@@ -692,8 +692,10 @@ function filmCard(week, f, alreadyVoted) {
 
   const votingEnabled = week.voting_open;
   const canVote = votingEnabled && !alreadyVoted;
-  const isWinner = !week.is_open && week.winner_film_id && week.winner_film_id === f.id;
+  const isWinner = (!week.is_open || week.phase === "voting_closed") && week.winner_film_id && String(week.winner_film_id) === String(f.id);
 
+  div.classList.toggle("is-winner", Boolean(isWinner));
+  const votingClosed = !week.is_open || week.phase === "voting_closed";
   const btnLabel = isMyVote ? "✓ O teu voto" : alreadyVoted ? "Voto registado"
     : (!week.is_open || week.phase === "voting_closed") ? "Encerrado"
     : !week.is_ready ? "Em breve"
@@ -704,7 +706,7 @@ function filmCard(week, f, alreadyVoted) {
     <div class="film-body">
       <div class="film-top">
         <h3 class="film-title">
-          ${escapeHtml(f.title)}
+          <span class="film-name">${escapeHtml(f.title)}</span>
           ${f.year ? `<span class="year">(${f.year})</span>` : ""}
           ${isWinner ? `<span class="trophy">🏆</span>` : ""}
         </h3>
@@ -725,9 +727,9 @@ function filmCard(week, f, alreadyVoted) {
         <div class="reaction-chips" id="chips-${f.id}"></div>
       </div>
       <div class="film-actions">
-        <button class="btn${canVote ? " primary" : ""}" ${canVote ? "" : "disabled"}>
+        ${!votingClosed ? `<button class="btn${canVote ? " primary" : ""}" ${canVote ? "" : "disabled"}>
           ${btnLabel}
-        </button>
+        </button>` : ""}
         ${isWinner ? `<span class="badge badge--open">Vencedor</span>` : ""}
       </div>
     </div>
@@ -745,7 +747,7 @@ function filmCard(week, f, alreadyVoted) {
   }
 
   const btn = div.querySelector(".film-actions button");
-  btn.addEventListener("click", async () => {
+  btn?.addEventListener("click", async () => {
     if (!canVote) return;
     if (!getToken()) { toast("Precisas de login para votar.", "info"); openAuthModal("login"); return; }
 
@@ -768,20 +770,139 @@ function filmCard(week, f, alreadyVoted) {
 }
 
 /* ── Render week ── */
+let featuredRequest = 0;
+function renderFeaturedFilm(week) {
+  const request = ++featuredRequest;
+  const hero = el("heroSection");
+  if (!hero) return;
+  hero.querySelectorAll(".feature-visual, .feature-meta, .feature-result, .feature-action").forEach(node => node.remove());
+  const films = week.films || [];
+  const closed = !week.is_open || week.phase === "voting_closed";
+  // The backend assigns this field. A leading candidate is never presented as a winner.
+  const winner = closed && films.find(f => String(f.id) === String(week.winner_film_id));
+  const total = films.reduce((sum, film) => sum + Number(film.votes || 0), 0);
+  const top = Math.max(0, ...films.map(film => Number(film.votes || 0)));
+  const tied = closed && !winner && top > 0 && films.filter(film => Number(film.votes || 0) === top).length > 1;
+  const subject = winner;
+  hero.classList.add("cinema-cover");
+  hero.classList.remove("cinema-feature");
+  hero.classList.toggle("is-winner", Boolean(winner));
+  hero.classList.toggle("selection-edition", !winner);
+  hero.classList.toggle("is-awaiting", closed && !winner);
+  hero.classList.remove("has-backdrop", "has-poster");
+
+  const state = winner ? "Filme da semana" : tied ? "Empate na votação" : closed ? "Votação encerrada" : week.voting_open ? "Votação aberta" : week.phase === "paused" ? "Votação pausada" : "Submissões abertas";
+  el("heroKicker").textContent = `${week.title} · ${state}`;
+  el("heroTitle").textContent = winner ? winner.title : "Seleção da semana";
+  const synopsis = el("heroSub");
+  synopsis.removeAttribute("lang");
+  synopsis.textContent = winner ? "" : tied ? "Empate entre os mais votados · sem vencedor atribuído." : closed ? total ? "Resultado por publicar." : "Sem votos registados." : week.voting_open ? "Vota num dos filmes abaixo." : week.phase === "paused" ? "Votação temporariamente pausada." : "Submete um filme para esta semana.";
+
+  const actions = hero.querySelector(".hero-actions");
+  if (el("openSubmission")) el("openSubmission").hidden = !week.submissions_open;
+  const info = actions.querySelector('a[href="/como-funciona"]');
+  if (info) info.hidden = true;
+  el("weekStatus")?.classList.add("cover-status");
+  const scrollToSelection = () => {
+    const selection = el("films").closest("section");
+    selection.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start"});
+    selection.querySelector("h2")?.focus({preventScroll: true});
+  };
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn feature-action" + (winner || week.voting_open ? " primary" : "");
+  button.textContent = winner ? "Conhecer o filme" : week.voting_open ? "Escolher e votar" : "Ver seleção";
+  button.addEventListener("click", () => winner ? window.CinemaMovieDetails.open({...winner, film_id: winner.id, directors: winner.director ? [winner.director] : []}) : scrollToSelection());
+  actions.prepend(button);
+  if (winner) {
+    const results = document.createElement("button");
+    results.type = "button";
+    results.className = "btn feature-action";
+    results.textContent = "Ver resultados";
+    results.addEventListener("click", scrollToSelection);
+    button.after(results);
+    const meta = document.createElement("p");
+    meta.className = "feature-meta";
+    meta.textContent = [winner.year, winner.director].filter(Boolean).join(" · ");
+    el("heroTitle").after(meta);
+  }
+
+  const result = document.createElement("div");
+  result.className = "feature-result cover-result";
+  result.innerHTML = `<span>${winner ? "Resultado da votação" : tied ? "Empate · sem vencedor atribuído" : closed ? "Sem vencedor atribuído" : "Seleção da semana"}</span><strong>${winner ? `${Number(winner.votes || 0)} de ${total} votos` : `${films.length} filme${films.length === 1 ? "" : "s"} · ${total} voto${total === 1 ? "" : "s"}`}</strong>`;
+  hero.append(result);
+
+  const edition = document.createElement("span");
+  edition.className = "feature-meta edition-stamp";
+  edition.textContent = week.title || `Semana ${week.id}`;
+  edition.setAttribute("aria-label", `Edição: ${edition.textContent}`);
+  hero.append(edition);
+
+  const visual = document.createElement("div");
+  visual.className = "feature-visual cover-art";
+  visual.setAttribute("aria-label", subject ? `Imagem de ${subject.title}` : "");
+  hero.prepend(visual);
+  if (!subject) return;
+  const caption = document.createElement("span");
+  caption.className = "cover-art-caption";
+  caption.textContent = winner ? "Poster do filme da semana" : `Na seleção: ${subject.title}`;
+  visual.append(caption);
+  const poster = document.createElement("img");
+  poster.className = "feature-poster";
+  poster.alt = `Poster de ${subject.title}`;
+  poster.decoding = "async";
+  poster.hidden = true;
+  const setPoster = value => {
+    try {
+      const url = new URL(value);
+      if (url.protocol !== "https:") return;
+      poster.src = url.href;
+      poster.hidden = false;
+      hero.classList.add("has-poster");
+    } catch {}
+  };
+  poster.addEventListener("error", () => { poster.hidden = true; hero.classList.remove("has-poster"); });
+  setPoster(subject.poster_url);
+  visual.append(poster);
+
+  const endpoint = subject.tmdb_id ? `/movies/${encodeURIComponent(subject.tmdb_id)}/details` : `/films/${encodeURIComponent(subject.id)}/details`;
+  apiGet(endpoint, {cacheTtl: 60000}).then(data => {
+    if (request !== featuredRequest) return;
+    if (!subject.poster_url && data.poster_url) setPoster(data.poster_url);
+    if (winner) {
+      const meta = hero.querySelector(".feature-meta");
+      if (!winner.director && data.directors?.length) meta.textContent = [winner.year || data.year, data.directors.join(", ")].filter(Boolean).join(" · ");
+      if (data.overview) {
+        const short = data.overview.slice(0, 230);
+        synopsis.textContent = data.overview.length > 230 ? `${short.slice(0, short.lastIndexOf(" "))}…` : data.overview;
+        if (data.overview_language) synopsis.lang = data.overview_language;
+      }
+    }
+    if (!data.backdrop_url) return;
+    const url = new URL(data.backdrop_url);
+    if (url.protocol !== "https:") return;
+    const backdrop = new Image();
+    backdrop.className = "feature-image";
+    backdrop.alt = `Fotograma de ${subject.title}`;
+    backdrop.decoding = "async";
+    backdrop.fetchPriority = "high";
+    backdrop.addEventListener("load", () => {
+      if (request !== featuredRequest || backdrop.naturalWidth <= backdrop.naturalHeight) return;
+      visual.prepend(backdrop);
+      hero.classList.add("has-backdrop");
+      caption.textContent = winner ? "Fotograma: TMDB" : `Na seleção: ${subject.title} · TMDB`;
+    });
+    backdrop.src = url.href;
+  }).catch(() => {});
+}
+
+
 function render(week) {
   _chatWeekId = week.id;
   const previewTitle = new URLSearchParams(window.location.search).get("previewTitle");
   const displayTitle = previewTitle || week.title;
   el("weekTitle").textContent = displayTitle;
   el("heroTitle").textContent = displayTitle;
-  if (el("ticketCount")) el("ticketCount").textContent = String((week.films || []).length).padStart(2, "0");
-  const posterStrip = el("weekPosterStrip");
-  if (posterStrip) {
-    posterStrip.innerHTML = (week.films || []).filter(film => film.poster_url).slice(0, 3).map(film =>
-      `<button type="button" class="week-preview__poster" data-film-details data-film-id="${escapeHtml(film.id)}" data-title="${escapeHtml(film.title)}" data-year="${escapeHtml(film.year || '')}" data-poster="${escapeHtml(film.poster_url)}" aria-label="Saber mais sobre ${escapeHtml(film.title)}"><img src="${escapeHtml(film.poster_url)}" alt="" /></button>`
-    ).join("");
-    posterStrip.closest(".week-preview").hidden = !posterStrip.children.length;
-  }
   const openSubmission = el("openSubmission");
   if (openSubmission) {
     openSubmission.disabled = !week.submissions_open;
@@ -792,17 +913,21 @@ function render(week) {
 
   // Apply week theme if set
   applyTheme(_requestedTheme || week.theme);
+  renderFeaturedFilm(week);
 
   // Show chat button
   const btnChat = el("btnChat");
   if (btnChat) btnChat.style.display = "";
 
   const hint = el("filmsHint");
-  if (hint) hint.textContent = week.voting_open ? "Podes votar mesmo sem ter submetido um filme."
+  if (hint) hint.textContent = week.winner_film_id && (!week.is_open || week.phase === "voting_closed") ? "Resultados finais."
+    : (!week.is_open || week.phase === "voting_closed") && !(week.films || []).some(film => Number(film.votes || 0) > 0) ? ""
+    : week.voting_open ? "Podes votar mesmo sem ter submetido um filme."
     : week.submissions_open ? "Escolhe o teu candidato. A votação começa após as submissões."
-    : week.phase === "voting_closed" ? "Votação terminada — a aguardar confirmação do vencedor."
+    : week.phase === "voting_closed" ? "Votação terminada · resultado por publicar."
     : week.phase === "paused" ? "A votação está pausada." : "Resultados finais.";
   renderDeadlines(week);
+  if (hint) hint.hidden = !hint.textContent.trim();
 
   const votedFilmId = localStorage.getItem(votedKey(week.id));
   const alreadyVoted = Boolean(votedFilmId);
@@ -817,6 +942,11 @@ function render(week) {
   const btnMore = el("filmsMore");
   let expanded = localStorage.getItem(`cinema_club_films_expanded_${week.id}`) === "1";
   const shown = (!expanded && all.length > LIMIT) ? all.slice(0, LIMIT) : all;
+  // Distribute extra rows evenly instead of leaving one poster on a final row.
+  for (const [name, maximum] of [["--film-columns", 7], ["--film-columns-medium", 4], ["--film-columns-tablet", 3], ["--film-columns-mobile", 2]]) {
+    const columns = shown.length ? Math.ceil(shown.length / Math.ceil(shown.length / maximum)) : 1;
+    filmsEl.style.setProperty(name, columns);
+  }
 
   shown.forEach(f => {
     filmsEl.appendChild(filmCard(week, f, alreadyVoted));
@@ -934,7 +1064,7 @@ function buildWatchedCard(week, film, watchers) {
 
   const raters = watchers.filter(w => w.rating != null);
   const avg = raters.length
-    ? (raters.reduce((s, w) => s + w.rating, 0) / raters.length).toFixed(1)
+    ? (raters.reduce((s, w) => s + Number(w.rating), 0) / raters.length).toFixed(1)
     : null;
 
   // Watcher avatars — each is a link to their Letterboxd profile
@@ -948,7 +1078,7 @@ function buildWatchedCard(week, film, watchers) {
       ? `<img class="wc-avatar" src="${escapeHtml(w.avatar_url)}" alt="@${escapeHtml(lbUser)}" title="${escapeHtml(tip)}" width="36" height="36"/>`
       : `<div class="wc-avatar wc-avatar--initials" title="${escapeHtml(tip)}">${escapeHtml(lbUser.slice(0,2).toUpperCase())}</div>`;
 
-    return `<a class="wc-watcher" href="${href}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(tip)}">
+    return `<a class="wc-watcher" href="${href}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(lbUser)}${w.rating != null ? `, ${w.rating} / 5` : ", sem nota"}" title="${escapeHtml(tip)}">
       ${avatarEl}
       ${stars ? `<span class="wc-stars">${escapeHtml(stars)}</span>` : `<span class="wc-stars" style="opacity:0">·</span>`}
     </a>`;
@@ -976,11 +1106,13 @@ function buildWatchedCard(week, film, watchers) {
       <div class="wc-week">${escapeHtml(week.title)}</div>
       <div class="wc-title">${escapeHtml(film.title)}${film.year ? `<span class="wc-year"> (${film.year})</span>` : ""}</div>
       ${film.director ? `<div class="wc-director">Dir. ${escapeHtml(film.director)}</div>` : ""}
+      ${avg != null ? `<div class="wc-rating" aria-label="M\u00e9dia ${avg} de 5"><strong>${avg}</strong><span>/ 5 \u00b7 ${raters.length} avalia\u00e7\u00f5es</span></div>` : `<div class="wc-unseen">Sem avalia\u00e7\u00f5es</div>`}
       ${!noWatchers ? `
-        <div class="wc-watchers">
-          <div class="wc-watchers__label">Visto por</div>
+        <div class="wc-member-preview" aria-hidden="true">${watchers.slice(0, 5).map(w => w.avatar_url ? `<img class="wc-avatar" src="${escapeHtml(w.avatar_url)}" alt="" loading="lazy"/>` : `<span class="wc-avatar wc-avatar--initials">${escapeHtml((w.letterboxd_username || w.username).slice(0, 2).toUpperCase())}</span>`).join("")}</div>
+        <details class="wc-watchers">
+          <summary>${watchers.length} membro${watchers.length === 1 ? "" : "s"} \u00b7 Ver avalia\u00e7\u00f5es</summary>
           <div class="wc-watchers__row">${watcherAvatars}</div>
-        </div>
+        </details>
       ` : `<div class="wc-unseen">Ninguém viu ainda</div>`}
     </div>
   `;

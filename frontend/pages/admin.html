@@ -6,8 +6,8 @@
   <title>Admin — Clube de Cinema</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&amp;family=Coming+Soon&amp;display=swap" rel="stylesheet" />
-  <script src="/static/js/shared/editorial.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,900;1,900&amp;family=Bowlby+One&amp;display=swap" rel="stylesheet" />
+  <script src="/static/js/shared/editorial.js?v=32" defer></script>
   <script src="/static/js/shared/api.js" defer></script>
   <script src="/static/js/shared/movie-details.js" defer></script>
   <link rel="stylesheet" href="/static/css/styles.css" />
@@ -17,7 +17,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon.png" />
   <link rel="manifest" href="/static/manifest.json" />
-  <meta name="theme-color" content="#B5294E" />
+  <meta name="theme-color" content="#F8E8F0" />
 </head>
 <body>
   <header class="top">
@@ -46,8 +46,42 @@
           <button class="btn" id="btnLogin" type="button">Entrar</button>
           <button class="btn" id="btnLogout" type="button" style="display:none">Sair</button>
           <button class="theme-toggle" id="btnTheme" type="button" title="Mudar tema">
-            <svg class="icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            <svg class="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg aria-hidden="true" focusable="false" class="ui-icon icon-moon"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />
+</svg>
+
+            <svg aria-hidden="true" focusable="false" class="ui-icon icon-sun"
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="12" r="4" />
+  <path d="M12 2v2" />
+  <path d="M12 20v2" />
+  <path d="m4.93 4.93 1.41 1.41" />
+  <path d="m17.66 17.66 1.41 1.41" />
+  <path d="M2 12h2" />
+  <path d="M20 12h2" />
+  <path d="m6.34 17.66-1.41 1.41" />
+  <path d="m19.07 4.93-1.41 1.41" />
+</svg>
+
           </button>
         </div>
       </div>
@@ -61,7 +95,23 @@
           <h2>Semana atual</h2>
           <div class="muted">Gerir estado da votação, filmes e semana ativa.</div>
         </div>
-        <button id="refresh" type="button" class="btn primary">Atualizar</button>
+        <button id="refresh" type="button" class="btn primary"><svg aria-hidden="true" focusable="false" class="ui-icon "
+  xmlns="http://www.w3.org/2000/svg"
+  width="22"
+  height="22"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+  <path d="M21 3v5h-5" />
+  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+  <path d="M8 16H3v5" />
+</svg>
+<span>Atualizar</span></button>
       </div>
 
       <div class="muted" id="currentStatus">A carregar…</div>

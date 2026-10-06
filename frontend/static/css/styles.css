@@ -12,5 +12,6 @@
 @import url("./themes/italian.css");
 @import url("./themes/netflix.css");
 @import url("./utilities.css");
-@import url("./editorial.css");
 @import url("./components/movie-details.css");
+@import url("./editorial.css");
+@import url("./chrome-edition.css");
