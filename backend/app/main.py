@@ -10,6 +10,7 @@ import requests
 from rapidfuzz import fuzz
 import xml.etree.ElementTree as ET
 import re
+import math
 
 import time
 import secrets
@@ -24,6 +25,7 @@ from .db import SessionLocal
 from . import models
 from .week_schedule import phase, parse_deadlines, require_submissions, require_voting
 from .movie_details import get_details as get_tmdb_details, letterboxd_url
+from .movie_details import get_backdrops, backdrop_url
 from .frontend import STATIC_DIR, router as frontend_router
 
 app = FastAPI(title="Cinema Club API")
@@ -1197,6 +1199,9 @@ def admin_update_film(
         film.poster_url = body["poster_url"]
 
     if "tmdb_id" in body:
+        if body["tmdb_id"] != film.tmdb_id:
+            film.featured_backdrop_path = None
+            film.featured_backdrop_x = film.featured_backdrop_y = None
         film.tmdb_id = body["tmdb_id"]
 
     reviewed = body.get("reviewed", True)
@@ -1427,6 +1432,9 @@ def admin_rematch_film(
         q_year = override_year
 
     match = pick_best_tmdb_match(q_title, q_year)
+    if match["tmdb_id"] != film.tmdb_id:
+        film.featured_backdrop_path = None
+        film.featured_backdrop_x = film.featured_backdrop_y = None
 
     if override_title:
         film.submitted_title = override_title
@@ -2159,6 +2167,59 @@ def movie_details(tmdb_id: int):
     return get_tmdb_details(tmdb_id)
 
 
+def featured_backdrop(film):
+    return {"backdrop_url": backdrop_url(film.featured_backdrop_path),
+            "backdrop_position": {"x": film.featured_backdrop_x if film.featured_backdrop_x is not None else 50,
+                                  "y": film.featured_backdrop_y if film.featured_backdrop_y is not None else 42},
+            "backdrop_selection": "manual", "image_source": "tmdb"}
+
+
+@app.get("/admin/films/{film_id}/backdrops")
+def admin_film_backdrops(film_id: int, db: Session = Depends(get_db), authorization: str | None = Header(None)):
+    require_admin_user(db, authorization)
+    film = db.query(models.Film).filter_by(id=film_id).first()
+    if not film:
+        raise HTTPException(404, "Film not found")
+    if not film.tmdb_id:
+        raise HTTPException(409, "Associa primeiro este filme ao TMDB.")
+    images = get_backdrops(film.tmdb_id)
+    automatic = next((item for item in images if item["suitable"]), None)
+    return {"film_id": film.id, "title": film.title, "backdrops": images,
+            "automatic_url": automatic["url"] if automatic else None,
+            "selected_path": film.featured_backdrop_path,
+            "selected_url": backdrop_url(film.featured_backdrop_path),
+            "position": featured_backdrop(film)["backdrop_position"]}
+
+
+@app.patch("/admin/films/{film_id}/backdrop")
+def admin_save_backdrop(film_id: int, body: dict = Body(...), db: Session = Depends(get_db),
+                       authorization: str | None = Header(None)):
+    require_admin_user(db, authorization)
+    film = db.query(models.Film).filter_by(id=film_id).first()
+    if not film:
+        raise HTTPException(404, "Film not found")
+    if "file_path" not in body:
+        raise HTTPException(422, "Indica a imagem ou null para seleção automática.")
+    path = body["file_path"]
+    if path is not None:
+        if not backdrop_url(path) or not film.tmdb_id:
+            raise HTTPException(422, "Imagem inválida.")
+        if path != film.featured_backdrop_path and not any(item["file_path"] == path for item in get_backdrops(film.tmdb_id)):
+            raise HTTPException(422, "Escolhe uma imagem deste filme no TMDB.")
+        try:
+            x, y = float(body.get("position_x", 50)), float(body.get("position_y", 42))
+            if not all(math.isfinite(value) and 0 <= value <= 100 for value in (x, y)):
+                raise ValueError
+        except (ValueError, TypeError):
+            raise HTTPException(422, "O recorte deve estar entre 0 e 100.")
+        film.featured_backdrop_x, film.featured_backdrop_y = x, y
+    else:
+        film.featured_backdrop_x = film.featured_backdrop_y = None
+    film.featured_backdrop_path = path
+    db.commit()
+    return {"ok": True, "film_id": film.id, "selection": "manual" if path else "automatic"}
+
+
 @app.get("/films/{film_id}/details")
 def club_film_details(film_id: int, db: Session = Depends(get_db)):
     film = db.query(models.Film).filter(models.Film.id == film_id).first()
@@ -2170,11 +2231,13 @@ def club_film_details(film_id: int, db: Session = Depends(get_db)):
         "directors": [film.director] if film.director else [],
         "poster_url": film.poster_url, "overview": None, "genres": [], "cast": [],
         "letterboxd_url": letterboxd_url(film.tmdb_id, film.title, film.year),
-        "source": "club",
+        "source": "club", "backdrop_url": None,
     }
+    saved = featured_backdrop(film) if film.featured_backdrop_path else {}
+    local.update(saved)
     if film.tmdb_id:
         try:
-            return {**local, **get_tmdb_details(film.tmdb_id)}
+            return {**local, **get_tmdb_details(film.tmdb_id), **saved}
         except HTTPException:
             local["details_status"] = "unavailable"
     else:

@@ -128,6 +128,9 @@ class Film(Base):
 
     # Matching metadata (TMDB / scoring)
     tmdb_id = Column(Integer, nullable=True)
+    featured_backdrop_path = Column(String, nullable=True)
+    featured_backdrop_x = Column(Float, nullable=True)
+    featured_backdrop_y = Column(Float, nullable=True)
     match_score = Column(Float, nullable=True)
     needs_review = Column(Boolean, default=False, nullable=False)
 

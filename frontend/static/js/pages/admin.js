@@ -479,6 +479,94 @@ function connectFilmButtons(week) {
 }
 
 /* ── Render current week ── */
+async function openBackdropPicker(film) {
+  const trigger = document.activeElement;
+  const dialog = document.createElement("dialog");
+  dialog.className = "backdrop-picker";
+  dialog.setAttribute("aria-label", `Imagem de destaque de ${film.title}`);
+  dialog.innerHTML = `<form method="dialog" class="backdrop-picker__head"><div><h2>Imagem de destaque</h2><p>${escapeHtml(film.title)}</p></div><button class="btn" aria-label="Fechar seletor" title="Fechar" value="close">Fechar</button></form>
+    <p class="small">A seleção automática favorece panorâmicas de boa resolução e sem idioma associado. Isso não garante que sejam fotografias de cenas.</p>
+    <div class="backdrop-picker__options" role="group" aria-label="Escolher imagem"><label class="backdrop-option backdrop-option--auto"><input type="radio" name="backdrop" value="" checked> Automática</label></div>
+    <div class="backdrop-picker__previews"><figure><div class="backdrop-preview backdrop-preview--desktop"></div><figcaption>Recorte desktop</figcaption></figure><figure><div class="backdrop-preview backdrop-preview--mobile"></div><figcaption>Recorte mobile</figcaption></figure></div>
+    <div class="backdrop-picker__crop"><label>Posição horizontal <input type="range" min="0" max="100" value="50" data-crop="x"><output data-output="x">50%</output></label><label>Posição vertical <input type="range" min="0" max="100" value="42" data-crop="y"><output data-output="y">42%</output></label></div>
+    <div class="backdrop-picker__footer"><button type="button" class="btn primary" data-save>Guardar escolha</button><span class="small" role="status" aria-live="polite" data-status>A carregar imagens…</span></div>`;
+  document.body.append(dialog);
+  dialog.showModal();
+  dialog.addEventListener("close", () => { dialog.remove(); trigger?.focus(); });
+  dialog.addEventListener("click", event => {
+    if (event.target !== dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+  });
+  let data = null;
+  const status = dialog.querySelector("[data-status]");
+  const save = dialog.querySelector("[data-save]");
+  save.disabled = true;
+  const updatePreview = () => {
+    const path = dialog.querySelector('input[name="backdrop"]:checked')?.value || "";
+    const selected = data?.backdrops.find(item => item.file_path === path);
+    const url = path ? selected?.url || data?.selected_url : data?.automatic_url;
+    const x = path ? dialog.querySelector('[data-crop="x"]').value : 50;
+    const y = path ? dialog.querySelector('[data-crop="y"]').value : 42;
+    dialog.querySelectorAll("[data-crop]").forEach(input => {
+      input.disabled = !path;
+      dialog.querySelector(`[data-output="${input.dataset.crop}"]`).textContent = `${input.value}%`;
+    });
+    dialog.querySelectorAll(".backdrop-preview").forEach(preview => {
+      preview.replaceChildren();
+      if (!url) { preview.textContent = "Sem backdrop adequado · será usado o poster separado."; return; }
+      const image = new Image();
+      image.alt = `Pré-visualização de ${film.title}`;
+      image.src = url;
+      image.style.objectPosition = `${x}% ${y}%`;
+      image.addEventListener("error", () => { if (image.parentElement === preview) preview.textContent = "Imagem indisponível · será usado o poster separado."; });
+      preview.append(image);
+    });
+  };
+  dialog.addEventListener("change", updatePreview);
+  dialog.querySelectorAll("[data-crop]").forEach(input => input.addEventListener("input", updatePreview));
+  save.addEventListener("click", async () => {
+    const path = dialog.querySelector('input[name="backdrop"]:checked')?.value || null;
+    save.disabled = true;
+    status.textContent = "A guardar…";
+    try {
+      await apiPatch(`/admin/films/${film.id}/backdrop`, {file_path:path,
+        position_x:Number(dialog.querySelector('[data-crop="x"]').value),
+        position_y:Number(dialog.querySelector('[data-crop="y"]').value)});
+      toast(path ? "Imagem de destaque guardada." : "Seleção automática restaurada.", "success");
+      dialog.close();
+    } catch (error) { status.textContent = error.message; save.disabled = false; }
+  });
+  try {
+    data = await apiGet(`/admin/films/${film.id}/backdrops`, {auth:true});
+    if (!dialog.isConnected) return;
+    const options = dialog.querySelector(".backdrop-picker__options");
+    const images = [...data.backdrops];
+    if (data.selected_path && !images.some(item => item.file_path === data.selected_path)) {
+      images.unshift({file_path:data.selected_path,thumbnail_url:data.selected_url,width:null,height:null,language:null});
+    }
+    images.forEach((item,index) => {
+      const label = document.createElement("label");
+      label.className = "backdrop-option";
+      label.innerHTML = `<input type="radio" name="backdrop" value="${escapeHtml(item.file_path)}"><img src="${escapeHtml(item.thumbnail_url)}" loading="lazy" alt="Backdrop ${index+1} de ${escapeHtml(film.title)}"><span>${item.width ? `${item.width} × ${item.height}` : "Escolha guardada"} · ${item.language ? escapeHtml(item.language) : "sem idioma"}${item.verified_scene ? " · fotografia verificada" : ""}</span>`;
+      label.querySelector("input").checked = item.file_path === data.selected_path;
+      label.querySelector("img").addEventListener("error", event => { event.target.hidden = true; });
+      options.append(label);
+    });
+    dialog.querySelector('input[value=""]').checked = !data.selected_path;
+    dialog.querySelector('[data-crop="x"]').value = data.position.x;
+    dialog.querySelector('[data-crop="y"]').value = data.position.y;
+    status.textContent = images.length ? `${images.length} imagens disponíveis.` : "Não há backdrops disponíveis para este filme.";
+    save.disabled = false;
+    updatePreview();
+  } catch (error) {
+    if (!dialog.isConnected) return;
+    status.textContent = `${error.message} Podes guardar Automática para remover uma escolha anterior.`;
+    save.disabled = false;
+    updatePreview();
+  }
+}
+
 function renderCurrent(week) {
   currentWeekData = week;
   $("editSubmissionDeadline").value = localDeadline(week?.submission_deadline);
@@ -542,6 +630,7 @@ function renderCurrent(week) {
           <button class="btn" data-set-winner="${f.id}">Set winner</button>
           ${f.needs_review ? `<button class="btn" data-rematch="${f.id}">Fix</button>` : ""}
           <button class="btn" data-edit="${f.id}">Editar</button>
+          <button class="btn" data-backdrop="${f.id}" ${f.tmdb_id ? "" : "disabled"} title="${f.tmdb_id ? "Escolher imagem de destaque" : "Associa primeiro o filme ao TMDB"}">Imagem de destaque</button>
           <button class="btn" data-delete-film="${f.id}">Apagar</button>
           ${f.poster_url ? `<a class="btn" target="_blank" href="${escapeHtml(f.poster_url)}">Poster ↗</a>` : ""}
         </div>
@@ -561,6 +650,10 @@ function renderCurrent(week) {
   }
 
   connectFilmButtons(week);
+  box?.querySelectorAll("[data-backdrop]").forEach(button => button.addEventListener("click", () => {
+    const film = films.find(item => item.id === Number(button.dataset.backdrop));
+    if (film) openBackdropPicker(film);
+  }));
 
   if (startBtn) startBtn.disabled = !week.is_open || week.voting_open || (week.submission_deadline != null && week.phase !== "paused");
   if (stopBtn)  stopBtn.disabled  = !week.voting_open;

@@ -229,6 +229,66 @@ class FrontendTests(unittest.TestCase):
         self.assertIsNone(response.json()["overview"])
         self.assertEqual(self.client.get("/films/999999/details").status_code, 404)
 
+    def test_admin_backdrop_permissions_persistence_and_automatic_reset(self):
+        _, film = self.voting_fixture()
+        with self.db.SessionLocal() as session:
+            session.get(self.models.Film, film).tmdb_id = 1878
+            session.commit()
+        images = [{"file_path": "/scene.jpg", "suitable": True, "url": "https://image.tmdb.org/t/p/w1280/scene.jpg"}]
+        route = f"/admin/films/{film}"
+        with patch("app.main.get_backdrops", return_value=images) as provider:
+            for headers, expected in [({}, 401), (self.voter_auth, 403)]:
+                self.assertEqual(self.client.get(route + "/backdrops", headers=headers).status_code, expected)
+                self.assertEqual(self.client.patch(route + "/backdrop", headers=headers, json={"file_path": "/scene.jpg"}).status_code, expected)
+            provider.assert_not_called()
+            self.assertEqual(self.client.get(route + "/backdrops", headers=self.owner_auth).status_code, 200)
+            for body in [{"file_path": "https://example.test/image.jpg"}, {"file_path": "/otherfilm.jpg"},
+                         {"file_path": "/scene.jpg", "position_x": 101}, {"file_path": "/scene.jpg", "position_y": "nan"}, {}]:
+                self.assertEqual(self.client.patch(route + "/backdrop", headers=self.owner_auth, json=body).status_code, 422)
+            response = self.client.patch(route + "/backdrop", headers=self.owner_auth,
+                json={"file_path": "/scene.jpg", "position_x": 65, "position_y": 30})
+            self.assertEqual(response.status_code, 200, response.text)
+        # New sessions and requests read the persisted override, not the TMDB cache.
+        with patch("app.main.get_tmdb_details", return_value={"backdrop_url": "https://image.tmdb.org/t/p/w1280/auto.jpg"}):
+            details = self.client.get(f"/films/{film}/details").json()
+            self.assertTrue(details["backdrop_url"].endswith("/scene.jpg"))
+            self.assertEqual(details["backdrop_position"], {"x": 65, "y": 30})
+            self.assertEqual(details["backdrop_selection"], "manual")
+            with patch("app.main.get_backdrops", side_effect=RuntimeError("must not be called")):
+                self.assertEqual(self.client.patch(route + "/backdrop", headers=self.owner_auth, json={"file_path": None}).status_code, 200)
+            details = self.client.get(f"/films/{film}/details").json()
+            self.assertTrue(details["backdrop_url"].endswith("/auto.jpg"))
+        with self.db.SessionLocal() as session:
+            record = session.get(self.models.Film, film)
+            self.assertIsNone(record.featured_backdrop_path)
+            self.assertIsNone(record.featured_backdrop_x)
+
+    def test_saved_backdrop_survives_provider_failure_and_is_cleared_on_rematch(self):
+        _, film = self.voting_fixture()
+        with self.db.SessionLocal() as session:
+            record = session.get(self.models.Film, film)
+            record.tmdb_id = 1878
+            record.featured_backdrop_path = "/scene.jpg"
+            session.commit()
+        from fastapi import HTTPException
+        with patch("app.main.get_tmdb_details", side_effect=HTTPException(503, "Unavailable")):
+            self.assertTrue(self.client.get(f"/films/{film}/details").json()["backdrop_url"].endswith("/scene.jpg"))
+        with patch("app.main.get_backdrops", side_effect=RuntimeError("Provider must not be needed to recrop an existing choice")):
+            response = self.client.patch(f"/admin/films/{film}/backdrop", headers=self.owner_auth,
+                json={"file_path": "/scene.jpg", "position_x": 60, "position_y": 35})
+            self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.patch(f"/admin/films/{film}", headers=self.owner_auth, json={"tmdb_id": 129}).status_code, 200)
+        with self.db.SessionLocal() as session:
+            self.assertIsNone(session.get(self.models.Film, film).featured_backdrop_path)
+            session.get(self.models.Film, film).featured_backdrop_path = "/oldscene.jpg"
+            session.commit()
+        match = {"tmdb_id": 1878, "canonical_title": "Fear and Loathing in Las Vegas", "canonical_year": 1998,
+                 "poster_url": None, "match_score": 1, "needs_review": False}
+        with patch("app.main.pick_best_tmdb_match", return_value=match):
+            self.assertEqual(self.client.post(f"/admin/films/{film}/rematch", headers=self.owner_auth, json={}).status_code, 200)
+        with self.db.SessionLocal() as session:
+            self.assertIsNone(session.get(self.models.Film, film).featured_backdrop_path)
+
     def test_film_sheet_resolves_confident_match_without_editing_submission(self):
         _, film = self.voting_fixture()
         with patch.dict(os.environ, {"TMDB_API_KEY": "test-only-key"}), \

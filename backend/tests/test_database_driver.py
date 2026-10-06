@@ -80,11 +80,14 @@ config = Config("alembic.ini")
 command.upgrade(config, "efe9de7c931d")
 with engine.begin() as connection:
     connection.execute(text("INSERT INTO users (username, password_hash, is_admin) VALUES ('migration_test', 'synthetic', false)"))
+    connection.execute(text("INSERT INTO weeks (id, title, is_open, is_ready) VALUES (1, 'Migration test', true, false)"))
+    connection.execute(text("INSERT INTO films (week_id, title, submitter_key, needs_review) VALUES (1, 'Existing film', 'migration_test', false)"))
 command.upgrade(config, "head")
 command.upgrade(config, "head")
 with engine.connect() as connection:
     assert connection.execute(text("SELECT username FROM users")).scalars().all() == ["migration_test"]
-    assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "h8b9c0d1e2f3"
+    assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "i9c0d1e2f3a4"
+    assert connection.execute(text("SELECT title, featured_backdrop_path, featured_backdrop_x, featured_backdrop_y FROM films")).one() == ("Existing film", None, None, None)
 from app.main import app
 assert app is not None
 engine.dispose()

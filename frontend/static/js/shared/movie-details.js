@@ -60,7 +60,7 @@
             <div class="movie-sheet__trailer" aria-live="polite"></div>
           </section>
         </div>
-        ${data.source === "tmdb" ? '<footer class="movie-sheet__credits">Informação e imagens: TMDB. <a href="/como-funciona#creditos">Créditos</a></footer>' : ""}
+        ${data.source === "tmdb" || data.image_source === "tmdb" ? '<footer class="movie-sheet__credits">Informação e imagens: TMDB. <a href="/como-funciona#creditos">Créditos</a></footer>' : ""}
       </div>`;
     dialog.querySelectorAll("img").forEach(img => img.addEventListener("error", () => { img.parentElement.hidden = true; }));
     dialog.querySelector(".movie-sheet__retry")?.addEventListener("click", () => open(data));

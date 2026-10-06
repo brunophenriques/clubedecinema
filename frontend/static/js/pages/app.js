@@ -843,10 +843,6 @@ function renderFeaturedFilm(week) {
   visual.setAttribute("aria-label", subject ? `Imagem de ${subject.title}` : "");
   hero.prepend(visual);
   if (!subject) return;
-  const caption = document.createElement("span");
-  caption.className = "cover-art-caption";
-  caption.textContent = winner ? "Poster do filme da semana" : `Na seleção: ${subject.title}`;
-  visual.append(caption);
   const poster = document.createElement("img");
   poster.className = "feature-poster";
   poster.alt = `Poster de ${subject.title}`;
@@ -865,8 +861,9 @@ function renderFeaturedFilm(week) {
   setPoster(subject.poster_url);
   visual.append(poster);
 
-  const endpoint = subject.tmdb_id ? `/movies/${encodeURIComponent(subject.tmdb_id)}/details` : `/films/${encodeURIComponent(subject.id)}/details`;
-  apiGet(endpoint, {cacheTtl: 60000}).then(data => {
+  // Club details apply the persisted per-film choice before the TMDB automatic image.
+  const endpoint = `/films/${encodeURIComponent(subject.id)}/details`;
+  apiGet(endpoint).then(data => {
     if (request !== featuredRequest) return;
     if (!subject.poster_url && data.poster_url) setPoster(data.poster_url);
     if (winner) {
@@ -883,14 +880,15 @@ function renderFeaturedFilm(week) {
     if (url.protocol !== "https:") return;
     const backdrop = new Image();
     backdrop.className = "feature-image";
-    backdrop.alt = `Fotograma de ${subject.title}`;
+    backdrop.alt = `Imagem de destaque de ${subject.title}`;
+    const position = data.backdrop_position || {x:50,y:42};
+    backdrop.style.objectPosition = `${position.x}% ${position.y}%`;
     backdrop.decoding = "async";
     backdrop.fetchPriority = "high";
     backdrop.addEventListener("load", () => {
       if (request !== featuredRequest || backdrop.naturalWidth <= backdrop.naturalHeight) return;
       visual.prepend(backdrop);
       hero.classList.add("has-backdrop");
-      caption.textContent = winner ? "Fotograma: TMDB" : `Na seleção: ${subject.title} · TMDB`;
     });
     backdrop.src = url.href;
   }).catch(() => {});

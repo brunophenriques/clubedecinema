@@ -11,10 +11,12 @@ from app import movie_details
 class MovieDetailsTests(unittest.TestCase):
     def setUp(self):
         movie_details._cache.clear()
+        movie_details._images_cache.clear()
         env = patch.dict(os.environ, {"TMDB_API_KEY": "test-only-key"})
         env.start()
         self.addCleanup(env.stop)
         self.addCleanup(movie_details._cache.clear)
+        self.addCleanup(movie_details._images_cache.clear)
 
     @patch("app.movie_details.requests.get")
     def test_metadata_translation_cast_and_cache(self, get):
@@ -34,23 +36,56 @@ class MovieDetailsTests(unittest.TestCase):
         self.assertEqual(result["runtime"], 125)
         self.assertEqual(result["letterboxd_url"], "https://letterboxd.com/search/tmdb:129/")
         self.assertEqual(movie_details.get_details(129), result)
-        self.assertEqual(get.call_count, 1)
+        self.assertEqual(get.call_count, 2)
 
     @patch("app.movie_details.requests.get")
-    def test_backdrop_prefers_untagged_landscape_over_titled_artwork(self, get):
-        get.return_value = Mock(status_code=200)
-        get.return_value.json.return_value = {
-            "title": "Film", "backdrop_path": "/default.jpg",
-            "images": {"backdrops": [
-                {"file_path": "/portrait.jpg", "iso_639_1": None, "aspect_ratio": .67, "vote_average": 10},
-                {"file_path": "/titled.jpg", "iso_639_1": "en", "aspect_ratio": 1.78, "vote_average": 9},
-                {"file_path": "/photography.jpg", "iso_639_1": None, "aspect_ratio": 1.78, "vote_average": 7},
-            ]},
-        }
+    def test_backdrop_uses_images_endpoint_and_prefers_untagged_high_resolution(self, get):
+        metadata, images = Mock(status_code=200), Mock(status_code=200)
+        metadata.json.return_value = {"title": "Film", "backdrop_path": "/default.jpg"}
+        images.json.return_value = {"backdrops": [
+            {"file_path": "/portrait.jpg", "iso_639_1": None, "width": 1000, "height": 1500, "vote_average": 10},
+            {"file_path": "/tiny.jpg", "iso_639_1": None, "width": 640, "height": 360, "vote_average": 10},
+            {"file_path": "/titled.jpg", "iso_639_1": "en", "width": 3840, "height": 2160, "vote_average": 9},
+            {"file_path": "/untagged.jpg", "iso_639_1": None, "width": 1920, "height": 1080, "vote_average": 7},
+        ]}
+        get.side_effect = [metadata, images]
         result = movie_details.get_details(129)
-        self.assertTrue(result["backdrop_url"].endswith("/photography.jpg"))
-        self.assertEqual(result["backdrop_aspect_ratio"], 1.78)
-        self.assertIn("images", get.call_args.kwargs["params"]["append_to_response"])
+        self.assertTrue(result["backdrop_url"].endswith("/untagged.jpg"))
+        self.assertAlmostEqual(result["backdrop_aspect_ratio"], 1920/1080)
+        self.assertTrue(get.call_args.args[0].endswith("/129/images"))
+        self.assertEqual(len(movie_details.get_backdrops(129)), 3)
+        self.assertEqual(get.call_count, 2)
+
+    @patch("app.movie_details.requests.get")
+    def test_unsuitable_images_do_not_use_main_backdrop_or_poster(self, get):
+        metadata, images = Mock(status_code=200), Mock(status_code=200)
+        metadata.json.return_value = {"title": "Film", "poster_path": "/poster.jpg", "backdrop_path": "/default.jpg"}
+        images.json.return_value = {"backdrops": [{"file_path": "/tiny.jpg", "width": 640, "height": 360}]}
+        get.side_effect = [metadata, images]
+        self.assertIsNone(movie_details.get_details(129)["backdrop_url"])
+
+    @patch("app.movie_details.requests.get")
+    def test_verified_fear_scene_is_preferred_only_if_listed(self, get):
+        get.return_value = Mock(status_code=200)
+        get.return_value.json.return_value = {"backdrops": [
+            {"file_path": "/4BcunK3qpDAMBM5YBsCgQWx9zB6.jpg", "width": 1920, "height": 1080, "vote_average": 10},
+            {"file_path": "/hUzs26surgYxbHATjyDIyWat6ZL.jpg", "width": 3840, "height": 2160, "vote_average": 5},
+        ]}
+        images = movie_details.get_backdrops(1878)
+        self.assertTrue(images[0]["verified_scene"])
+        self.assertEqual(images[0]["file_path"], "/hUzs26surgYxbHATjyDIyWat6ZL.jpg")
+        movie_details._images_cache.clear()
+        get.return_value.json.return_value["backdrops"].pop()
+        self.assertFalse(movie_details.get_backdrops(1878)[0]["verified_scene"])
+
+    @patch("app.movie_details.requests.get")
+    def test_image_failure_preserves_metadata_without_leaking_key(self, get):
+        metadata = Mock(status_code=200)
+        metadata.json.return_value = {"title": "Film"}
+        get.side_effect = [metadata, requests.Timeout("api_key=test-only-key")]
+        self.assertEqual(movie_details.get_details(129)["title"], "Film")
+        self.assertIsNone(movie_details.get_details(129)["backdrop_url"])
+        self.assertNotIn(129, movie_details._images_cache)
 
     @patch("app.movie_details.requests.get")
     def test_missing_optional_metadata_is_not_fabricated(self, get):
