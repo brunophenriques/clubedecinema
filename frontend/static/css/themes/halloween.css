@@ -1,0 +1,178 @@
+/* Halloween: a two-ink horror cinema edition. Loaded after the pink edition. */
+@font-face {
+  font-family: 'Halloween Condensed';
+  src: url('/static/images/halloween/six-caps-400.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Halloween Companion';
+  src: url('/static/images/halloween/barlow-condensed-900.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+body.theme-halloween {
+  --cream:#EEEBDD; --cream-80:#EEEBDD; --card:#F7F3E7; --parchment:#E2DCCD;
+  --ink:#151512; --ink-60:#4D4A40; --ink-30:#686357; --ink-10:#B3AA98; --ink-06:#DDD5C5;
+  --accent:#F4511E; --hot:#9C2C10; --rouge:#9C2C10; --rouge-dim:#F2D6C3; --rouge-mid:#A93B1B;
+  --ice:#F2D6C3; --silver:#ABA390; --gold:#75601F; --gold-dim:#E2D9B7;
+  --font-display:'Halloween Companion','Arial Narrow',Impact,sans-serif;
+  --font-halloween-heading:'Halloween Condensed','Arial Narrow',Impact,sans-serif;
+  background:var(--cream); color:var(--ink);
+  background-image:radial-gradient(#1515120c .65px,transparent .8px);
+  background-size:5px 5px;
+}
+[data-theme="dark"] body.theme-halloween {
+  --cream:#151512; --cream-80:#151512; --card:#24241F; --parchment:#303028;
+  --ink:#EEEBDD; --ink-60:#D2CCBA; --ink-30:#BEB5A0; --ink-10:#746D5C; --ink-06:#35342C;
+  --hot:#FF9B75; --rouge:#FF9B75; --rouge-dim:#492C20; --rouge-mid:#C27650;
+  --ice:#492C20; --gold:#DECA87; --gold-dim:#3A3423;
+  background-image:radial-gradient(#eeebdd0a .65px,transparent .8px);
+}
+body.theme-halloween .top { background:#151512; color:#EEEBDD; border-block:7px solid #F4511E; z-index:auto; }
+body.theme-halloween .top-inner { border:0; padding-top:0; gap:0 24px; }
+body.theme-halloween .halloween-edition { grid-column:1/-1; padding:10px 0; border-bottom:1px solid #eeebdd55; font:700 12px var(--font-mono); text-transform:uppercase; letter-spacing:.16em; }
+body.theme-halloween .brand { display:grid; grid-template-columns:minmax(0,1fr) 150px; align-items:center; gap:24px; padding:12px 0; }
+body.theme-halloween .brand-title { display:flex; align-items:center; justify-content:space-between; width:100%; gap:20px; padding:0; font:400 clamp(140px,20.5vw,300px)/.92 var(--font-halloween-heading); font-synthesis:none; letter-spacing:.012em; transform:none; white-space:nowrap; text-transform:uppercase; }
+body.theme-halloween .brand-title .masthead-club,body.theme-halloween .brand-title .masthead-cinema { color:#F4511E; background:none; -webkit-text-fill-color:currentColor; -webkit-text-stroke:0; filter:none; }
+body.theme-halloween .brand-title .masthead-cinema { margin:0; color:#EEEBDD; font-size:1em; text-shadow:none; }
+body.theme-halloween .brand-title em { align-self:center; font:italic 400 .28em/.9 Georgia,serif; letter-spacing:-.035em; text-transform:lowercase; color:#EEEBDD; -webkit-text-stroke:0; text-shadow:none; }
+body.theme-halloween .club-emblem { width:150px; transform:rotate(-9deg); }
+body.theme-halloween .club-emblem svg > path:nth-of-type(1) { fill:#EEEBDD; stroke:#151512; }
+body.theme-halloween .club-emblem svg > path:nth-of-type(2) { fill:#F4511E; stroke:#151512; }
+body.theme-halloween .club-emblem svg > path:nth-of-type(3) { stroke:#EEEBDD; }
+body.theme-halloween .club-emblem svg > path:last-child { stroke:#F4511E; }
+body.theme-halloween .club-emblem text { fill:#151512; }
+body.theme-halloween .nav { min-height:60px; border-top:1px solid #eeebdd55; }
+body.theme-halloween .nav-link { color:#EEEBDD; font-weight:700; }
+body.theme-halloween .nav-link.active { background:none !important; text-decoration:underline !important; text-decoration-color:#F4511E !important; text-underline-offset:8px; text-decoration-thickness:3px; }
+body.theme-halloween .nav-link:hover { color:#FF9B75; }
+body.theme-halloween .auth-pill { padding-top:8px; padding-bottom:8px; }
+body.theme-halloween .auth-pill__user { color:#EEEBDD; }
+body.theme-halloween .header-controls { background:#EEEBDD; border:0; box-shadow:none; }
+body.theme-halloween .header-controls #btnLogin,body.theme-halloween .header-controls #btnLogout,body.theme-halloween .header-controls #btnChat,body.theme-halloween .header-controls #btnTheme { color:#151512; }
+body.theme-halloween .header-controls button:hover { background:#F4511E !important; color:#151512 !important; }
+body.theme-halloween :focus-visible { outline:3px solid var(--ink); outline-offset:4px; }
+body.theme-halloween .top :focus-visible { outline-color:#FF9B75; }
+body.theme-halloween .header-controls button:focus-visible,body.theme-halloween .section:has(> #films) .section-head :focus-visible { outline-color:#151512; }
+body.theme-halloween button,body.theme-halloween [role="button"],body.theme-halloween .btn { min-width:44px; min-height:44px; }
+body.theme-halloween .btn { border:2px solid var(--ink); background:var(--cream); color:var(--ink); padding:10px 16px; }
+body.theme-halloween .btn:hover { background:var(--ink-06); color:var(--ink); }
+body.theme-halloween .btn.primary,body.theme-halloween .cinema-cover .hero-actions .btn.primary { background:#F4511E; color:#151512; border:2px solid #151512; box-shadow:3px 3px 0 var(--ink); }
+body.theme-halloween .btn.primary:hover { background:#FF7547; }
+body.theme-halloween .input,body.theme-halloween .chat-input { background:var(--card); color:var(--ink); border:1px solid var(--ink-30); }
+body.theme-halloween .input::placeholder,body.theme-halloween .chat-input::placeholder { color:var(--ink-30); opacity:1; }
+/* The real assigned film keeps the whole cover. Archive figures live below it. */
+body.theme-halloween .cinema-cover.is-winner { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:360px auto; border-bottom:5px solid var(--ink); background:var(--card); margin-top:28px; }
+body.theme-halloween .is-winner .feature-visual.cover-art { position:relative; grid-row:1; grid-column:1; inset:auto; width:100%; height:360px; background:#F4511E; overflow:hidden; }
+body.theme-halloween .is-winner .feature-image { object-position:inherit; filter:grayscale(1) contrast(1.15); mix-blend-mode:luminosity; }
+body.theme-halloween .is-winner .cover-art::after { display:block; content:''; position:absolute; inset:0; z-index:1; background:radial-gradient(#15151260 .6px,transparent .8px); background-size:3px 3px; opacity:.22; pointer-events:none; }
+body.theme-halloween .is-winner .feature-poster { width:100px; height:150px; top:auto; right:20px; bottom:18px; border:3px solid #EEEBDD; box-shadow:4px 4px 0 #151512; transform:rotate(3deg); filter:none; z-index:2; }
+body.theme-halloween .cinema-cover.is-winner .hero-inner { grid-row:2; grid-column:1; display:grid; grid-template-columns:minmax(0,1fr) auto; padding:28px; gap:12px 24px; min-height:0; }
+body.theme-halloween .cinema-cover.is-winner .kicker { grid-column:1/-1; color:var(--ink-60); padding:0; background:none; transform:none; font-weight:700; }
+body.theme-halloween .cinema-cover.is-winner h1 { grid-column:1; font:700 clamp(44px,5.5vw,78px)/1 Georgia,serif; letter-spacing:-.05em; background:none; box-shadow:none; color:var(--ink); margin:0; }
+body.theme-halloween .cinema-cover.is-winner h1::first-line { background:none; }
+body.theme-halloween .is-winner .feature-meta,body.theme-halloween .is-winner #heroSub { grid-column:1; grid-row:auto; color:var(--ink-60); max-width:670px; margin:0; }
+body.theme-halloween .is-winner .hero-actions { grid-column:2; grid-row:2/span 3; display:flex; flex-direction:column; align-self:center; align-items:stretch; margin:0; }
+body.theme-halloween .is-winner .hero-actions .btn { background:var(--cream); color:var(--ink); }
+body.theme-halloween .is-winner .edition-stamp { top:14px; left:18px; writing-mode:horizontal-tb; transform:rotate(-2deg); color:#151512; background:#EEEBDD; border:1px solid #151512; max-width:calc(100% - 36px); padding:7px 10px; }
+body.theme-halloween .cover-result { border:0; margin:0; padding:0 28px 20px; font-size:12px; }
+body.theme-halloween .cover-result strong { font-family:var(--font-body); font-weight:700; font-style:normal; }
+body.theme-halloween .selection-edition.cinema-cover { border:0; border-block:3px solid var(--ink); background:var(--card); margin-top:28px; }
+body.theme-halloween .selection-edition .hero-inner { padding:22px 20px; gap:12px; }
+body.theme-halloween .selection-edition.cinema-cover .kicker { color:var(--ink); font-size:12px; }
+body.theme-halloween .selection-edition.cinema-cover #heroSub { color:var(--ink-60); max-width:none; font-size:14px; }
+/* A reserved margin portrait and a second, cropped divider: no floating stickers. */
+body.theme-halloween .section:has(> #films) { padding-top:34px; }
+body.theme-halloween .section:has(> #films) > .section-head { position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto 170px; align-items:center; min-height:190px; gap:24px; margin:0 0 28px; padding:18px 22px; border:0; background:#F4511E; color:#151512; overflow:hidden; }
+body.theme-halloween h2 { font-family:var(--font-halloween-heading); font-weight:400; font-style:normal; font-synthesis:none; letter-spacing:.015em; }
+body.theme-halloween .section:has(> #films) .section-head h2 { font:400 clamp(46px,5.8vw,84px)/1 var(--font-halloween-heading); color:#151512; text-transform:uppercase; letter-spacing:.015em; }
+body.theme-halloween .section:has(> #films) h2::before { display:block; content:'01 /'; font:700 12px var(--font-mono); color:#151512; padding:0; margin:0 0 14px; background:none; border:0; transform:none; }
+body.theme-halloween .section:has(> #films) .section-head .small { color:#151512; margin-top:14px; }
+body.theme-halloween .selection-refresh { background:#EEEBDD; color:#151512; border-color:#151512; }
+body.theme-halloween .selection-refresh:hover { background:#F9F6EB; color:#151512; }
+body.theme-halloween .halloween-portrait { pointer-events:none; user-select:none; position:relative; background:#F4511E; isolation:isolate; overflow:hidden; }
+body.theme-halloween .halloween-portrait img { display:block; width:100%; height:100%; object-fit:cover; filter:grayscale(1) contrast(1.65); mix-blend-mode:multiply; }
+body.theme-halloween .halloween-portrait::after { content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(#15151270 .7px,transparent .9px); background-size:3px 3px; opacity:.32; }
+body.theme-halloween .halloween-portrait--nosferatu { width:170px; height:210px; margin-block:-18px; transform:rotate(4deg); clip-path:polygon(7% 0,100% 3%,96% 100%,0 95%); }
+body.theme-halloween .halloween-portrait--nosferatu img { object-position:center 15%; transform:scale(1.5); transform-origin:50% 18%; }
+body.theme-halloween .halloween-divider { position:relative; height:150px; margin:26px 0; border-block:3px solid var(--ink); background:repeating-linear-gradient(-12deg,transparent 0 22px,var(--ink-10) 23px 24px); overflow:hidden; pointer-events:none; }
+body.theme-halloween .halloween-divider::before { content:'Edição Halloween'; position:absolute; left:24px; top:50%; transform:translateY(-50%); font:italic 700 clamp(24px,4vw,52px)/1 Georgia,serif; color:var(--ink); max-width:65%; }
+body.theme-halloween .halloween-portrait--phantom { position:absolute; right:8%; top:-36px; width:260px; height:220px; transform:rotate(-6deg); border:6px solid var(--cream); }
+body.theme-halloween .halloween-portrait--phantom img { object-position:center 28%; transform:scale(1.25); transform-origin:50% 28%; }
+body.theme-halloween .film-grid { gap:32px 24px; }
+body.theme-halloween .film-card::before { border-top:2px solid var(--ink); font:900 30px/1 var(--font-display); color:var(--rouge); }
+body.theme-halloween .film-card .poster { border:1px solid var(--ink); background:#F4511E; box-shadow:4px 4px 0 var(--ink-10); }
+body.theme-halloween .film-card .poster > img { filter:grayscale(1) contrast(1.12); mix-blend-mode:luminosity; }
+body.theme-halloween .film-card:hover .poster > img,body.theme-halloween .film-card:focus-within .poster > img { filter:none; mix-blend-mode:normal; }
+body.theme-halloween .film-title { font-family:var(--font-body); font-size:15px; line-height:1.4; }
+body.theme-halloween .poster-btn { min-height:44px; min-width:44px; }
+body.theme-halloween .poster-btn--know { background:#EEEBDD; color:#151512; }
+body.theme-halloween .poster-btn--play { background:#F4511E; color:#151512; }
+body.theme-halloween .reaction-bar { flex-wrap:wrap; }
+body.theme-halloween .reaction-add-btn,body.theme-halloween .reaction-chip { background:var(--card); color:var(--ink); min-width:44px; min-height:44px; }
+body.theme-halloween .reaction-picker__btn { min-width:44px; min-height:44px; }
+body.theme-halloween .movie-sheet,body.theme-halloween .submission-dialog,body.theme-halloween .hof-modal__panel { color:var(--ink); background:var(--card); border:2px solid var(--ink); box-shadow:6px 6px 0 #F4511E; }
+body.theme-halloween .movie-sheet__header,body.theme-halloween .hof-modal__head { background:var(--card); }
+body.theme-halloween .movie-sheet__header h2 { font:700 clamp(34px,5vw,64px)/1.1 Georgia,serif; letter-spacing:-.04em; }
+body.theme-halloween .movie-sheet__close { background:#F4511E; color:#151512; }
+body.theme-halloween .chat-panel { border:2px solid var(--ink); background:var(--card); box-shadow:-6px 0 0 #F4511E; }
+body.theme-halloween .chat-panel__head { background:#F4511E; color:#151512; }
+body.theme-halloween .chat-panel__week,body.theme-halloween .chat-panel__input-wrap { background:var(--parchment); color:var(--ink); }
+body.theme-halloween .chat-msg__text { background:var(--parchment); color:var(--ink); }
+body.theme-halloween .chat-msg--me .chat-msg__text,body.theme-halloween .chat-header-btn__badge { background:#F4511E; color:#151512; }
+body.theme-halloween .chat-msg__name { color:var(--ink); }
+body.theme-halloween .chat-panel__hint,body.theme-halloween .chat-msg__time { color:var(--ink-60); }
+body.theme-halloween .lb-avatar--initials,body.theme-halloween .wc-avatar--initials { background:var(--ink); color:var(--cream); }
+body.theme-halloween #clubWatchedSection { border-top:5px solid var(--ink); }
+body.theme-halloween .wc-rating strong { background:#F4511E; color:#151512; }
+body.theme-halloween .preview-notice { border-color:var(--ink); background:var(--card); }
+@media(min-width:1200px) { body.theme-halloween .wrap { max-width:1280px; } }
+@media(max-width:800px) {
+  body.theme-halloween .brand { grid-template-columns:minmax(0,1fr) 100px; gap:16px; }
+  body.theme-halloween .club-emblem { width:100px; }
+  body.theme-halloween .brand-title { font-size:clamp(110px,20vw,160px); gap:14px; }
+  body.theme-halloween .section:has(> #films) > .section-head { grid-template-columns:minmax(0,1fr) 120px; gap:16px; }
+  body.theme-halloween .selection-refresh { grid-column:1; grid-row:2; justify-self:start; }
+  body.theme-halloween .halloween-portrait--nosferatu { grid-column:2; grid-row:1/span 2; width:120px; height:200px; }
+  body.theme-halloween .halloween-portrait--phantom { right:0; width:210px; }
+  body.theme-halloween .cinema-cover.is-winner .hero-inner { grid-template-columns:1fr; }
+  body.theme-halloween .is-winner .hero-actions { grid-column:1; grid-row:auto; flex-direction:row; flex-wrap:wrap; margin-top:10px; }
+}
+@media(max-width:560px) {
+  body.theme-halloween .wrap { padding-inline:16px; }
+  body.theme-halloween .halloween-edition { padding-block:10px; font-size:10px; }
+  body.theme-halloween .brand { grid-template-columns:minmax(0,1fr) 70px; gap:12px; padding-block:12px; }
+  body.theme-halloween .brand-title { display:grid; grid-template-columns:max-content max-content; justify-content:start; width:fit-content; font-size:clamp(84px,28vw,156px); gap:8px 12px; white-space:normal; }
+  body.theme-halloween .brand-title .masthead-cinema { grid-column:1/-1; font-size:1.2em; }
+  body.theme-halloween .brand-title em { font-size:.32em; }
+  body.theme-halloween .club-emblem { width:70px; }
+  body.theme-halloween .nav { grid-column:1/-1; gap:20px; min-height:52px; }
+  body.theme-halloween .nav-link { font-size:12px; }
+  body.theme-halloween .auth-pill { grid-column:1/-1; justify-content:flex-end; }
+  body.theme-halloween .top-inner { gap:0; }
+  body.theme-halloween .cinema-cover.is-winner { grid-template-rows:240px auto; margin-top:20px; }
+  body.theme-halloween .is-winner .feature-visual.cover-art { height:240px; }
+  body.theme-halloween .is-winner .feature-poster { width:64px; height:96px; right:12px; bottom:12px; }
+  body.theme-halloween .is-winner .edition-stamp { font-size:10px; left:12px; top:10px; }
+  body.theme-halloween .cinema-cover.is-winner .hero-inner { padding:20px 16px; gap:12px; }
+  body.theme-halloween .cinema-cover.is-winner h1 { font-size:44px; }
+  body.theme-halloween .cover-result { padding:0 16px 18px; flex-wrap:wrap; gap:12px; }
+  body.theme-halloween .selection-edition .hero-inner { padding:18px 16px; }
+  body.theme-halloween .selection-edition .hero-actions { width:100%; margin:0; }
+  body.theme-halloween .section:has(> #films) > .section-head { grid-template-columns:minmax(0,1fr) 88px; gap:16px 10px; padding:18px 12px; }
+  body.theme-halloween .section:has(> #films) .section-head h2 { font-size:48px; }
+  body.theme-halloween .halloween-portrait--nosferatu { width:88px; height:170px; }
+  body.theme-halloween .halloween-divider { height:115px; }
+  body.theme-halloween .halloween-divider::before { left:8px; max-width:52%; font-size:25px; }
+  body.theme-halloween .halloween-portrait--phantom { right:-10px; top:-18px; width:160px; height:160px; }
+  body.theme-halloween .film-grid { gap:28px 16px; }
+  body.theme-halloween .poster-btn { max-width:calc(100% - 12px); padding:10px 6px; }
+  body.theme-halloween .poster-overlay { padding:6px; }
+  body.theme-halloween .film-title { font-size:14px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  body.theme-halloween *,body.theme-halloween *::before,body.theme-halloween *::after { scroll-behavior:auto !important; animation:none !important; transition:none !important; }
+}

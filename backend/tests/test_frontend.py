@@ -56,7 +56,7 @@ class FrontendTests(unittest.TestCase):
             self.assertNotIn("token_prefix", response.text)
 
     def test_week_themes_and_independent_preview(self):
-        for theme in [None, "portugal", "netflix", "italian"]:
+        for theme in [None, "portugal", "netflix", "italian", "halloween"]:
             with self.subTest(theme=theme), self.db.SessionLocal() as session:
                 week = self.models.Week(title="Frontend test", theme=theme, is_open=True)
                 session.add(week)
@@ -78,6 +78,31 @@ class FrontendTests(unittest.TestCase):
         preview = self.client.get("/preview?theme=netflix")
         self.assertIn('<body class="theme-netflix">', preview.text)
         self.assertEqual(preview.headers["cache-control"], "no-store")
+
+    def test_halloween_preview_demo_is_read_only_and_independent(self):
+        with self.db.SessionLocal() as session:
+            before = session.query(self.models.Week).count()
+        preview = self.client.get("/preview?theme=halloween&demo=1")
+        self.assertEqual(preview.status_code, 200)
+        self.assertIn('<body class="theme-halloween">', preview.text)
+        self.assertIn("Dados de demonstração", preview.text)
+        self.assertEqual(preview.headers["cache-control"], "no-store")
+        for stage in ["winner", "submissions", "voting"]:
+            response = self.client.get("/preview/data", params={"path": "/weeks/current", "stage": stage})
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertLess(data["id"], 0)
+            self.assertEqual(bool(data["winner_film_id"]), stage == "winner")
+            self.assertNotIn("Nosferatu", [film["title"] for film in data["films"]])
+            self.assertEqual(data["submissions_open"], stage == "submissions")
+        details = self.client.get("/preview/data", params={"path": "/films/-671/details"}).json()
+        self.assertEqual(details["title"], "Alien")
+        self.assertIn("image.tmdb.org", details["backdrop_url"])
+        self.assertEqual(self.client.get("/preview/data", params={"path": "https://example.com"}).status_code, 404)
+        self.assertEqual(self.client.post("/preview/data", json={"path": "/weeks/current"}).status_code, 405)
+        self.assertEqual(self.client.get("/preview?stage=invalid").status_code, 422)
+        with self.db.SessionLocal() as session:
+            self.assertEqual(session.query(self.models.Week).count(), before)
 
     def test_all_static_references_and_precache_urls_resolve(self):
         sources = [*self.frontend.FRONTEND_DIR.rglob("*"), Path(self.frontend.__file__)]

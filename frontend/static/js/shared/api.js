@@ -32,12 +32,20 @@
     return Object.assign(new Error(detail), { status: response.status });
   }
 
+  function previewPath(path) {
+    if (window.location.pathname !== "/preview" || !window.CinemaPreview || !/^\/(weeks|films|letterboxd)(\/|\?|$)/.test(path)) return path;
+    return `/preview/data?${new URLSearchParams({path, stage: window.CinemaPreview.stage})}`;
+  }
+
   async function request(path, { method = "GET", body, auth = false, headers = {} } = {}) {
+    if (method !== "GET" && previewPath(path) !== path) {
+      throw Object.assign(new Error("Dados de demonstração: esta ação não é guardada."), {status: 409});
+    }
     const requestHeaders = { ...headers };
     if (auth) Object.assign(requestHeaders, authHeaders());
     if (body !== undefined) requestHeaders["Content-Type"] = "application/json";
 
-    const response = await fetch(path, {
+    const response = await fetch(previewPath(path), {
       method,
       headers: requestHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -51,6 +59,7 @@
     setToken,
     clearToken,
     authHeaders,
+    previewPath,
     request,
   });
 })();

@@ -1,10 +1,15 @@
-const CACHE = "clubedecinema-v36";
+const CACHE = "clubedecinema-v39";
 const STATIC = [
   "/",
   "/watch",
   "/static/css/styles.css",
   "/static/css/editorial.css",
   "/static/css/chrome-edition.css",
+  "/static/css/themes/halloween.css",
+  "/static/images/halloween/nosferatu.jpg",
+  "/static/images/halloween/phantom.jpg",
+  "/static/images/halloween/six-caps-400.ttf",
+  "/static/images/halloween/barlow-condensed-900.ttf",
   "/static/js/shared/editorial.js",
   "/static/js/shared/api.js",
   "/static/js/shared/movie-details.js",
@@ -53,7 +58,8 @@ self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
 
   // API calls — always network, never cache
-  if (url.pathname.startsWith("/api/") ||
+  if (url.pathname.startsWith("/preview") ||
+      url.pathname.startsWith("/api/") ||
       url.pathname.startsWith("/movies/") ||
       url.pathname.startsWith("/weeks") ||
       url.pathname.startsWith("/auth") ||

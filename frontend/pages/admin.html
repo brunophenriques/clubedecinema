@@ -147,7 +147,8 @@
       </div>
       <div class="hero-actions">
         <input id="newWeekTitle" class="input" placeholder="Título da semana" />
-        <input id="newWeekTheme" class="input" placeholder="Tema (opcional — ex: italian, netflix...)" style="margin-top:8px" />
+        <input id="newWeekTheme" class="input" list="weekThemes" placeholder="Tema (opcional — italian, netflix, halloween)" style="margin-top:8px" />
+        <datalist id="weekThemes"><option value="italian"></option><option value="netflix"></option><option value="halloween"></option></datalist>
       <div class="deadline-fields">
         <label>Fim das submissões<input id="newSubmissionDeadline" class="input" type="datetime-local" /></label>
         <label>Fim da votação<input id="newVotingDeadline" class="input" type="datetime-local" /></label>

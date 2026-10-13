@@ -153,6 +153,7 @@ async function apiPost(path, body, { auth = false } = {}) {
 
 /* ── Error messages ── */
 function prettyVoteError(e) {
+  if (window.CinemaPreview && e?.status === 409) return e.message;
   const s = e?.status;
   const m = String(e?.message || "");
   if (s === 401) return "Tens de fazer login para votar.";
@@ -166,6 +167,7 @@ function prettyVoteError(e) {
 }
 
 function prettySubmitError(e) {
+  if (window.CinemaPreview && e?.status === 409) return e.message;
   const s = e?.status;
   const m = String(e?.message || "");
   if (s === 401) return "Tens de fazer login para submeter.";
@@ -178,13 +180,16 @@ function prettySubmitError(e) {
 }
 
 /* ── Auth modal ── */
+let authFocusTimer;
 function openAuthModal(mode = "login") {
+  clearTimeout(authFocusTimer);
   setAuthMode(mode);
   el("authModal").style.display = "block";
-  setTimeout(() => el("authUser")?.focus(), 50);
+  authFocusTimer = setTimeout(() => el("authUser")?.focus(), 50);
 }
 
 function closeAuthModal() {
+  clearTimeout(authFocusTimer);
   const m = el("authModal");
   if (m) m.style.display = "none";
 }
@@ -917,7 +922,7 @@ function render(week) {
   if (filmsHeading) filmsHeading.textContent = week.submissions_open ? "Os candidatos da semana" : week.voting_open ? "Em votação esta semana" : "A seleção da semana";
 
   // Apply week theme if set
-  applyTheme(_requestedTheme || week.theme);
+  applyTheme(_requestedTheme ?? week.theme);
   renderFeaturedFilm(week);
 
   // Show chat button
@@ -1235,14 +1240,23 @@ if ("serviceWorker" in navigator) {
 
 /* ── Theme ── */
 /* ── Italian theme ── */
-const _requestedTheme = new URLSearchParams(window.location.search).get("theme")?.trim().toLowerCase() || null;
+const _themeParams = new URLSearchParams(window.location.search);
+const _requestedTheme = _themeParams.has("theme") ? _themeParams.get("theme").trim().toLowerCase() : null;
 let _activeTheme = null;
+let _themeOriginalCopy = null;
 
 function applyTheme(theme) {
   if (window.__PT_PAGE) return;
   theme = String(theme || "").trim().toLowerCase();
-  if (!theme || _activeTheme === theme) return;
-  document.body.classList.remove("theme-italian", "theme-netflix");
+  if (_activeTheme === theme) return;
+  const brandSub = document.querySelector(".brand-sub");
+  const kicker = el("heroKicker");
+  if (!_themeOriginalCopy) _themeOriginalCopy = { brandSub: brandSub?.textContent, kicker: kicker?.textContent };
+  document.body.classList.remove("theme-italian", "theme-netflix", "theme-halloween");
+  document.querySelectorAll(".it-flag-left, .it-flag-right, .netflix-brand-mark, [data-halloween-decoration]").forEach(node => node.remove());
+  ["itStripeTop","itColiseum","itPisatower","itLambreta","itPizza","itPinocchio","itFarioli","itWhyBtn","itPopupBd"].forEach(id => { const node = el(id); if (node) node.style.display = "none"; });
+  if (brandSub && _activeTheme === "italian") brandSub.textContent = _displayedWeek?.title || _themeOriginalCopy.brandSub;
+  if (kicker) kicker.textContent = _themeOriginalCopy.kicker;
   _activeTheme = theme;
 
   if (theme === "italian") {
@@ -1270,6 +1284,36 @@ function applyTheme(theme) {
       el("itPopupX")?.addEventListener("click", () => { bd.style.display = "none"; });
       bd.addEventListener("click", (e) => { if (e.target === bd) bd.style.display = "none"; });
     }
+  } else if (theme === "halloween") {
+    document.body.classList.add("theme-halloween");
+    const edition = document.createElement("div");
+    edition.className = "halloween-edition";
+    edition.dataset.halloweenDecoration = "";
+    edition.textContent = "Edição Halloween";
+    document.querySelector(".brand")?.before(edition);
+    // Archive portraits occupy dedicated collage slots, never the winner image.
+    const portrait = (name, className) => {
+      const slot = document.createElement("div");
+      slot.className = `halloween-portrait ${className}`;
+      slot.dataset.halloweenDecoration = "";
+      slot.setAttribute("aria-hidden", "true");
+      const image = document.createElement("img");
+      image.src = {nosferatu: "/static/images/halloween/nosferatu.jpg", phantom: "/static/images/halloween/phantom.jpg"}[name];
+      image.alt = "";
+      image.width = name === "nosferatu" ? 705 : 1625;
+      image.height = name === "nosferatu" ? 900 : 2040;
+      image.decoding = "async";
+      slot.append(image);
+      return slot;
+    };
+    const head = el("films")?.closest("section")?.querySelector(".section-head");
+    head?.append(portrait("nosferatu", "halloween-portrait--nosferatu"));
+    const divider = document.createElement("div");
+    divider.className = "halloween-divider";
+    divider.dataset.halloweenDecoration = "";
+    divider.setAttribute("aria-hidden", "true");
+    divider.append(portrait("phantom", "halloween-portrait--phantom"));
+    el("films")?.closest("section")?.after(divider);
   } else if (theme === "netflix") {
     document.body.classList.add("theme-netflix");
 
@@ -1484,12 +1528,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   await load();
 
   // Apply URL theme param for preview (e.g. ?theme=italian)
-  if (_requestedTheme) {
+  if (_requestedTheme !== null) {
     applyTheme(_requestedTheme);
     const previewTitle = new URLSearchParams(window.location.search).get("previewTitle");
     if (previewTitle) {
       if (el("weekTitle")) el("weekTitle").textContent = previewTitle;
-      if (el("heroTitle")) el("heroTitle").textContent = previewTitle;
+      if (el("heroTitle") && !el("heroSection")?.classList.contains("is-winner")) el("heroTitle").textContent = previewTitle;
     }
   }
   el("films")?.addEventListener("click", (e) => {

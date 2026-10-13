@@ -99,7 +99,7 @@
     const endpoint = film.film_id ? `/films/${encodeURIComponent(film.film_id)}/details` : film.tmdb_id ? `/movies/${encodeURIComponent(film.tmdb_id)}/details` : null;
     try {
       if (!endpoint) throw new Error("No match");
-      const response = await fetch(endpoint, {signal: request.signal});
+      const response = await fetch(window.CinemaApi.previewPath(endpoint), {signal: request.signal});
       if (!response.ok) throw new Error("Unavailable");
       const data = await response.json();
       if (request !== controller || !dialog.open) return;

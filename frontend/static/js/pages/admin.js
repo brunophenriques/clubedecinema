@@ -756,9 +756,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   /* ── Create week ── */
   $("previewWeek")?.addEventListener("click", () => {
-    const title = $("newWeekTitle").value.trim() || "Semana Netflix";
-    const theme = $("newWeekTheme")?.value.trim().toLowerCase() || "netflix";
-    const params = new URLSearchParams({ theme, preview: "1", previewTitle: title });
+    const title = $("newWeekTitle").value.trim();
+    const theme = $("newWeekTheme")?.value.trim().toLowerCase() || "";
+    const params = new URLSearchParams({ theme, preview: "1" });
+    if (title) params.set("previewTitle", title);
     const previewUrl = `/preview?${params.toString()}`;
     const previewWindow = window.open(previewUrl, "_blank");
     if (!previewWindow) window.location.assign(previewUrl);
