@@ -1,6 +1,13 @@
 /* Pink editorial identity; metal is reserved for the wordmark and club emblem. */
 :root,[data-theme="light"] { --cream:#F8E8F0; --cream-80:#F8E8F0; --card:#FFF9FC; --parchment:#F3E0EA; --ink:#211B20; --ink-60:#65515D; --ink-30:#77616F; --ink-10:#CAB1C0; --ink-06:#EAD4E1; --accent:#E64B98; --hot:#C62976; --rouge:#211B20; --rouge-mid:#E64B98; --rouge-dim:#F3ADD0; --ice:#F3ADD0; --silver:#D6D3D8; }
 [data-theme="dark"] { --cream:#211B20; --cream-80:#211B20; --card:#2E252C; --parchment:#382B34; --ink:#FFF9FC; --ink-60:#DEC8D6; --ink-30:#C3A9B9; --ink-10:#624A59; --ink-06:#402F3A; --ice:#523045; --silver:#756B75; --rouge:#F3ADD0; }
+/* Keep text paired with its surface when earlier dark-mode rules take priority. */
+[data-theme="dark"] .chat-panel__head { color:var(--ink); }
+[data-theme="dark"] .chat-msg--me .chat-msg__text { background:var(--accent); color:#211B20; }
+.chat-header-btn__badge { background:var(--accent); color:#211B20; }
+.lb-avatar--initials,.wc-avatar--initials { background:#523045; color:#FFF9FC; }
+.cinema-hero,[data-theme="dark"] .cinema-hero { background:var(--accent); color:#211B20; }
+.cinema-hero__label,.cinema-hero__title,.cinema-hero__sub,.cinema-hero__aside { color:#211B20; }
 .brand { display:flex; align-items:center; gap:24px; }
 .brand-copy { width:auto; min-width:0; }
 .club-emblem { display:block; flex:none; width:86px; transform:rotate(7deg); }
