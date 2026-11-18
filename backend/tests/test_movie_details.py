@@ -37,6 +37,21 @@ class MovieDetailsTests(unittest.TestCase):
         self.assertEqual(result["letterboxd_url"], "https://letterboxd.com/search/tmdb:129/")
         self.assertEqual(movie_details.get_details(129), result)
         self.assertEqual(get.call_count, 2)
+        self.assertEqual(get.call_args_list[0].kwargs["params"]["language"], "en-US")
+
+    @patch("app.movie_details.requests.get")
+    def test_english_metadata_and_poster(self, get):
+        get.return_value = Mock(status_code=200)
+        get.return_value.json.return_value = {
+            "title": "Spirited Away", "overview": "English synopsis",
+            "genres": [{"name": "Animation"}], "poster_path": "/english.jpg",
+        }
+        result = movie_details.get_details(129)
+        self.assertEqual(result["overview_language"], "en")
+        self.assertEqual(result["overview"], "English synopsis")
+        self.assertEqual(result["genres"], ["Animation"])
+        self.assertTrue(result["poster_url"].endswith("/english.jpg"))
+        self.assertEqual(get.call_args_list[0].kwargs["params"]["language"], "en-US")
 
     @patch("app.movie_details.requests.get")
     def test_backdrop_uses_images_endpoint_and_prefers_untagged_high_resolution(self, get):

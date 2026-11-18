@@ -86,7 +86,7 @@ def get_details(tmdb_id):
     try:
         response = requests.get(
             f"https://api.themoviedb.org/3/movie/{tmdb_id}",
-            params={"api_key": key, "language": "pt-PT",
+            params={"api_key": key, "language": "en-US",
                     "append_to_response": "credits,translations"},
             timeout=8,
         )
@@ -94,9 +94,9 @@ def get_details(tmdb_id):
             raise HTTPException(404, "Movie not found")
         response.raise_for_status()
         data = response.json()
-        # Use an available English synopsis when TMDB has no Portuguese text.
+        # Keep the sheet in English, including TMDB's localized poster preference.
         overview = data.get("overview") or ""
-        overview_language = "pt" if overview else None
+        overview_language = "en" if overview else None
         if not overview:
             for translation in data.get("translations", {}).get("translations", []):
                 if translation.get("iso_639_1") == "en" and translation.get("data", {}).get("overview"):
