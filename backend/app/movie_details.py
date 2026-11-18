@@ -94,11 +94,19 @@ def get_details(tmdb_id):
             raise HTTPException(404, "Movie not found")
         response.raise_for_status()
         data = response.json()
-        # Keep the sheet in English, including TMDB's localized poster preference.
+        # Request English metadata/posters, but prefer the exact Portugal synopsis.
         overview = data.get("overview") or ""
         overview_language = "en" if overview else None
+        translations = data.get("translations", {}).get("translations", [])
+        for translation in translations:
+            translated_overview = (translation.get("data", {}).get("overview") or "").strip()
+            if (translation.get("iso_639_1") == "pt"
+                    and translation.get("iso_3166_1") == "PT" and translated_overview):
+                overview = translated_overview
+                overview_language = "pt-PT"
+                break
         if not overview:
-            for translation in data.get("translations", {}).get("translations", []):
+            for translation in translations:
                 if translation.get("iso_639_1") == "en" and translation.get("data", {}).get("overview"):
                     overview = translation["data"]["overview"]
                     overview_language = "en"

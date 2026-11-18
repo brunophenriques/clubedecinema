@@ -54,6 +54,35 @@ class MovieDetailsTests(unittest.TestCase):
         self.assertEqual(get.call_args_list[0].kwargs["params"]["language"], "en-US")
 
     @patch("app.movie_details.requests.get")
+    def test_portugal_synopsis_keeps_english_poster(self, get):
+        get.return_value = Mock(status_code=200)
+        get.return_value.json.return_value = {
+            "title": "Film", "overview": "English synopsis", "poster_path": "/english.jpg",
+            "translations": {"translations": [
+                {"iso_639_1": "pt", "iso_3166_1": "BR", "data": {"overview": "Brazil synopsis"}},
+                {"iso_639_1": "pt", "iso_3166_1": "PT", "data": {"overview": "Portugal synopsis"}},
+            ]},
+        }
+        result = movie_details.get_details(129)
+        self.assertEqual(result["overview"], "Portugal synopsis")
+        self.assertEqual(result["overview_language"], "pt-PT")
+        self.assertTrue(result["poster_url"].endswith("/english.jpg"))
+
+    @patch("app.movie_details.requests.get")
+    def test_missing_portugal_synopsis_falls_back_to_english(self, get):
+        get.return_value = Mock(status_code=200)
+        get.return_value.json.return_value = {
+            "overview": "English synopsis",
+            "translations": {"translations": [
+                {"iso_639_1": "pt", "iso_3166_1": "BR", "data": {"overview": "Brazil synopsis"}},
+                {"iso_639_1": "pt", "iso_3166_1": "PT", "data": {"overview": "  "}},
+            ]},
+        }
+        result = movie_details.get_details(129)
+        self.assertEqual(result["overview"], "English synopsis")
+        self.assertEqual(result["overview_language"], "en")
+
+    @patch("app.movie_details.requests.get")
     def test_backdrop_uses_images_endpoint_and_prefers_untagged_high_resolution(self, get):
         metadata, images = Mock(status_code=200), Mock(status_code=200)
         metadata.json.return_value = {"title": "Film", "backdrop_path": "/default.jpg"}
